@@ -31,7 +31,7 @@ const Index = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Always call all hooks in the same order
+  // Always call all hooks in the same order - BEFORE any conditional returns
   useEffect(() => {
     if (error) {
       toast({
@@ -52,6 +52,35 @@ const Index = () => {
     }
   }, [allRecords, selectedYear]);
 
+  // Set initial village and month - moved before early returns
+  useEffect(() => {
+    if (allRecords && allRecords.length > 0) {
+      const filteredByYear = selectedYear ? filterByYear(allRecords, selectedYear) : allRecords;
+      const villages = getUniqueValues(filteredByYear, 'Desa/Kel');
+      
+      if (villages.length > 0 && !selectedVillage) {
+        setSelectedVillage(villages[0]);
+      }
+    }
+  }, [allRecords, selectedYear, selectedVillage]);
+
+  useEffect(() => {
+    if (allRecords && allRecords.length > 0) {
+      const filteredByYear = selectedYear ? filterByYear(allRecords, selectedYear) : allRecords;
+      const months = [
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+      ].filter(month => 
+        filteredByYear.some(record => record['Bulan Pengukuran'] === month)
+      );
+      
+      if (months.length > 0 && !selectedMonth) {
+        setSelectedMonth(months[0]);
+      }
+    }
+  }, [allRecords, selectedYear, selectedMonth]);
+
+  // Early returns AFTER all hooks
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -84,19 +113,6 @@ const Index = () => {
   ].filter(month => 
     filteredByYear.some(record => record['Bulan Pengukuran'] === month)
   );
-
-  // Set initial village and month
-  useEffect(() => {
-    if (villages.length > 0 && !selectedVillage) {
-      setSelectedVillage(villages[0]);
-    }
-  }, [villages, selectedVillage]);
-
-  useEffect(() => {
-    if (months.length > 0 && !selectedMonth) {
-      setSelectedMonth(months[0]);
-    }
-  }, [months, selectedMonth]);
 
   const villageData = countByVillage(filteredByYear);
   // Calculate total unique names across all villages
