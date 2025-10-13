@@ -31,6 +31,7 @@ const Index = () => {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Always call all hooks in the same order
   useEffect(() => {
     if (error) {
       toast({
@@ -41,10 +42,11 @@ const Index = () => {
     }
   }, [error, toast]);
 
+  // Set initial year
   useEffect(() => {
-    if (allRecords && allRecords.length > 0) {
+    if (allRecords && allRecords.length > 0 && !selectedYear) {
       const years = getUniqueYears(allRecords);
-      if (years.length > 0 && !selectedYear) {
+      if (years.length > 0) {
         setSelectedYear(years[0]);
       }
     }
@@ -83,14 +85,18 @@ const Index = () => {
     filteredByYear.some(record => record['Bulan Pengukuran'] === month)
   );
 
+  // Set initial village and month
   useEffect(() => {
     if (villages.length > 0 && !selectedVillage) {
       setSelectedVillage(villages[0]);
     }
+  }, [villages, selectedVillage]);
+
+  useEffect(() => {
     if (months.length > 0 && !selectedMonth) {
       setSelectedMonth(months[0]);
     }
-  }, [villages, months, selectedVillage, selectedMonth]);
+  }, [months, selectedMonth]);
 
   const villageData = countByVillage(filteredByYear);
   const totalCount = deduplicateByName(filteredByYear).length;
