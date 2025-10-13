@@ -131,16 +131,24 @@ export function filterByVillage(records: ChildRecord[], village: string): ChildR
 }
 
 export function countByVillage(records: ChildRecord[]): { village: string; count: number }[] {
-  const uniqueRecords = deduplicateByName(records);
-  const countMap = new Map<string, number>();
+  // Group by village first, then count unique names per village
+  const villageMap = new Map<string, Set<string>>();
   
-  uniqueRecords.forEach(record => {
+  records.forEach(record => {
     const village = record['Desa/Kel'];
-    countMap.set(village, (countMap.get(village) || 0) + 1);
+    const name = record.Nama;
+    
+    if (!village || !name) return;
+    
+    if (!villageMap.has(village)) {
+      villageMap.set(village, new Set());
+    }
+    
+    villageMap.get(village)!.add(name);
   });
   
-  return Array.from(countMap.entries())
-    .map(([village, count]) => ({ village, count }))
+  return Array.from(villageMap.entries())
+    .map(([village, names]) => ({ village, count: names.size }))
     .sort((a, b) => a.village.localeCompare(b.village));
 }
 
