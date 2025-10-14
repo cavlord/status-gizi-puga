@@ -115,12 +115,8 @@ const Index = () => {
   );
 
   const villageData = countByVillage(filteredByYear);
-  // Calculate total unique names across all villages
-  const uniqueNamesSet = new Set<string>();
-  filteredByYear.forEach(record => {
-    if (record.Nama) uniqueNamesSet.add(record.Nama);
-  });
-  const totalCount = uniqueNamesSet.size;
+  // Calculate total count from all records
+  const totalCount = filteredByYear.length;
   const chartData = getNutritionalStatusByMonth(filteredByYear);
   
   const filteredForPosyandu = selectedVillage && selectedMonth

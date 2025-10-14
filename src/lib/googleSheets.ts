@@ -131,24 +131,19 @@ export function filterByVillage(records: ChildRecord[], village: string): ChildR
 }
 
 export function countByVillage(records: ChildRecord[]): { village: string; count: number }[] {
-  // Group by village first, then count unique names per village
-  const villageMap = new Map<string, Set<string>>();
+  // Count all records per village (no deduplication)
+  const villageMap = new Map<string, number>();
   
   records.forEach(record => {
     const village = record['Desa/Kel'];
-    const name = record.Nama;
     
-    if (!village || !name) return;
+    if (!village) return;
     
-    if (!villageMap.has(village)) {
-      villageMap.set(village, new Set());
-    }
-    
-    villageMap.get(village)!.add(name);
+    villageMap.set(village, (villageMap.get(village) || 0) + 1);
   });
   
   return Array.from(villageMap.entries())
-    .map(([village, names]) => ({ village, count: names.size }))
+    .map(([village, count]) => ({ village, count }))
     .sort((a, b) => a.village.localeCompare(b.village));
 }
 
@@ -201,10 +196,10 @@ export function getPosyanduData(records: ChildRecord[]): {
   posyandu: string;
   [key: string]: number | string;
 }[] {
-  const uniqueRecords = deduplicateByName(records);
-  const posyanduMap = new Map<string, Map<string, Set<string>>>();
+  // Group by posyandu, then by status, count all records (no deduplication)
+  const posyanduMap = new Map<string, Map<string, number>>();
   
-  uniqueRecords.forEach(record => {
+  records.forEach(record => {
     const posyandu = record.Posyandu;
     const status = record['BB/TB'];
     
@@ -215,11 +210,7 @@ export function getPosyanduData(records: ChildRecord[]): {
     }
     
     const statusMap = posyanduMap.get(posyandu)!;
-    if (!statusMap.has(status)) {
-      statusMap.set(status, new Set());
-    }
-    
-    statusMap.get(status)!.add(record.Nama);
+    statusMap.set(status, (statusMap.get(status) || 0) + 1);
   });
   
   const result: { posyandu: string; [key: string]: number | string }[] = [];
@@ -227,8 +218,8 @@ export function getPosyanduData(records: ChildRecord[]): {
   posyanduMap.forEach((statusMap, posyandu) => {
     const posyanduData: { posyandu: string; [key: string]: number | string } = { posyandu };
     
-    statusMap.forEach((names, status) => {
-      posyanduData[status] = names.size;
+    statusMap.forEach((count, status) => {
+      posyanduData[status] = count;
     });
     
     result.push(posyanduData);
