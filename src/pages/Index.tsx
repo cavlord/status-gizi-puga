@@ -168,7 +168,7 @@ const Index = () => {
 
         <div>
           <h2 className="text-xl font-bold mb-4 text-foreground">
-            Data Posyandu – Naik Berat Badan
+            Data Status Gizi Per Posyandu
           </h2>
           <PosyanduTable
             data={posyanduData}
