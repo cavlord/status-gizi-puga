@@ -83,11 +83,8 @@ export async function fetchSheetData(): Promise<ChildRecord[]> {
 export function getUniqueYears(records: ChildRecord[]): string[] {
   const years = new Set<string>();
   records.forEach(record => {
-    if (record['Tanggal Pengukuran']) {
-      const year = new Date(record['Tanggal Pengukuran']).getFullYear().toString();
-      if (!isNaN(parseInt(year))) {
-        years.add(year);
-      }
+    if (record['status tahun']) {
+      years.add(record['status tahun']);
     }
   });
   return Array.from(years).sort((a, b) => parseInt(b) - parseInt(a));
@@ -115,11 +112,7 @@ export function deduplicateByName(records: ChildRecord[]): ChildRecord[] {
 }
 
 export function filterByYear(records: ChildRecord[], year: string): ChildRecord[] {
-  return records.filter(record => {
-    if (!record['Tanggal Pengukuran']) return false;
-    const recordYear = new Date(record['Tanggal Pengukuran']).getFullYear().toString();
-    return recordYear === year;
-  });
+  return records.filter(record => record['status tahun'] === year);
 }
 
 export function filterByMonth(records: ChildRecord[], month: string): ChildRecord[] {
