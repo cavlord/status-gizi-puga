@@ -83,8 +83,11 @@ export async function fetchSheetData(): Promise<ChildRecord[]> {
 export function getUniqueYears(records: ChildRecord[]): string[] {
   const years = new Set<string>();
   records.forEach(record => {
-    if (record['status tahun']) {
-      years.add(record['status tahun']);
+    if (record['Tanggal Pengukuran']) {
+      const year = new Date(record['Tanggal Pengukuran']).getFullYear().toString();
+      if (!isNaN(parseInt(year))) {
+        years.add(year);
+      }
     }
   });
   return Array.from(years).sort((a, b) => parseInt(b) - parseInt(a));
@@ -112,7 +115,11 @@ export function deduplicateByName(records: ChildRecord[]): ChildRecord[] {
 }
 
 export function filterByYear(records: ChildRecord[], year: string): ChildRecord[] {
-  return records.filter(record => record['status tahun'] === year);
+  return records.filter(record => {
+    if (!record['Tanggal Pengukuran']) return false;
+    const recordYear = new Date(record['Tanggal Pengukuran']).getFullYear().toString();
+    return recordYear === year;
+  });
 }
 
 export function filterByMonth(records: ChildRecord[], month: string): ChildRecord[] {
@@ -149,14 +156,15 @@ export function getNutritionalStatusByMonth(records: ChildRecord[]): {
   month: string;
   [key: string]: number | string;
 }[] {
-  const uniqueRecords = deduplicateByName(records);
+  // Group by month first, then count unique names per status in each month
   const monthMap = new Map<string, Map<string, Set<string>>>();
   
-  uniqueRecords.forEach(record => {
+  records.forEach(record => {
     const month = record['Bulan Pengukuran'];
     const status = record['BB/TB'];
+    const name = record.Nama;
     
-    if (!month || !status) return;
+    if (!month || !status || !name) return;
     
     if (!monthMap.has(month)) {
       monthMap.set(month, new Map());
@@ -167,7 +175,7 @@ export function getNutritionalStatusByMonth(records: ChildRecord[]): {
       statusMap.set(status, new Set());
     }
     
-    statusMap.get(status)!.add(record.Nama);
+    statusMap.get(status)!.add(name);
   });
   
   const result: { month: string; [key: string]: number | string }[] = [];
