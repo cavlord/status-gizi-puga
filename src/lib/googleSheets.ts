@@ -131,14 +131,15 @@ export function filterByVillage(records: ChildRecord[], village: string): ChildR
 }
 
 export function countByVillage(records: ChildRecord[]): { village: string; count: number }[] {
-  // Count unique names per village (COUNTUNIQUE)
+  // Count unique names per village (COUNTUNIQUE) - include records even with empty columns
   const villageMap = new Map<string, Set<string>>();
   
   records.forEach(record => {
     const village = record['Desa/Kel'];
     const name = record.Nama;
     
-    if (!village || !name) return;
+    // Only skip if village or name is missing
+    if (!village || !name || village.trim() === '' || name.trim() === '') return;
     
     if (!villageMap.has(village)) {
       villageMap.set(village, new Set());
@@ -156,7 +157,7 @@ export function getNutritionalStatusByMonth(records: ChildRecord[]): {
   month: string;
   [key: string]: number | string;
 }[] {
-  // Group by month first, then count unique names per status in each month
+  // Group by month first, then count unique names per status in each month - include even with empty columns
   const monthMap = new Map<string, Map<string, Set<string>>>();
   
   records.forEach(record => {
@@ -164,7 +165,8 @@ export function getNutritionalStatusByMonth(records: ChildRecord[]): {
     const status = record['BB/TB'];
     const name = record.Nama;
     
-    if (!month || !status || !name) return;
+    // Only skip if essential fields are missing
+    if (!month || !status || !name || month.trim() === '' || status.trim() === '' || name.trim() === '') return;
     
     if (!monthMap.has(month)) {
       monthMap.set(month, new Map());
@@ -201,14 +203,15 @@ export function getPosyanduData(records: ChildRecord[]): {
   posyandu: string;
   [key: string]: number | string;
 }[] {
-  // Group by posyandu, then by status, count all records (no deduplication)
+  // Group by posyandu, then by status, count all records - include even with empty columns
   const posyanduMap = new Map<string, Map<string, number>>();
   
   records.forEach(record => {
     const posyandu = record.Posyandu;
     const status = record['BB/TB'];
     
-    if (!posyandu || !status) return;
+    // Only skip if essential fields are missing
+    if (!posyandu || !status || posyandu.trim() === '' || status.trim() === '') return;
     
     if (!posyanduMap.has(posyandu)) {
       posyanduMap.set(posyandu, new Map());
