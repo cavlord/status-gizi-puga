@@ -216,6 +216,9 @@ export function getPosyanduData(records: ChildRecord[]): {
   // Pivot: Rows = BB/TB, Columns = Posyandu, Values = COUNTUNIQUE Nama
   // Filters: Desa/Kel, Bulan Pengukuran (month), Tanggal Pengukuran (year)
   // Note: Filters are applied before calling this function
+  
+  // First, collect all unique posyandus
+  const allPosyandus = new Set<string>();
   const statusMap = new Map<string, Map<string, Set<string>>>();
   
   records.forEach(record => {
@@ -225,6 +228,8 @@ export function getPosyanduData(records: ChildRecord[]): {
     
     // Only skip if essential fields are missing
     if (!status || !posyandu || !name || status.trim() === '' || posyandu.trim() === '' || name.trim() === '') return;
+    
+    allPosyandus.add(posyandu);
     
     if (!statusMap.has(status)) {
       statusMap.set(status, new Map());
@@ -240,11 +245,13 @@ export function getPosyanduData(records: ChildRecord[]): {
   
   const result: { status: string; [key: string]: number | string }[] = [];
   
+  // For each status, create a row with all posyandus (even if count is 0)
   statusMap.forEach((posyanduMap, status) => {
     const statusData: { status: string; [key: string]: number | string } = { status };
     
-    posyanduMap.forEach((names, posyandu) => {
-      statusData[posyandu] = names.size;
+    // Add all posyandus to ensure all columns are present
+    allPosyandus.forEach(posyandu => {
+      statusData[posyandu] = posyanduMap.has(posyandu) ? posyanduMap.get(posyandu)!.size : 0;
     });
     
     result.push(statusData);
