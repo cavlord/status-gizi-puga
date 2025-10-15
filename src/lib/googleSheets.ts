@@ -131,7 +131,8 @@ export function filterByVillage(records: ChildRecord[], village: string): ChildR
 }
 
 export function countByVillage(records: ChildRecord[]): { village: string; count: number }[] {
-  // Count unique names per village (COUNTUNIQUE) - include records even with empty columns
+  // Pivot: Rows = Desa/Kel, Values = COUNTUNIQUE Nama
+  // Filter: Already filtered by year before calling this function
   const villageMap = new Map<string, Set<string>>();
   
   records.forEach(record => {
@@ -203,16 +204,18 @@ export function getPosyanduData(records: ChildRecord[]): {
   status: string;
   [key: string]: number | string;
 }[] {
-  // Pivot: Rows = BB/TB, Columns = Posyandu, Values = COUNTUNIQUE of Nama
+  // Pivot: Rows = BB/TB, Columns = Posyandu, Values = COUNTUNIQUE Nama
+  // Filters: Desa/Kel, Bulan Pengukuran (month), Tanggal Pengukuran (year)
+  // Note: Filters are applied before calling this function
   const statusMap = new Map<string, Map<string, Set<string>>>();
   
   records.forEach(record => {
-    const posyandu = record.Posyandu;
     const status = record['BB/TB'];
+    const posyandu = record.Posyandu;
     const name = record.Nama;
     
     // Only skip if essential fields are missing
-    if (!posyandu || !status || !name || posyandu.trim() === '' || status.trim() === '' || name.trim() === '') return;
+    if (!status || !posyandu || !name || status.trim() === '' || posyandu.trim() === '' || name.trim() === '') return;
     
     if (!statusMap.has(status)) {
       statusMap.set(status, new Map());
