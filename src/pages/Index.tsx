@@ -15,6 +15,7 @@ import {
 import { YearFilter } from "@/components/YearFilter";
 import { SummaryCards } from "@/components/SummaryCards";
 import { NutritionalStatusChart } from "@/components/NutritionalStatusChart";
+import { NutritionalStatusSummary } from "@/components/NutritionalStatusSummary";
 import { PosyanduTable } from "@/components/PosyanduTable";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -150,15 +151,22 @@ const Index = () => {
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          <div className="lg:col-span-1">
+        <div className="space-y-6 mb-6">
+          <div>
             <h2 className="text-xl font-bold mb-4 text-foreground">
               Total Data Aktif Status Gizi Balita
             </h2>
-            <SummaryCards data={villageData} totalCount={totalCount} />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-1">
+                <SummaryCards data={villageData} totalCount={totalCount} />
+              </div>
+              <div className="lg:col-span-2">
+                <NutritionalStatusSummary data={filteredByYear} />
+              </div>
+            </div>
           </div>
 
-          <div className="lg:col-span-2">
+          <div>
             <h2 className="text-xl font-bold mb-4 text-foreground">
               Grafik Status Gizi Balita
             </h2>
