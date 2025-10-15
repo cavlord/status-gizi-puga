@@ -1,6 +1,6 @@
 const API_KEY = 'AIzaSyBNkFJW0WOXOd2xFfsllmO-tdrXANMZjkA';
 const SPREADSHEET_ID = '1o-Lok3oWtmGXaN5Q9CeFj4ji9WFOINYW3M_RBNBUw60';
-const SHEET_NAME = 'RECORDS';
+const SHEET_NAME = 'RECORDS table1';
 
 export interface ChildRecord {
   NIK: string;
