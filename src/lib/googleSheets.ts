@@ -1,6 +1,6 @@
 const API_KEY = 'AIzaSyBNkFJW0WOXOd2xFfsllmO-tdrXANMZjkA';
 const SPREADSHEET_ID = '1o-Lok3oWtmGXaN5Q9CeFj4ji9WFOINYW3M_RBNBUw60';
-const SHEET_NAME = 'RECORDS table1';
+const SHEET_NAME = 'RECORDS';
 
 export interface ChildRecord {
   NIK: string;
@@ -200,38 +200,43 @@ export function getNutritionalStatusByMonth(records: ChildRecord[]): {
 }
 
 export function getPosyanduData(records: ChildRecord[]): {
-  posyandu: string;
+  status: string;
   [key: string]: number | string;
 }[] {
-  // Group by posyandu, then by status, count all records - include even with empty columns
-  const posyanduMap = new Map<string, Map<string, number>>();
+  // Pivot: Rows = BB/TB, Columns = Posyandu, Values = COUNTUNIQUE of Nama
+  const statusMap = new Map<string, Map<string, Set<string>>>();
   
   records.forEach(record => {
     const posyandu = record.Posyandu;
     const status = record['BB/TB'];
+    const name = record.Nama;
     
     // Only skip if essential fields are missing
-    if (!posyandu || !status || posyandu.trim() === '' || status.trim() === '') return;
+    if (!posyandu || !status || !name || posyandu.trim() === '' || status.trim() === '' || name.trim() === '') return;
     
-    if (!posyanduMap.has(posyandu)) {
-      posyanduMap.set(posyandu, new Map());
+    if (!statusMap.has(status)) {
+      statusMap.set(status, new Map());
     }
     
-    const statusMap = posyanduMap.get(posyandu)!;
-    statusMap.set(status, (statusMap.get(status) || 0) + 1);
+    const posyanduMap = statusMap.get(status)!;
+    if (!posyanduMap.has(posyandu)) {
+      posyanduMap.set(posyandu, new Set());
+    }
+    
+    posyanduMap.get(posyandu)!.add(name);
   });
   
-  const result: { posyandu: string; [key: string]: number | string }[] = [];
+  const result: { status: string; [key: string]: number | string }[] = [];
   
-  posyanduMap.forEach((statusMap, posyandu) => {
-    const posyanduData: { posyandu: string; [key: string]: number | string } = { posyandu };
+  statusMap.forEach((posyanduMap, status) => {
+    const statusData: { status: string; [key: string]: number | string } = { status };
     
-    statusMap.forEach((count, status) => {
-      posyanduData[status] = count;
+    posyanduMap.forEach((names, posyandu) => {
+      statusData[posyandu] = names.size;
     });
     
-    result.push(posyanduData);
+    result.push(statusData);
   });
   
-  return result.sort((a, b) => a.posyandu.localeCompare(b.posyandu));
+  return result.sort((a, b) => a.status.localeCompare(b.status));
 }

@@ -6,7 +6,7 @@ import { ChildRecord } from "@/lib/googleSheets";
 import { ChildDetailsModal } from "./ChildDetailsModal";
 
 interface PosyanduTableProps {
-  data: { posyandu: string; [key: string]: number | string }[];
+  data: { status: string; [key: string]: number | string }[];
   villages: string[];
   months: string[];
   selectedVillage: string;
@@ -27,22 +27,26 @@ export function PosyanduTable({
   allRecords,
 }: PosyanduTableProps) {
   const [selectedPosyandu, setSelectedPosyandu] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const statuses = data.length > 0 
-    ? Object.keys(data[0]).filter(key => key !== 'posyandu')
+  // Get all unique Posyandu names from data
+  const posyandus = data.length > 0 
+    ? Object.keys(data[0]).filter(key => key !== 'status')
     : [];
 
-  const handleRowClick = (posyandu: string) => {
+  const handleCellClick = (posyandu: string, status: string) => {
     setSelectedPosyandu(posyandu);
+    setSelectedStatus(status);
     setIsModalOpen(true);
   };
 
   const getFilteredRecords = () => {
-    if (!selectedPosyandu) return [];
+    if (!selectedPosyandu || !selectedStatus) return [];
     
     return allRecords.filter(record => {
       return record.Posyandu === selectedPosyandu &&
+             record['BB/TB'] === selectedStatus &&
              record['Desa/Kel'] === selectedVillage &&
              record['Bulan Pengukuran'] === selectedMonth;
     });
@@ -107,10 +111,10 @@ export function PosyanduTable({
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="bg-muted/50">
-                    <th className="p-3 text-left font-semibold border">Posyandu</th>
-                    {statuses.map((status) => (
-                      <th key={status} className="p-3 text-center font-semibold border">
-                        {status}
+                    <th className="p-3 text-left font-semibold border">BB/TB</th>
+                    {posyandus.map((posyandu) => (
+                      <th key={posyandu} className="p-3 text-center font-semibold border">
+                        {posyandu}
                       </th>
                     ))}
                     <th className="p-3 text-center font-semibold border">Total</th>
@@ -118,17 +122,17 @@ export function PosyanduTable({
                 </thead>
                 <tbody>
                   {data.map((row) => {
-                    const total = statuses.reduce((sum, status) => sum + (Number(row[status]) || 0), 0);
+                    const total = posyandus.reduce((sum, posyandu) => sum + (Number(row[posyandu]) || 0), 0);
                     return (
-                      <tr
-                        key={row.posyandu}
-                        className="hover:bg-muted/30 cursor-pointer transition-colors"
-                        onClick={() => handleRowClick(row.posyandu)}
-                      >
-                        <td className="p-3 border font-medium">{row.posyandu}</td>
-                        {statuses.map((status) => (
-                          <td key={status} className="p-3 text-center border">
-                            {row[status] || 0}
+                      <tr key={row.status} className="hover:bg-muted/30 transition-colors">
+                        <td className="p-3 border font-medium">{row.status}</td>
+                        {posyandus.map((posyandu) => (
+                          <td 
+                            key={posyandu} 
+                            className="p-3 text-center border cursor-pointer hover:bg-muted/50"
+                            onClick={() => handleCellClick(posyandu, row.status)}
+                          >
+                            {row[posyandu] || 0}
                           </td>
                         ))}
                         <td className="p-3 text-center border font-bold text-primary">
@@ -148,7 +152,7 @@ export function PosyanduTable({
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         records={getFilteredRecords()}
-        posyandu={selectedPosyandu || ''}
+        posyandu={`${selectedPosyandu || ''} - ${selectedStatus || ''}`}
       />
     </>
   );
