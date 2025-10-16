@@ -52,9 +52,13 @@ export function NutritionalStatusSummary({ data }: NutritionalStatusSummaryProps
                 data={chartData}
                 cx="50%"
                 cy="50%"
-                outerRadius={80}
+                startAngle={180}
+                endAngle={0}
+                innerRadius={60}
+                outerRadius={100}
                 fill="#8884d8"
                 dataKey="value"
+                paddingAngle={2}
               >
                 {chartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.fill} />
