@@ -52,8 +52,6 @@ export function NutritionalStatusSummary({ data }: NutritionalStatusSummaryProps
                 data={chartData}
                 cx="50%"
                 cy="50%"
-                labelLine={false}
-                label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
                 outerRadius={80}
                 fill="#8884d8"
                 dataKey="value"
@@ -69,7 +67,7 @@ export function NutritionalStatusSummary({ data }: NutritionalStatusSummaryProps
                   borderRadius: '0.5rem',
                 }}
               />
-              <Legend wrapperStyle={{ fontSize: '12px' }} />
+              <Legend wrapperStyle={{ fontSize: '11px' }} />
             </PieChart>
           </ResponsiveContainer>
         </CardContent>
