@@ -31,10 +31,10 @@ export function NutritionalStatusSummary({ data }: NutritionalStatusSummaryProps
     statusCounts.get(status)!.add(name);
   });
 
-  const chartData = Array.from(statusCounts.entries()).map(([status, names]) => ({
+  const chartData = Array.from(statusCounts.entries()).map(([status, names], index) => ({
     name: status,
     value: names.size,
-    fill: STATUS_COLORS[status as keyof typeof STATUS_COLORS] || "hsl(var(--muted))",
+    fill: STATUS_COLORS[status as keyof typeof STATUS_COLORS] || `hsl(${(index * 60) % 360} 70% 50%)`,
   }));
 
   const totalChildren = new Set(data.map(r => r.Nama).filter(Boolean)).size;
