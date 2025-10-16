@@ -7,12 +7,12 @@ interface NutritionalStatusSummaryProps {
 }
 
 const STATUS_COLORS = {
-  "Gizi Buruk": "hsl(var(--destructive))",
-  "Gizi Kurang": "hsl(var(--warning))",
-  "Gizi Baik": "hsl(var(--success))",
-  "Berisiko Gizi Lebih": "hsl(var(--info))",
-  "Gizi Lebih": "hsl(var(--chart-4))",
-  "Obesitas": "hsl(var(--chart-5))",
+  "Gizi Buruk": "hsl(0 84% 60%)",
+  "Gizi Kurang": "hsl(38 92% 50%)",
+  "Gizi Baik": "hsl(142 71% 45%)",
+  "Berisiko Gizi Lebih": "hsl(199 89% 48%)",
+  "Gizi Lebih": "hsl(271 81% 56%)",
+  "Obesitas": "hsl(340 82% 52%)",
 };
 
 export function NutritionalStatusSummary({ data }: NutritionalStatusSummaryProps) {
