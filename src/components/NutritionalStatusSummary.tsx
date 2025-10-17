@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { ChildRecord } from "@/lib/googleSheets";
+import { ChildDetailsModal } from "./ChildDetailsModal";
 
 interface NutritionalStatusSummaryProps {
   data: ChildRecord[];
@@ -16,6 +18,9 @@ const STATUS_COLORS = {
 };
 
 export function NutritionalStatusSummary({ data }: NutritionalStatusSummaryProps) {
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   // Count unique names per status
   const statusCounts = new Map<string, Set<string>>();
   
@@ -30,6 +35,15 @@ export function NutritionalStatusSummary({ data }: NutritionalStatusSummaryProps
     }
     statusCounts.get(status)!.add(name);
   });
+
+  const handleCardClick = (statusName: string) => {
+    setSelectedStatus(statusName);
+    setIsModalOpen(true);
+  };
+
+  const filteredRecords = selectedStatus 
+    ? data.filter(record => record['BB/TB'] === selectedStatus)
+    : [];
 
   const chartData = Array.from(statusCounts.entries()).map(([status, names], index) => ({
     name: status,
@@ -82,7 +96,11 @@ export function NutritionalStatusSummary({ data }: NutritionalStatusSummaryProps
           const percentage = totalChildren > 0 ? ((item.value / totalChildren) * 100).toFixed(1) : '0';
           
           return (
-            <Card key={item.name} className="shadow-sm hover:shadow-md transition-shadow">
+            <Card 
+              key={item.name} 
+              className="shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-105 active:scale-100"
+              onClick={() => handleCardClick(item.name)}
+            >
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <div 
@@ -104,6 +122,13 @@ export function NutritionalStatusSummary({ data }: NutritionalStatusSummaryProps
           );
         })}
       </div>
+
+      <ChildDetailsModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        records={filteredRecords}
+        posyandu={selectedStatus || ''}
+      />
     </div>
   );
 }
