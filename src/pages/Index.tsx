@@ -11,6 +11,7 @@ import {
   getNutritionalStatusByMonth,
   getPosyanduData,
   deduplicateByName,
+  filterUnderFiveYears,
 } from "@/lib/googleSheets";
 import { YearFilter } from "@/components/YearFilter";
 import { SummaryCards } from "@/components/SummaryCards";
@@ -47,7 +48,8 @@ const Index = () => {
   // Set initial year
   useEffect(() => {
     if (allRecords && allRecords.length > 0 && !selectedYear) {
-      const years = getUniqueYears(allRecords);
+      const underFiveRecords = filterUnderFiveYears(allRecords);
+      const years = getUniqueYears(underFiveRecords);
       if (years.length > 0) {
         setSelectedYear(years[0]);
       }
@@ -57,7 +59,8 @@ const Index = () => {
   // Set initial village and month - moved before early returns
   useEffect(() => {
     if (allRecords && allRecords.length > 0) {
-      const filteredByYear = selectedYear ? filterByYear(allRecords, selectedYear) : allRecords;
+      const underFiveRecords = filterUnderFiveYears(allRecords);
+      const filteredByYear = selectedYear ? filterByYear(underFiveRecords, selectedYear) : underFiveRecords;
       const villages = getUniqueValues(filteredByYear, 'Desa/Kel');
       
       if (villages.length > 0 && !selectedVillage) {
@@ -68,7 +71,8 @@ const Index = () => {
 
   useEffect(() => {
     if (allRecords && allRecords.length > 0) {
-      const filteredByYear = selectedYear ? filterByYear(allRecords, selectedYear) : allRecords;
+      const underFiveRecords = filterUnderFiveYears(allRecords);
+      const filteredByYear = selectedYear ? filterByYear(underFiveRecords, selectedYear) : underFiveRecords;
       const months = [
         'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
         'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
@@ -106,8 +110,11 @@ const Index = () => {
     );
   }
 
-  const years = getUniqueYears(allRecords);
-  const filteredByYear = selectedYear ? filterByYear(allRecords, selectedYear) : allRecords;
+  // Filter untuk hanya anak di bawah 5 tahun
+  const underFiveRecords = filterUnderFiveYears(allRecords);
+  
+  const years = getUniqueYears(underFiveRecords);
+  const filteredByYear = selectedYear ? filterByYear(underFiveRecords, selectedYear) : underFiveRecords;
   
   const villages = getUniqueValues(filteredByYear, 'Desa/Kel');
   const months = [

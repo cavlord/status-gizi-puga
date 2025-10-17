@@ -107,6 +107,20 @@ export function getUniqueValues(records: ChildRecord[], field: keyof ChildRecord
   return Array.from(values).sort();
 }
 
+export function filterUnderFiveYears(records: ChildRecord[]): ChildRecord[] {
+  return records.filter(record => {
+    const ageStr = record['Usia Saat Ukur'];
+    if (!ageStr || ageStr.trim() === '') return false;
+    
+    // Extract years from format like "4 Tahun 3 Bulan" or "4 tahun"
+    const yearMatch = ageStr.match(/(\d+)\s*[Tt]ahun/);
+    if (!yearMatch) return false;
+    
+    const years = parseInt(yearMatch[1]);
+    return years < 5;
+  });
+}
+
 export function deduplicateByName(records: ChildRecord[]): ChildRecord[] {
   const seen = new Set<string>();
   return records.filter(record => {
