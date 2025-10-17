@@ -25,6 +25,7 @@ const Index = () => {
   const [selectedYear, setSelectedYear] = useState<string>("");
   const [selectedVillage, setSelectedVillage] = useState<string>("");
   const [selectedMonth, setSelectedMonth] = useState<string>("");
+  const [showLoading, setShowLoading] = useState(true);
 
   const { data: allRecords, isLoading, error } = useQuery({
     queryKey: ['sheetData'],
@@ -81,8 +82,16 @@ const Index = () => {
     }
   }, [allRecords, selectedYear, selectedMonth]);
 
+  // Minimum loading time
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowLoading(false);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Early returns AFTER all hooks
-  if (isLoading) {
+  if (isLoading || showLoading) {
     return <LoadingScreen />;
   }
 
