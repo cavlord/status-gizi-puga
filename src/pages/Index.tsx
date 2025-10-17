@@ -17,8 +17,8 @@ import { SummaryCards } from "@/components/SummaryCards";
 import { NutritionalStatusChart } from "@/components/NutritionalStatusChart";
 import { NutritionalStatusSummary } from "@/components/NutritionalStatusSummary";
 import { PosyanduTable } from "@/components/PosyanduTable";
-import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import LoadingScreen from "@/components/LoadingScreen";
 
 const Index = () => {
   const { toast } = useToast();
@@ -83,14 +83,7 @@ const Index = () => {
 
   // Early returns AFTER all hooks
   if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Memuat data...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (!allRecords || allRecords.length === 0) {
