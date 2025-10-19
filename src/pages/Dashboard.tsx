@@ -11,16 +11,14 @@ import { YearFilter } from "@/components/YearFilter";
 import { NutritionalStatusChart } from "@/components/NutritionalStatusChart";
 import { NutritionalStatusSummary } from "@/components/NutritionalStatusSummary";
 import { useToast } from "@/hooks/use-toast";
-import LoadingScreen from "@/components/LoadingScreen";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Users, Activity, AlertTriangle } from "lucide-react";
 
 const Dashboard = () => {
   const { toast } = useToast();
   const [selectedYear, setSelectedYear] = useState<string>("");
-  const [showLoading, setShowLoading] = useState(true);
 
-  const { allRecords, isLoading, error } = useData();
+  const { allRecords, error } = useData();
 
   useEffect(() => {
     if (error) {
@@ -41,17 +39,6 @@ const Dashboard = () => {
       }
     }
   }, [allRecords, selectedYear]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowLoading(false);
-    }, 2500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (isLoading || showLoading) {
-    return <LoadingScreen />;
-  }
 
   if (!allRecords || allRecords.length === 0) {
     return (
