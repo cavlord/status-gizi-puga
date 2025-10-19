@@ -1,31 +1,26 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
 import {
-  fetchSheetData,
   getUniqueYears,
   filterByYear,
   filterUnderFiveYears,
   getNutritionalStatusByMonth,
+  ChildRecord,
 } from "@/lib/googleSheets";
+import { useData } from "@/contexts/DataContext";
 import { YearFilter } from "@/components/YearFilter";
-import { SummaryCards } from "@/components/SummaryCards";
 import { NutritionalStatusChart } from "@/components/NutritionalStatusChart";
 import { NutritionalStatusSummary } from "@/components/NutritionalStatusSummary";
 import { useToast } from "@/hooks/use-toast";
 import LoadingScreen from "@/components/LoadingScreen";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, Users, Activity } from "lucide-react";
+import { TrendingUp, Users, Activity, AlertTriangle } from "lucide-react";
 
 const Dashboard = () => {
   const { toast } = useToast();
   const [selectedYear, setSelectedYear] = useState<string>("");
   const [showLoading, setShowLoading] = useState(true);
 
-  const { data: allRecords, isLoading, error } = useQuery({
-    queryKey: ['sheetData'],
-    queryFn: fetchSheetData,
-    staleTime: 5 * 60 * 1000,
-  });
+  const { allRecords, isLoading, error } = useData();
 
   useEffect(() => {
     if (error) {
@@ -73,9 +68,33 @@ const Dashboard = () => {
   const years = getUniqueYears(underFiveRecords);
   const filteredByYear = selectedYear ? filterByYear(underFiveRecords, selectedYear) : underFiveRecords;
 
-  // Calculate village data
+  // Get latest record per child
+  const getLatestRecords = (records: ChildRecord[]): ChildRecord[] => {
+    const latestMap = new Map<string, ChildRecord>();
+    
+    records.forEach(record => {
+      if (!record.Nama) return;
+      
+      const existingRecord = latestMap.get(record.Nama);
+      if (!existingRecord) {
+        latestMap.set(record.Nama, record);
+      } else {
+        const existingDate = new Date(existingRecord['Tanggal Pengukuran']);
+        const newDate = new Date(record['Tanggal Pengukuran']);
+        if (newDate > existingDate) {
+          latestMap.set(record.Nama, record);
+        }
+      }
+    });
+    
+    return Array.from(latestMap.values());
+  };
+
+  const latestRecords = getLatestRecords(filteredByYear);
+
+  // Calculate village data from latest records
   const villageMap = new Map<string, Set<string>>();
-  filteredByYear.forEach(record => {
+  latestRecords.forEach(record => {
     const village = record['Desa/Kel'];
     if (!villageMap.has(village)) {
       villageMap.set(village, new Set());
@@ -90,11 +109,40 @@ const Dashboard = () => {
     count: names.size
   }));
 
-  const uniqueNames = new Set<string>();
-  filteredByYear.forEach(record => {
-    if (record.Nama) uniqueNames.add(record.Nama);
-  });
-  const totalCount = uniqueNames.size;
+  const totalCount = latestRecords.length;
+
+  // Calculate children not gaining weight (consecutive "T" in Naik Berat Badan)
+  const getNotGainingWeight = (): number => {
+    const recordsByName = new Map<string, ChildRecord[]>();
+    
+    filteredByYear.forEach(record => {
+      if (!record.Nama) return;
+      if (!recordsByName.has(record.Nama)) {
+        recordsByName.set(record.Nama, []);
+      }
+      recordsByName.get(record.Nama)!.push(record);
+    });
+
+    let notGainingCount = 0;
+    recordsByName.forEach(records => {
+      const sortedRecords = records.sort((a, b) => 
+        new Date(a['Tanggal Pengukuran']).getTime() - new Date(b['Tanggal Pengukuran']).getTime()
+      );
+      
+      if (sortedRecords.length < 2) return;
+      
+      const latest = sortedRecords[sortedRecords.length - 1];
+      const previous = sortedRecords[sortedRecords.length - 2];
+      
+      if (latest['Naik Berat Badan'] === 'T' && previous['Naik Berat Badan'] === 'T') {
+        notGainingCount++;
+      }
+    });
+    
+    return notGainingCount;
+  };
+
+  const notGainingWeightCount = getNotGainingWeight();
 
   const chartData = getNutritionalStatusByMonth(filteredByYear);
 
@@ -118,7 +166,7 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="border-0 shadow-lg bg-gradient-to-br from-primary to-accent text-primary-foreground">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base font-medium opacity-90">
@@ -157,16 +205,24 @@ const Dashboard = () => {
             <p className="text-sm opacity-80 mt-1">Total Pengukuran</p>
           </CardContent>
         </Card>
+
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-destructive/80 to-destructive text-white">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base font-medium opacity-90">
+              <AlertTriangle className="h-5 w-5" />
+              Tidak Naik BB
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-bold">{notGainingWeightCount}</div>
+            <p className="text-sm opacity-80 mt-1">Balita Berturut-turut</p>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1">
-          <SummaryCards data={villageData} totalCount={totalCount} />
-        </div>
-        <div className="lg:col-span-2">
-          <NutritionalStatusSummary data={filteredByYear} />
-        </div>
+      {/* Nutritional Status Distribution */}
+      <div>
+        <NutritionalStatusSummary data={latestRecords} />
       </div>
 
       {/* Chart Section */}
