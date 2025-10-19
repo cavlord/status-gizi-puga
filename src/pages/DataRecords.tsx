@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
 import {
-  fetchSheetData,
   getUniqueYears,
   getUniqueValues,
   filterByYear,
@@ -10,6 +8,7 @@ import {
   filterUnderFiveYears,
   getPosyanduData,
 } from "@/lib/googleSheets";
+import { useData } from "@/contexts/DataContext";
 import { YearFilter } from "@/components/YearFilter";
 import { PosyanduTable } from "@/components/PosyanduTable";
 import { useToast } from "@/hooks/use-toast";
@@ -24,11 +23,7 @@ const DataRecords = () => {
   const [selectedMonth, setSelectedMonth] = useState<string>("");
   const [showLoading, setShowLoading] = useState(true);
 
-  const { data: allRecords, isLoading, error } = useQuery({
-    queryKey: ['sheetData'],
-    queryFn: fetchSheetData,
-    staleTime: 5 * 60 * 1000,
-  });
+  const { allRecords, isLoading, error } = useData();
 
   useEffect(() => {
     if (error) {
