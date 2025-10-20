@@ -10,6 +10,7 @@ import { useData } from "@/contexts/DataContext";
 import { YearFilter } from "@/components/YearFilter";
 import { NutritionalStatusChart } from "@/components/NutritionalStatusChart";
 import { NutritionalStatusSummary } from "@/components/NutritionalStatusSummary";
+import { ChildDetailsModal } from "@/components/ChildDetailsModal";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Users, Activity, AlertTriangle } from "lucide-react";
@@ -79,6 +80,31 @@ const Dashboard = () => {
 
   const latestRecords = getLatestRecords(filteredByYear);
 
+  // Get most recent month's data for nutritional status distribution
+  const getMostRecentMonthRecords = (records: ChildRecord[]): ChildRecord[] => {
+    if (records.length === 0) return [];
+    
+    // Find the most recent date
+    const mostRecentDate = records.reduce((latest, record) => {
+      const recordDate = new Date(record['Tanggal Pengukuran']);
+      return recordDate > latest ? recordDate : latest;
+    }, new Date(records[0]['Tanggal Pengukuran']));
+    
+    const mostRecentMonth = mostRecentDate.getMonth();
+    const mostRecentYear = mostRecentDate.getFullYear();
+    
+    // Filter records from that month and get latest per child
+    const monthRecords = records.filter(record => {
+      const recordDate = new Date(record['Tanggal Pengukuran']);
+      return recordDate.getMonth() === mostRecentMonth && 
+             recordDate.getFullYear() === mostRecentYear;
+    });
+    
+    return getLatestRecords(monthRecords);
+  };
+
+  const mostRecentMonthRecords = getMostRecentMonthRecords(filteredByYear);
+
   // Calculate village data from latest records
   const villageMap = new Map<string, Set<string>>();
   latestRecords.forEach(record => {
@@ -99,7 +125,7 @@ const Dashboard = () => {
   const totalCount = latestRecords.length;
 
   // Calculate children not gaining weight (consecutive "T" in Naik Berat Badan)
-  const getNotGainingWeight = (): number => {
+  const getNotGainingWeight = (): { count: number; children: ChildRecord[] } => {
     const recordsByName = new Map<string, ChildRecord[]>();
     
     filteredByYear.forEach(record => {
@@ -110,7 +136,7 @@ const Dashboard = () => {
       recordsByName.get(record.Nama)!.push(record);
     });
 
-    let notGainingCount = 0;
+    const notGainingChildren: ChildRecord[] = [];
     recordsByName.forEach(records => {
       const sortedRecords = records.sort((a, b) => 
         new Date(a['Tanggal Pengukuran']).getTime() - new Date(b['Tanggal Pengukuran']).getTime()
@@ -122,14 +148,16 @@ const Dashboard = () => {
       const previous = sortedRecords[sortedRecords.length - 2];
       
       if (latest['Naik Berat Badan'] === 'T' && previous['Naik Berat Badan'] === 'T') {
-        notGainingCount++;
+        notGainingChildren.push(latest);
       }
     });
     
-    return notGainingCount;
+    return { count: notGainingChildren.length, children: notGainingChildren };
   };
 
-  const notGainingWeightCount = getNotGainingWeight();
+  const notGainingWeightData = getNotGainingWeight();
+
+  const [showNotGainingModal, setShowNotGainingModal] = useState(false);
 
   const chartData = getNutritionalStatusByMonth(filteredByYear);
 
@@ -193,7 +221,10 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-destructive/80 to-destructive text-white">
+        <Card 
+          className="border-0 shadow-lg bg-gradient-to-br from-destructive/80 to-destructive text-white cursor-pointer hover:shadow-xl transition-shadow"
+          onClick={() => setShowNotGainingModal(true)}
+        >
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base font-medium opacity-90">
               <AlertTriangle className="h-5 w-5" />
@@ -201,16 +232,24 @@ const Dashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold">{notGainingWeightCount}</div>
-            <p className="text-sm opacity-80 mt-1">Balita Berturut-turut</p>
+            <div className="text-4xl font-bold">{notGainingWeightData.count}</div>
+            <p className="text-sm opacity-80 mt-1">Balita Berturut-turut (Klik untuk detail)</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Nutritional Status Distribution */}
       <div>
-        <NutritionalStatusSummary data={latestRecords} />
+        <NutritionalStatusSummary data={mostRecentMonthRecords} />
       </div>
+
+      {/* Modal for Not Gaining Weight Children */}
+      <ChildDetailsModal
+        isOpen={showNotGainingModal}
+        onClose={() => setShowNotGainingModal(false)}
+        records={notGainingWeightData.children}
+        posyandu="Tidak Naik BB (2 Bulan Berturut-turut)"
+      />
 
       {/* Chart Section */}
       <div>

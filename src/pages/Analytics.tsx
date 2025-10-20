@@ -5,7 +5,6 @@ import {
 } from "@/lib/googleSheets";
 import { useData } from "@/contexts/DataContext";
 import { useToast } from "@/hooks/use-toast";
-import LoadingScreen from "@/components/LoadingScreen";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Search, User, TrendingUp, Calendar, Weight, Ruler } from "lucide-react";
@@ -16,9 +15,8 @@ const Analytics = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<ChildRecord[]>([]);
   const [selectedChild, setSelectedChild] = useState<string | null>(null);
-  const [showLoading, setShowLoading] = useState(true);
 
-  const { allRecords, isLoading, error } = useData();
+  const { allRecords, error } = useData();
 
   useEffect(() => {
     if (error) {
@@ -29,13 +27,6 @@ const Analytics = () => {
       });
     }
   }, [error, toast]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowLoading(false);
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     if (!allRecords || !searchQuery.trim()) {
@@ -60,10 +51,6 @@ const Analytics = () => {
 
     setSearchResults(results);
   }, [searchQuery, allRecords, selectedChild]);
-
-  if (isLoading || showLoading) {
-    return <LoadingScreen />;
-  }
 
   if (!allRecords || allRecords.length === 0) {
     return (
@@ -241,20 +228,20 @@ const Analytics = () => {
                                         </p>
                                         <p className="font-medium">{record['Usia Saat Ukur']}</p>
                                       </div>
-                                      <div>
-                                        <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                          <Weight className="h-3 w-3" />
-                                          Berat Badan
-                                        </p>
-                                        <p className="font-medium">{record['Berat Badan (Kg)']} kg</p>
-                                      </div>
-                                      <div>
-                                        <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                          <Ruler className="h-3 w-3" />
-                                          Tinggi Badan
-                                        </p>
-                                        <p className="font-medium">{record['Tinggi Badan (Cm)']} cm</p>
-                                      </div>
+                                       <div>
+                                         <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                           <Weight className="h-3 w-3" />
+                                           Berat Badan
+                                         </p>
+                                         <p className="font-medium">{record.Berat} kg</p>
+                                       </div>
+                                       <div>
+                                         <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                           <Ruler className="h-3 w-3" />
+                                           Tinggi Badan
+                                         </p>
+                                         <p className="font-medium">{record.Tinggi} cm</p>
+                                       </div>
                                       <div>
                                         <p className="text-xs text-muted-foreground">Naik BB</p>
                                         <Badge variant={record['Naik Berat Badan'] === 'Y' ? 'default' : 'destructive'}>
