@@ -12,10 +12,60 @@ interface ChildDetailsModalProps {
   onClose: () => void;
   records: ChildRecord[];
   posyandu: string;
+  showWeightComparison?: boolean;
+  allRecords?: ChildRecord[];
 }
 
-export function ChildDetailsModal({ isOpen, onClose, records, posyandu }: ChildDetailsModalProps) {
+type RecordWithComparison = ChildRecord & {
+  previousWeight: number | null;
+  previousDate?: string;
+  weightDiff: number | null;
+};
+
+export function ChildDetailsModal({ 
+  isOpen, 
+  onClose, 
+  records, 
+  posyandu,
+  showWeightComparison = false,
+  allRecords = []
+}: ChildDetailsModalProps) {
   const uniqueRecords = deduplicateByName(records);
+
+  // Get previous month's weight for each child if showing weight comparison
+  const getRecordWithComparison = (record: ChildRecord): RecordWithComparison => {
+    if (!showWeightComparison || !allRecords.length) {
+      return { ...record, previousWeight: null, weightDiff: null };
+    }
+    
+    const childRecords = allRecords
+      .filter(r => r.Nama === record.Nama)
+      .sort((a, b) => new Date(a['Tanggal Pengukuran']).getTime() - new Date(b['Tanggal Pengukuran']).getTime());
+    
+    const currentIndex = childRecords.findIndex(
+      r => r['Tanggal Pengukuran'] === record['Tanggal Pengukuran']
+    );
+    
+    if (currentIndex > 0) {
+      const previousRecord = childRecords[currentIndex - 1];
+      const previousWeight = parseFloat(previousRecord.Berat);
+      const currentWeight = parseFloat(record.Berat);
+      
+      if (!isNaN(previousWeight) && !isNaN(currentWeight)) {
+        const diff = currentWeight - previousWeight;
+        return { 
+          ...record, 
+          previousWeight, 
+          previousDate: previousRecord['Tanggal Pengukuran'],
+          weightDiff: diff 
+        };
+      }
+    }
+    
+    return { ...record, previousWeight: null, weightDiff: null };
+  };
+
+  const recordsWithComparison = uniqueRecords.map(getRecordWithComparison);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -39,14 +89,20 @@ export function ChildDetailsModal({ isOpen, onClose, records, posyandu }: ChildD
                   <th className="px-2 py-2 md:px-3 md:py-2.5 text-left border font-semibold min-w-[60px] md:min-w-[80px]">Usia</th>
                   <th className="px-2 py-2 md:px-3 md:py-2.5 text-left border font-semibold min-w-[70px] md:min-w-[100px]">Tgl Ukur</th>
                   <th className="px-2 py-2 md:px-3 md:py-2.5 text-left border font-semibold min-w-[80px] md:min-w-[110px]">BB/TB</th>
-                  <th className="px-2 py-2 md:px-3 md:py-2.5 text-left border font-semibold">BB (kg)</th>
+                  <th className="px-2 py-2 md:px-3 md:py-2.5 text-left border font-semibold">BB Saat Ini (kg)</th>
+                  {showWeightComparison && (
+                    <>
+                      <th className="px-2 py-2 md:px-3 md:py-2.5 text-left border font-semibold">BB Sebelumnya (kg)</th>
+                      <th className="px-2 py-2 md:px-3 md:py-2.5 text-left border font-semibold">Selisih (kg)</th>
+                    </>
+                  )}
                   <th className="px-2 py-2 md:px-3 md:py-2.5 text-left border font-semibold">TB (cm)</th>
                   <th className="px-2 py-2 md:px-3 md:py-2.5 text-left border font-semibold min-w-[90px] md:min-w-[120px]">Desa/Kel</th>
                   <th className="px-2 py-2 md:px-3 md:py-2.5 text-left border font-semibold min-w-[100px] md:min-w-[140px]">Nama Ortu</th>
                 </tr>
               </thead>
               <tbody>
-                {uniqueRecords.map((record, index) => (
+                {recordsWithComparison.map((record, index) => (
                   <tr key={index} className="hover:bg-muted/30 transition-colors">
                     <td className="px-2 py-1.5 md:px-3 md:py-2 border text-center">{index + 1}</td>
                     <td className="px-2 py-1.5 md:px-3 md:py-2 border font-medium">{record.Nama}</td>
@@ -68,7 +124,36 @@ export function ChildDetailsModal({ isOpen, onClose, records, posyandu }: ChildD
                         {record['BB/TB']}
                       </span>
                     </td>
-                    <td className="px-2 py-1.5 md:px-3 md:py-2 border text-center">{record.Berat}</td>
+                    <td className="px-2 py-1.5 md:px-3 md:py-2 border text-center font-semibold">{record.Berat}</td>
+                    {showWeightComparison && (
+                      <>
+                        <td className="px-2 py-1.5 md:px-3 md:py-2 border text-center">
+                          {record.previousWeight !== null ? (
+                            <div>
+                              <div className="font-medium">{record.previousWeight}</div>
+                              <div className="text-[9px] text-muted-foreground">{record.previousDate}</div>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </td>
+                        <td className="px-2 py-1.5 md:px-3 md:py-2 border text-center">
+                          {record.weightDiff !== null ? (
+                            <span className={`font-bold ${
+                              record.weightDiff > 0 
+                                ? 'text-green-600' 
+                                : record.weightDiff < 0 
+                                ? 'text-red-600' 
+                                : 'text-muted-foreground'
+                            }`}>
+                              {record.weightDiff > 0 ? '+' : ''}{record.weightDiff.toFixed(2)}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </td>
+                      </>
+                    )}
                     <td className="px-2 py-1.5 md:px-3 md:py-2 border text-center">{record.Tinggi}</td>
                     <td className="px-2 py-1.5 md:px-3 md:py-2 border">{record['Desa/Kel']}</td>
                     <td className="px-2 py-1.5 md:px-3 md:py-2 border">{record['Nama Ortu']}</td>
