@@ -300,6 +300,8 @@ const Dashboard = () => {
         onClose={() => setShowNotGainingModal(false)}
         records={notGainingWeightData.children}
         posyandu="Tidak Naik BB (2 Bulan Berturut-turut)"
+        showWeightComparison={true}
+        allRecords={filteredByYear}
       />
 
       {/* Chart Section */}
