@@ -18,7 +18,6 @@ import {
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Data Balita", href: "/data", icon: Database },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Pengaturan", href: "/settings", icon: Settings },
 ];

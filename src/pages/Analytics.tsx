@@ -38,10 +38,17 @@ const Analytics = () => {
     const underFiveRecords = filterUnderFiveYears(allRecords);
     const query = searchQuery.toLowerCase().trim();
     
-    const results = underFiveRecords.filter(record => 
-      record.Nama?.toLowerCase().includes(query) || 
-      record.NIK?.toLowerCase().includes(query)
-    );
+    // Improved search: normalize and match multiple parts
+    const results = underFiveRecords.filter(record => {
+      const nama = record.Nama?.toLowerCase().replace(/\s+/g, ' ').trim() || '';
+      const nik = record.NIK?.toLowerCase().trim() || '';
+      
+      // Exact match or contains for both fields
+      return nama.includes(query) || 
+             nik.includes(query) ||
+             nama.split(' ').some(part => part.startsWith(query)) ||
+             query.split(' ').every(part => nama.includes(part));
+    });
 
     const uniqueNames = Array.from(new Set(results.map(r => r.Nama)));
     
@@ -194,6 +201,16 @@ const Analytics = () => {
                         {childHistory.map((record, index) => {
                           const isLatest = index === childHistory.length - 1;
                           
+                          // Calculate actual weight gain
+                          let actualWeightGain: 'Y' | 'T' | '-' = '-';
+                          if (index > 0) {
+                            const previousWeight = parseFloat(childHistory[index - 1].Berat);
+                            const currentWeight = parseFloat(record.Berat);
+                            if (!isNaN(previousWeight) && !isNaN(currentWeight)) {
+                              actualWeightGain = currentWeight > previousWeight ? 'Y' : 'T';
+                            }
+                          }
+                          
                           return (
                             <div
                               key={index}
@@ -244,9 +261,13 @@ const Analytics = () => {
                                        </div>
                                       <div>
                                         <p className="text-xs text-muted-foreground">Naik BB</p>
-                                        <Badge variant={record['Naik Berat Badan'] === 'Y' ? 'default' : 'destructive'}>
-                                          {record['Naik Berat Badan'] === 'Y' ? 'Ya' : 'Tidak'}
-                                        </Badge>
+                                        {actualWeightGain === '-' ? (
+                                          <Badge variant="outline">Pertama Kali</Badge>
+                                        ) : (
+                                          <Badge variant={actualWeightGain === 'Y' ? 'default' : 'destructive'}>
+                                            {actualWeightGain === 'Y' ? 'Ya' : 'Tidak'}
+                                          </Badge>
+                                        )}
                                       </div>
                                     </div>
 
