@@ -4,6 +4,10 @@ import {
   filterByYear,
   filterUnderFiveYears,
   getNutritionalStatusByMonth,
+  getUniqueValues,
+  filterByMonth,
+  filterByVillage,
+  getPosyanduData,
   ChildRecord,
 } from "@/lib/googleSheets";
 import { useData } from "@/contexts/DataContext";
@@ -11,13 +15,16 @@ import { YearFilter } from "@/components/YearFilter";
 import { NutritionalStatusChart } from "@/components/NutritionalStatusChart";
 import { NutritionalStatusSummary } from "@/components/NutritionalStatusSummary";
 import { ChildDetailsModal } from "@/components/ChildDetailsModal";
+import { PosyanduTable } from "@/components/PosyanduTable";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, Users, Activity, AlertTriangle } from "lucide-react";
+import { TrendingUp, Users, AlertTriangle } from "lucide-react";
 
 const Dashboard = () => {
   const { toast } = useToast();
   const [selectedYear, setSelectedYear] = useState<string>("");
+  const [selectedVillage, setSelectedVillage] = useState<string>("");
+  const [selectedMonth, setSelectedMonth] = useState<string>("");
 
   const { allRecords, error } = useData();
 
@@ -40,6 +47,35 @@ const Dashboard = () => {
       }
     }
   }, [allRecords, selectedYear]);
+
+  useEffect(() => {
+    if (allRecords && allRecords.length > 0) {
+      const underFiveRecords = filterUnderFiveYears(allRecords);
+      const filteredByYear = selectedYear ? filterByYear(underFiveRecords, selectedYear) : underFiveRecords;
+      const villages = getUniqueValues(filteredByYear, 'Desa/Kel');
+      
+      if (villages.length > 0 && !selectedVillage) {
+        setSelectedVillage(villages[0]);
+      }
+    }
+  }, [allRecords, selectedYear, selectedVillage]);
+
+  useEffect(() => {
+    if (allRecords && allRecords.length > 0) {
+      const underFiveRecords = filterUnderFiveYears(allRecords);
+      const filteredByYear = selectedYear ? filterByYear(underFiveRecords, selectedYear) : underFiveRecords;
+      const months = [
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+      ].filter(month => 
+        filteredByYear.some(record => record['Bulan Pengukuran'] === month)
+      );
+      
+      if (months.length > 0 && !selectedMonth) {
+        setSelectedMonth(months[0]);
+      }
+    }
+  }, [allRecords, selectedYear, selectedMonth]);
 
   if (!allRecords || allRecords.length === 0) {
     return (
@@ -124,11 +160,39 @@ const Dashboard = () => {
 
   const totalCount = latestRecords.length;
 
-  // Calculate children not gaining weight (consecutive "T" in Naik Berat Badan)
+  // Calculate children not gaining weight in last 2 months (consecutive "T" in Naik Berat Badan)
   const getNotGainingWeight = (): { count: number; children: ChildRecord[] } => {
-    const recordsByName = new Map<string, ChildRecord[]>();
+    if (filteredByYear.length === 0) return { count: 0, children: [] };
     
-    filteredByYear.forEach(record => {
+    // Get the most recent month
+    const mostRecentDate = filteredByYear.reduce((latest, record) => {
+      const recordDate = new Date(record['Tanggal Pengukuran']);
+      return recordDate > latest ? recordDate : latest;
+    }, new Date(filteredByYear[0]['Tanggal Pengukuran']));
+    
+    const mostRecentMonth = mostRecentDate.getMonth();
+    const mostRecentYear = mostRecentDate.getFullYear();
+    
+    // Get previous month
+    const previousDate = new Date(mostRecentYear, mostRecentMonth - 1);
+    const previousMonth = previousDate.getMonth();
+    const previousYear = previousDate.getFullYear();
+    
+    // Filter records to only include last 2 months
+    const lastTwoMonthsRecords = filteredByYear.filter(record => {
+      const recordDate = new Date(record['Tanggal Pengukuran']);
+      const recordMonth = recordDate.getMonth();
+      const recordYear = recordDate.getFullYear();
+      
+      return (
+        (recordMonth === mostRecentMonth && recordYear === mostRecentYear) ||
+        (recordMonth === previousMonth && recordYear === previousYear)
+      );
+    });
+    
+    // Group by child name
+    const recordsByName = new Map<string, ChildRecord[]>();
+    lastTwoMonthsRecords.forEach(record => {
       if (!record.Nama) return;
       if (!recordsByName.has(record.Nama)) {
         recordsByName.set(record.Nama, []);
@@ -181,7 +245,7 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="border-0 shadow-lg bg-gradient-to-br from-primary to-accent text-primary-foreground">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base font-medium opacity-90">
@@ -195,7 +259,7 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-success to-secondary text-white">
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-500 to-blue-700 text-white">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base font-medium opacity-90">
               <TrendingUp className="h-5 w-5" />
@@ -205,19 +269,6 @@ const Dashboard = () => {
           <CardContent>
             <div className="text-4xl font-bold">{villageData.length}</div>
             <p className="text-sm opacity-80 mt-1">Wilayah Kerja</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-warning to-destructive text-white">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base font-medium opacity-90">
-              <Activity className="h-5 w-5" />
-              Data Pengukuran
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-bold">{filteredByYear.length}</div>
-            <p className="text-sm opacity-80 mt-1">Total Pengukuran</p>
           </CardContent>
         </Card>
 
@@ -233,7 +284,7 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold">{notGainingWeightData.count}</div>
-            <p className="text-sm opacity-80 mt-1">Balita Berturut-turut (Klik untuk detail)</p>
+            <p className="text-sm opacity-80 mt-1">2 Bulan Berturut-turut (Klik untuk detail)</p>
           </CardContent>
         </Card>
       </div>
@@ -264,6 +315,43 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <NutritionalStatusChart data={chartData} />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Data Balita Section */}
+      <div>
+        <Card className="border-0 shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-xl font-heading">
+              Data Status Gizi Per Posyandu
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Pilih desa/kelurahan dan bulan untuk melihat data detail
+            </p>
+          </CardHeader>
+          <CardContent>
+            <PosyanduTable
+              data={getPosyanduData(
+                selectedVillage && selectedMonth
+                  ? filterByMonth(filterByVillage(filteredByYear, selectedVillage), selectedMonth)
+                  : []
+              )}
+              villages={getUniqueValues(filteredByYear, 'Desa/Kel')}
+              months={[
+                'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+              ].filter(month => 
+                filteredByYear.some(record => record['Bulan Pengukuran'] === month)
+              )}
+              selectedVillage={selectedVillage}
+              selectedMonth={selectedMonth}
+              onVillageChange={setSelectedVillage}
+              onMonthChange={setSelectedMonth}
+              allRecords={selectedVillage && selectedMonth
+                ? filterByMonth(filterByVillage(filteredByYear, selectedVillage), selectedMonth)
+                : []}
+            />
           </CardContent>
         </Card>
       </div>
