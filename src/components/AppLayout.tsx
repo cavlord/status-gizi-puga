@@ -90,18 +90,20 @@ export function AppLayout({ children }: AppLayoutProps) {
       <div className="min-h-screen flex w-full bg-muted/30">
         <AppSidebar />
         <div className="flex-1 flex flex-col">
-          <header className="h-16 border-b bg-card flex items-center px-6 sticky top-0 z-10 shadow-sm">
-            <SidebarTrigger className="mr-4">
+          <header className="h-14 md:h-16 border-b bg-card flex items-center px-3 md:px-6 sticky top-0 z-10 shadow-sm">
+            <SidebarTrigger className="mr-2 md:mr-4">
               <Menu className="h-5 w-5" />
             </SidebarTrigger>
-            <div className="flex-1">
-              <h1 className="text-xl font-heading font-semibold text-foreground">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-sm md:text-xl font-heading font-semibold text-foreground truncate">
                 Dashboard Status Gizi Balita
               </h1>
             </div>
           </header>
-          <main className="flex-1 p-6 overflow-auto">
-            {children}
+          <main className="flex-1 p-3 md:p-6 overflow-x-hidden">
+            <div className="max-w-full mx-auto">
+              {children}
+            </div>
           </main>
           <footer className="border-t bg-card py-4 px-6">
             <p className="text-sm text-muted-foreground text-center">

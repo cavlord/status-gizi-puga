@@ -54,10 +54,10 @@ export function PosyanduTable({
 
   return (
     <>
-      <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-lg">Data Posyandu – Status Gizi</CardTitle>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+      <Card className="shadow-sm w-full">
+        <CardHeader className="p-3 md:p-6">
+          <CardTitle className="text-sm md:text-lg">Data Posyandu – Status Gizi</CardTitle>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mt-3 md:mt-4">
             <div className="flex items-center gap-3 bg-muted/50 p-3 rounded-lg">
               <Building2 className="h-5 w-5 text-primary" />
               <div className="flex-1">
@@ -101,48 +101,50 @@ export function PosyanduTable({
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 md:p-6">
           {data.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-6 md:py-8 text-sm md:text-base text-muted-foreground">
               Tidak ada data untuk filter yang dipilih
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-muted/50">
-                    <th className="p-3 text-left font-semibold border">BB/TB</th>
-                    {posyandus.map((posyandu) => (
-                      <th key={posyandu} className="p-3 text-center font-semibold border">
-                        {posyandu}
-                      </th>
-                    ))}
-                    <th className="p-3 text-center font-semibold border">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.map((row) => {
-                    const total = posyandus.reduce((sum, posyandu) => sum + (Number(row[posyandu]) || 0), 0);
-                    return (
-                      <tr key={row.status} className="hover:bg-muted/30 transition-colors">
-                        <td className="p-3 border font-medium">{row.status}</td>
-                        {posyandus.map((posyandu) => (
-                          <td 
-                            key={posyandu} 
-                            className="p-3 text-center border cursor-pointer hover:bg-muted/50"
-                            onClick={() => handleCellClick(posyandu, row.status)}
-                          >
-                            {row[posyandu] || 0}
+            <div className="overflow-x-auto -mx-3 md:mx-0">
+              <div className="min-w-max px-3 md:px-0">
+                <table className="w-full border-collapse text-xs md:text-sm">
+                  <thead>
+                    <tr className="bg-muted/50">
+                      <th className="p-2 md:p-3 text-left font-semibold border whitespace-nowrap">BB/TB</th>
+                      {posyandus.map((posyandu) => (
+                        <th key={posyandu} className="p-2 md:p-3 text-center font-semibold border whitespace-nowrap min-w-[60px] md:min-w-[80px]">
+                          {posyandu}
+                        </th>
+                      ))}
+                      <th className="p-2 md:p-3 text-center font-semibold border whitespace-nowrap">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.map((row) => {
+                      const total = posyandus.reduce((sum, posyandu) => sum + (Number(row[posyandu]) || 0), 0);
+                      return (
+                        <tr key={row.status} className="hover:bg-muted/30 transition-colors">
+                          <td className="p-2 md:p-3 border font-medium whitespace-nowrap text-[10px] md:text-sm">{row.status}</td>
+                          {posyandus.map((posyandu) => (
+                            <td 
+                              key={posyandu} 
+                              className="p-2 md:p-3 text-center border cursor-pointer hover:bg-muted/50 text-xs md:text-sm"
+                              onClick={() => handleCellClick(posyandu, row.status)}
+                            >
+                              {row[posyandu] || 0}
+                            </td>
+                          ))}
+                          <td className="p-2 md:p-3 text-center border font-bold text-primary text-xs md:text-sm">
+                            {total}
                           </td>
-                        ))}
-                        <td className="p-3 text-center border font-bold text-primary">
-                          {total}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </CardContent>
