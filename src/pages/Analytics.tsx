@@ -36,31 +36,34 @@ const Analytics = () => {
     }
 
     const underFiveRecords = filterUnderFiveYears(allRecords);
-    const query = searchQuery.toLowerCase().trim().replace(/\s+/g, ' ');
+    const query = searchQuery.toLowerCase().trim();
     
-    // Enhanced search: exact match, partial match, and flexible word matching
+    // Enhanced search with multiple strategies
     const results = underFiveRecords.filter(record => {
-      const nama = record.Nama?.toLowerCase().replace(/\s+/g, ' ').trim() || '';
-      const nik = record.NIK?.toString().toLowerCase().trim() || '';
+      const nama = (record.Nama || '').toLowerCase().trim();
+      const nik = (record.NIK || '').toString().toLowerCase().trim();
       
-      // Check NIK first (exact or partial match)
-      if (nik.includes(query)) return true;
+      // Search in NIK (exact or partial)
+      if (nik && nik.includes(query)) return true;
       
-      // For name search:
-      // 1. Exact match
+      // Search in name with multiple strategies:
+      // 1. Direct exact match
       if (nama === query) return true;
       
-      // 2. Name contains the full query
+      // 2. Name contains full query (handles full name search)
       if (nama.includes(query)) return true;
       
-      // 3. Query words all present in name (in any order)
-      const queryWords = query.split(' ');
-      const allWordsPresent = queryWords.every(word => nama.includes(word));
-      if (allWordsPresent) return true;
+      // 3. Fuzzy matching: all query words present in name
+      const queryWords = query.split(/\s+/);
+      const nameWords = nama.split(/\s+/);
       
-      // 4. Any name word starts with query
-      const nameWords = nama.split(' ');
-      return nameWords.some(word => word.startsWith(query));
+      // Check if all query words are in the name (in any order)
+      const allQueryWordsMatch = queryWords.every(qWord => 
+        nameWords.some(nWord => nWord.includes(qWord))
+      );
+      if (allQueryWordsMatch) return true;
+      
+      return false;
     });
 
     const uniqueNames = Array.from(new Set(results.map(r => r.Nama)));
@@ -106,14 +109,14 @@ const Analytics = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col gap-4">
+    <div className="w-full space-y-4 md:space-y-6 animate-fade-in">
+      <div className="flex flex-col gap-3 md:gap-4">
         <div>
-          <h2 className="text-3xl font-heading font-bold text-foreground flex items-center gap-3">
-            <Search className="h-8 w-8 text-primary" />
+          <h2 className="text-xl md:text-3xl font-heading font-bold text-foreground flex items-center gap-2 md:gap-3">
+            <Search className="h-6 w-6 md:h-8 md:w-8 text-primary" />
             Detail Riwayat Anak
           </h2>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-xs md:text-base text-muted-foreground mt-1">
             Cari dan lihat perjalanan status gizi balita dari waktu ke waktu
           </p>
         </div>

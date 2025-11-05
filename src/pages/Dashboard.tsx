@@ -160,11 +160,11 @@ const Dashboard = () => {
 
   const totalCount = latestRecords.length;
 
-  // Calculate children not gaining weight based on actual weight comparison
+  // Calculate children not gaining weight using only the 2 most recent months
   const getNotGainingWeight = (): { count: number; children: ChildRecord[] } => {
     if (filteredByYear.length === 0) return { count: 0, children: [] };
     
-    // Get the most recent month from all records
+    // Get the most recent date
     const mostRecentDate = filteredByYear.reduce((latest, record) => {
       const recordDate = new Date(record['Tanggal Pengukuran']);
       return recordDate > latest ? recordDate : latest;
@@ -173,19 +173,26 @@ const Dashboard = () => {
     const mostRecentMonth = mostRecentDate.getMonth();
     const mostRecentYear = mostRecentDate.getFullYear();
     
-    // Get 2 months before the most recent month
-    const oneMonthBefore = new Date(mostRecentYear, mostRecentMonth - 1);
-    const twoMonthsBefore = new Date(mostRecentYear, mostRecentMonth - 2);
+    // Get the previous month
+    const previousMonthDate = new Date(mostRecentYear, mostRecentMonth - 1);
+    const previousMonth = previousMonthDate.getMonth();
+    const previousYear = previousMonthDate.getFullYear();
     
-    // Filter records for the last 3 months
-    const lastThreeMonthsRecords = filteredByYear.filter(record => {
+    // Filter to get ONLY records from these exact 2 months
+    const lastTwoMonthsRecords = filteredByYear.filter(record => {
       const recordDate = new Date(record['Tanggal Pengukuran']);
-      return recordDate >= twoMonthsBefore && recordDate <= mostRecentDate;
+      const recordMonth = recordDate.getMonth();
+      const recordYear = recordDate.getFullYear();
+      
+      return (
+        (recordMonth === mostRecentMonth && recordYear === mostRecentYear) ||
+        (recordMonth === previousMonth && recordYear === previousYear)
+      );
     });
     
     // Group by child name
     const recordsByName = new Map<string, ChildRecord[]>();
-    lastThreeMonthsRecords.forEach(record => {
+    lastTwoMonthsRecords.forEach(record => {
       if (!record.Nama) return;
       if (!recordsByName.has(record.Nama)) {
         recordsByName.set(record.Nama, []);
@@ -195,36 +202,26 @@ const Dashboard = () => {
 
     const notGainingChildren: ChildRecord[] = [];
     
-    recordsByName.forEach((records, childName) => {
+    recordsByName.forEach((records) => {
       // Sort by date
       const sortedRecords = records.sort((a, b) => 
         new Date(a['Tanggal Pengukuran']).getTime() - new Date(b['Tanggal Pengukuran']).getTime()
       );
       
-      // Need at least 2 records to compare
+      // Must have exactly 2 records (one from each month)
       if (sortedRecords.length < 2) return;
       
-      // Check weight changes between consecutive measurements
-      let consecutiveNoGain = 0;
+      // Get the latest 2 records
+      const previousRecord = sortedRecords[sortedRecords.length - 2];
+      const latestRecord = sortedRecords[sortedRecords.length - 1];
       
-      for (let i = 1; i < sortedRecords.length; i++) {
-        const previousWeight = parseFloat(sortedRecords[i - 1].Berat);
-        const currentWeight = parseFloat(sortedRecords[i].Berat);
-        
-        if (!isNaN(previousWeight) && !isNaN(currentWeight)) {
-          // If current weight is NOT greater than previous (no gain or loss)
-          if (currentWeight <= previousWeight) {
-            consecutiveNoGain++;
-          } else {
-            consecutiveNoGain = 0; // Reset if there was a gain
-          }
-          
-          // If we found 2 consecutive measurements with no weight gain
-          if (consecutiveNoGain >= 2) {
-            // Add the latest record for this child
-            notGainingChildren.push(sortedRecords[sortedRecords.length - 1]);
-            return; // Only add once per child
-          }
+      const previousWeight = parseFloat(previousRecord.Berat);
+      const currentWeight = parseFloat(latestRecord.Berat);
+      
+      // Check if weight did NOT increase
+      if (!isNaN(previousWeight) && !isNaN(currentWeight)) {
+        if (currentWeight <= previousWeight) {
+          notGainingChildren.push(latestRecord);
         }
       }
     });
@@ -239,14 +236,14 @@ const Dashboard = () => {
   const chartData = getNutritionalStatusByMonth(filteredByYear);
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="w-full space-y-4 md:space-y-6 animate-fade-in">
       {/* Header Section */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-3 md:gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-3xl font-heading font-bold text-foreground">
+          <h2 className="text-xl md:text-3xl font-heading font-bold text-foreground">
             Dashboard Ringkasan
           </h2>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-xs md:text-base text-muted-foreground mt-1">
             Monitoring status gizi balita di wilayah kerja
           </p>
         </div>
