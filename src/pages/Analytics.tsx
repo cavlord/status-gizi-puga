@@ -36,18 +36,31 @@ const Analytics = () => {
     }
 
     const underFiveRecords = filterUnderFiveYears(allRecords);
-    const query = searchQuery.toLowerCase().trim();
+    const query = searchQuery.toLowerCase().trim().replace(/\s+/g, ' ');
     
-    // Improved search: normalize and match multiple parts
+    // Enhanced search: exact match, partial match, and flexible word matching
     const results = underFiveRecords.filter(record => {
       const nama = record.Nama?.toLowerCase().replace(/\s+/g, ' ').trim() || '';
-      const nik = record.NIK?.toLowerCase().trim() || '';
+      const nik = record.NIK?.toString().toLowerCase().trim() || '';
       
-      // Exact match or contains for both fields
-      return nama.includes(query) || 
-             nik.includes(query) ||
-             nama.split(' ').some(part => part.startsWith(query)) ||
-             query.split(' ').every(part => nama.includes(part));
+      // Check NIK first (exact or partial match)
+      if (nik.includes(query)) return true;
+      
+      // For name search:
+      // 1. Exact match
+      if (nama === query) return true;
+      
+      // 2. Name contains the full query
+      if (nama.includes(query)) return true;
+      
+      // 3. Query words all present in name (in any order)
+      const queryWords = query.split(' ');
+      const allWordsPresent = queryWords.every(word => nama.includes(word));
+      if (allWordsPresent) return true;
+      
+      // 4. Any name word starts with query
+      const nameWords = nama.split(' ');
+      return nameWords.some(word => word.startsWith(query));
     });
 
     const uniqueNames = Array.from(new Set(results.map(r => r.Nama)));
@@ -106,15 +119,15 @@ const Analytics = () => {
         </div>
 
         <Card className="border-0 shadow-lg">
-          <CardContent className="pt-6">
+                  <CardContent className="pt-4 md:pt-6">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
               <Input
                 type="text"
                 placeholder="Cari berdasarkan nama atau NIK..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-12 text-lg"
+                className="pl-9 md:pl-10 h-10 md:h-12 text-sm md:text-lg"
               />
             </div>
           </CardContent>
@@ -133,7 +146,7 @@ const Analytics = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                       {uniqueChildren.map((name) => (
                         <button
                           key={name}
@@ -165,7 +178,7 @@ const Analytics = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                         <div>
                           <p className="text-sm text-muted-foreground">Nama</p>
                           <p className="text-lg font-semibold">{childHistory[0].Nama}</p>
@@ -237,7 +250,7 @@ const Analytics = () => {
                                       </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                                       <div>
                                         <p className="text-xs text-muted-foreground flex items-center gap-1">
                                           <Calendar className="h-3 w-3" />
