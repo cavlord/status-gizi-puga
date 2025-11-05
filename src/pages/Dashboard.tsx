@@ -160,11 +160,11 @@ const Dashboard = () => {
 
   const totalCount = latestRecords.length;
 
-  // Calculate children not gaining weight in last 2 months (consecutive "T" in Naik Berat Badan)
+  // Calculate children not gaining weight based on actual weight comparison
   const getNotGainingWeight = (): { count: number; children: ChildRecord[] } => {
     if (filteredByYear.length === 0) return { count: 0, children: [] };
     
-    // Get the most recent month
+    // Get the most recent month from all records
     const mostRecentDate = filteredByYear.reduce((latest, record) => {
       const recordDate = new Date(record['Tanggal Pengukuran']);
       return recordDate > latest ? recordDate : latest;
@@ -173,26 +173,19 @@ const Dashboard = () => {
     const mostRecentMonth = mostRecentDate.getMonth();
     const mostRecentYear = mostRecentDate.getFullYear();
     
-    // Get previous month
-    const previousDate = new Date(mostRecentYear, mostRecentMonth - 1);
-    const previousMonth = previousDate.getMonth();
-    const previousYear = previousDate.getFullYear();
+    // Get 2 months before the most recent month
+    const oneMonthBefore = new Date(mostRecentYear, mostRecentMonth - 1);
+    const twoMonthsBefore = new Date(mostRecentYear, mostRecentMonth - 2);
     
-    // Filter records to only include last 2 months
-    const lastTwoMonthsRecords = filteredByYear.filter(record => {
+    // Filter records for the last 3 months
+    const lastThreeMonthsRecords = filteredByYear.filter(record => {
       const recordDate = new Date(record['Tanggal Pengukuran']);
-      const recordMonth = recordDate.getMonth();
-      const recordYear = recordDate.getFullYear();
-      
-      return (
-        (recordMonth === mostRecentMonth && recordYear === mostRecentYear) ||
-        (recordMonth === previousMonth && recordYear === previousYear)
-      );
+      return recordDate >= twoMonthsBefore && recordDate <= mostRecentDate;
     });
     
     // Group by child name
     const recordsByName = new Map<string, ChildRecord[]>();
-    lastTwoMonthsRecords.forEach(record => {
+    lastThreeMonthsRecords.forEach(record => {
       if (!record.Nama) return;
       if (!recordsByName.has(record.Nama)) {
         recordsByName.set(record.Nama, []);
@@ -201,18 +194,38 @@ const Dashboard = () => {
     });
 
     const notGainingChildren: ChildRecord[] = [];
-    recordsByName.forEach(records => {
+    
+    recordsByName.forEach((records, childName) => {
+      // Sort by date
       const sortedRecords = records.sort((a, b) => 
         new Date(a['Tanggal Pengukuran']).getTime() - new Date(b['Tanggal Pengukuran']).getTime()
       );
       
+      // Need at least 2 records to compare
       if (sortedRecords.length < 2) return;
       
-      const latest = sortedRecords[sortedRecords.length - 1];
-      const previous = sortedRecords[sortedRecords.length - 2];
+      // Check weight changes between consecutive measurements
+      let consecutiveNoGain = 0;
       
-      if (latest['Naik Berat Badan'] === 'T' && previous['Naik Berat Badan'] === 'T') {
-        notGainingChildren.push(latest);
+      for (let i = 1; i < sortedRecords.length; i++) {
+        const previousWeight = parseFloat(sortedRecords[i - 1].Berat);
+        const currentWeight = parseFloat(sortedRecords[i].Berat);
+        
+        if (!isNaN(previousWeight) && !isNaN(currentWeight)) {
+          // If current weight is NOT greater than previous (no gain or loss)
+          if (currentWeight <= previousWeight) {
+            consecutiveNoGain++;
+          } else {
+            consecutiveNoGain = 0; // Reset if there was a gain
+          }
+          
+          // If we found 2 consecutive measurements with no weight gain
+          if (consecutiveNoGain >= 2) {
+            // Add the latest record for this child
+            notGainingChildren.push(sortedRecords[sortedRecords.length - 1]);
+            return; // Only add once per child
+          }
+        }
       }
     });
     
@@ -245,30 +258,30 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         <Card className="border-0 shadow-lg bg-gradient-to-br from-primary to-accent text-primary-foreground">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base font-medium opacity-90">
-              <Users className="h-5 w-5" />
+          <CardHeader className="pb-2 md:pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm md:text-base font-medium opacity-90">
+              <Users className="h-4 w-4 md:h-5 md:w-5" />
               Total Balita Aktif
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold">{totalCount}</div>
-            <p className="text-sm opacity-80 mt-1">Balita Terdaftar</p>
+            <div className="text-3xl md:text-4xl font-bold">{totalCount}</div>
+            <p className="text-xs md:text-sm opacity-80 mt-1">Balita Terdaftar</p>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-500 to-blue-700 text-white">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base font-medium opacity-90">
-              <TrendingUp className="h-5 w-5" />
+          <CardHeader className="pb-2 md:pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm md:text-base font-medium opacity-90">
+              <TrendingUp className="h-4 w-4 md:h-5 md:w-5" />
               Total Desa/Kelurahan
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold">{villageData.length}</div>
-            <p className="text-sm opacity-80 mt-1">Wilayah Kerja</p>
+            <div className="text-3xl md:text-4xl font-bold">{villageData.length}</div>
+            <p className="text-xs md:text-sm opacity-80 mt-1">Wilayah Kerja</p>
           </CardContent>
         </Card>
 
@@ -276,15 +289,15 @@ const Dashboard = () => {
           className="border-0 shadow-lg bg-gradient-to-br from-destructive/80 to-destructive text-white cursor-pointer hover:shadow-xl transition-shadow"
           onClick={() => setShowNotGainingModal(true)}
         >
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base font-medium opacity-90">
-              <AlertTriangle className="h-5 w-5" />
+          <CardHeader className="pb-2 md:pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm md:text-base font-medium opacity-90">
+              <AlertTriangle className="h-4 w-4 md:h-5 md:w-5" />
               Tidak Naik BB
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold">{notGainingWeightData.count}</div>
-            <p className="text-sm opacity-80 mt-1">2 Bulan Berturut-turut (Klik untuk detail)</p>
+            <div className="text-3xl md:text-4xl font-bold">{notGainingWeightData.count}</div>
+            <p className="text-xs md:text-sm opacity-80 mt-1">2 Bulan Berturut-turut (Klik untuk detail)</p>
           </CardContent>
         </Card>
       </div>
