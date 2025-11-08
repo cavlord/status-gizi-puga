@@ -160,11 +160,11 @@ const Dashboard = () => {
 
   const totalCount = latestRecords.length;
 
-  // Calculate children not gaining weight using only the 2 most recent months
+  // Calculate children not gaining weight using only the 2 most recent consecutive months
   const getNotGainingWeight = (): { count: number; children: ChildRecord[] } => {
     if (filteredByYear.length === 0) return { count: 0, children: [] };
     
-    // Get the most recent date
+    // Get the most recent date from all records
     const mostRecentDate = filteredByYear.reduce((latest, record) => {
       const recordDate = new Date(record['Tanggal Pengukuran']);
       return recordDate > latest ? recordDate : latest;
@@ -173,26 +173,14 @@ const Dashboard = () => {
     const mostRecentMonth = mostRecentDate.getMonth();
     const mostRecentYear = mostRecentDate.getFullYear();
     
-    // Get the previous month
+    // Get previous month date
     const previousMonthDate = new Date(mostRecentYear, mostRecentMonth - 1);
     const previousMonth = previousMonthDate.getMonth();
     const previousYear = previousMonthDate.getFullYear();
     
-    // Filter to get ONLY records from these exact 2 months
-    const lastTwoMonthsRecords = filteredByYear.filter(record => {
-      const recordDate = new Date(record['Tanggal Pengukuran']);
-      const recordMonth = recordDate.getMonth();
-      const recordYear = recordDate.getFullYear();
-      
-      return (
-        (recordMonth === mostRecentMonth && recordYear === mostRecentYear) ||
-        (recordMonth === previousMonth && recordYear === previousYear)
-      );
-    });
-    
-    // Group by child name
+    // Group all records by child name first
     const recordsByName = new Map<string, ChildRecord[]>();
-    lastTwoMonthsRecords.forEach(record => {
+    filteredByYear.forEach(record => {
       if (!record.Nama) return;
       if (!recordsByName.has(record.Nama)) {
         recordsByName.set(record.Nama, []);
@@ -202,23 +190,37 @@ const Dashboard = () => {
 
     const notGainingChildren: ChildRecord[] = [];
     
-    recordsByName.forEach((records) => {
-      // Sort by date
+    recordsByName.forEach((records, childName) => {
+      // Sort all records by date
       const sortedRecords = records.sort((a, b) => 
         new Date(a['Tanggal Pengukuran']).getTime() - new Date(b['Tanggal Pengukuran']).getTime()
       );
       
-      // Must have exactly 2 records (one from each month)
-      if (sortedRecords.length < 2) return;
+      // Find records from the most recent month
+      const currentMonthRecords = sortedRecords.filter(record => {
+        const recordDate = new Date(record['Tanggal Pengukuran']);
+        return recordDate.getMonth() === mostRecentMonth && 
+               recordDate.getFullYear() === mostRecentYear;
+      });
       
-      // Get the latest 2 records
-      const previousRecord = sortedRecords[sortedRecords.length - 2];
-      const latestRecord = sortedRecords[sortedRecords.length - 1];
+      // Find records from previous month
+      const previousMonthRecords = sortedRecords.filter(record => {
+        const recordDate = new Date(record['Tanggal Pengukuran']);
+        return recordDate.getMonth() === previousMonth && 
+               recordDate.getFullYear() === previousYear;
+      });
+      
+      // Must have at least one record in each of the 2 months
+      if (currentMonthRecords.length === 0 || previousMonthRecords.length === 0) return;
+      
+      // Get the latest record from each month
+      const latestRecord = currentMonthRecords[currentMonthRecords.length - 1];
+      const previousRecord = previousMonthRecords[previousMonthRecords.length - 1];
       
       const previousWeight = parseFloat(previousRecord.Berat);
       const currentWeight = parseFloat(latestRecord.Berat);
       
-      // Check if weight did NOT increase
+      // Check if weight did NOT increase (stayed same or decreased)
       if (!isNaN(previousWeight) && !isNaN(currentWeight)) {
         if (currentWeight <= previousWeight) {
           notGainingChildren.push(latestRecord);
@@ -240,60 +242,62 @@ const Dashboard = () => {
       {/* Header Section */}
       <div className="flex flex-col gap-3 md:gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-xl md:text-3xl font-heading font-bold text-foreground">
+          <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-heading font-bold text-foreground">
             Dashboard Ringkasan
           </h2>
-          <p className="text-xs md:text-base text-muted-foreground mt-1">
+          <p className="text-xs sm:text-sm md:text-base text-muted-foreground mt-1">
             Monitoring status gizi balita di wilayah kerja
           </p>
         </div>
-        <YearFilter
-          years={years}
-          selectedYear={selectedYear}
-          onYearChange={setSelectedYear}
-        />
+        <div className="w-full md:w-auto">
+          <YearFilter
+            years={years}
+            selectedYear={selectedYear}
+            onYearChange={setSelectedYear}
+          />
+        </div>
       </div>
 
       {/* Stats Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-primary to-accent text-primary-foreground">
-          <CardHeader className="pb-2 md:pb-3">
-            <CardTitle className="flex items-center gap-2 text-sm md:text-base font-medium opacity-90">
-              <Users className="h-4 w-4 md:h-5 md:w-5" />
-              Total Balita Aktif
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 lg:gap-6">
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-primary to-accent text-primary-foreground transition-all duration-300 hover:shadow-xl hover:scale-[1.02]">
+          <CardHeader className="pb-2 md:pb-3 p-4 md:p-6">
+            <CardTitle className="flex items-center gap-2 text-xs sm:text-sm md:text-base font-medium opacity-90">
+              <Users className="h-4 w-4 md:h-5 md:w-5 flex-shrink-0" />
+              <span>Total Balita Aktif</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl md:text-4xl font-bold">{totalCount}</div>
+          <CardContent className="p-4 md:p-6 pt-0">
+            <div className="text-2xl sm:text-3xl md:text-4xl font-bold">{totalCount}</div>
             <p className="text-xs md:text-sm opacity-80 mt-1">Balita Terdaftar</p>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-500 to-blue-700 text-white">
-          <CardHeader className="pb-2 md:pb-3">
-            <CardTitle className="flex items-center gap-2 text-sm md:text-base font-medium opacity-90">
-              <TrendingUp className="h-4 w-4 md:h-5 md:w-5" />
-              Total Desa/Kelurahan
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-500 to-blue-700 text-white transition-all duration-300 hover:shadow-xl hover:scale-[1.02]">
+          <CardHeader className="pb-2 md:pb-3 p-4 md:p-6">
+            <CardTitle className="flex items-center gap-2 text-xs sm:text-sm md:text-base font-medium opacity-90">
+              <TrendingUp className="h-4 w-4 md:h-5 md:w-5 flex-shrink-0" />
+              <span>Total Desa/Kelurahan</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl md:text-4xl font-bold">{villageData.length}</div>
+          <CardContent className="p-4 md:p-6 pt-0">
+            <div className="text-2xl sm:text-3xl md:text-4xl font-bold">{villageData.length}</div>
             <p className="text-xs md:text-sm opacity-80 mt-1">Wilayah Kerja</p>
           </CardContent>
         </Card>
 
         <Card 
-          className="border-0 shadow-lg bg-gradient-to-br from-destructive/80 to-destructive text-white cursor-pointer hover:shadow-xl transition-shadow"
+          className="border-0 shadow-lg bg-gradient-to-br from-destructive/80 to-destructive text-white cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] active:scale-100"
           onClick={() => setShowNotGainingModal(true)}
         >
-          <CardHeader className="pb-2 md:pb-3">
-            <CardTitle className="flex items-center gap-2 text-sm md:text-base font-medium opacity-90">
-              <AlertTriangle className="h-4 w-4 md:h-5 md:w-5" />
-              Tidak Naik BB
+          <CardHeader className="pb-2 md:pb-3 p-4 md:p-6">
+            <CardTitle className="flex items-center gap-2 text-xs sm:text-sm md:text-base font-medium opacity-90">
+              <AlertTriangle className="h-4 w-4 md:h-5 md:w-5 flex-shrink-0" />
+              <span>Tidak Naik BB</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl md:text-4xl font-bold">{notGainingWeightData.count}</div>
+          <CardContent className="p-4 md:p-6 pt-0">
+            <div className="text-2xl sm:text-3xl md:text-4xl font-bold">{notGainingWeightData.count}</div>
             <p className="text-xs md:text-sm opacity-80 mt-1">2 Bulan Berturut-turut (Klik untuk detail)</p>
           </CardContent>
         </Card>
@@ -315,34 +319,34 @@ const Dashboard = () => {
       />
 
       {/* Chart Section */}
-      <div>
+      <div className="transition-all duration-300">
         <Card className="border-0 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-xl font-heading">
+          <CardHeader className="p-4 md:p-6">
+            <CardTitle className="text-base sm:text-lg md:text-xl font-heading">
               Tren Status Gizi Balita
             </CardTitle>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Grafik perkembangan status gizi per bulan
             </p>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 md:p-6">
             <NutritionalStatusChart data={chartData} />
           </CardContent>
         </Card>
       </div>
 
       {/* Data Balita Section */}
-      <div>
+      <div className="transition-all duration-300">
         <Card className="border-0 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-xl font-heading">
+          <CardHeader className="p-4 md:p-6">
+            <CardTitle className="text-base sm:text-lg md:text-xl font-heading">
               Data Status Gizi Per Posyandu
             </CardTitle>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Pilih desa/kelurahan dan bulan untuk melihat data detail
             </p>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 md:p-6">
             <PosyanduTable
               data={getPosyanduData(
                 selectedVillage && selectedMonth

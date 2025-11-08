@@ -54,13 +54,13 @@ export function NutritionalStatusSummary({ data }: NutritionalStatusSummaryProps
   const totalChildren = new Set(data.map(r => r.Nama).filter(Boolean)).size;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 transition-all duration-300">
       <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Distribusi Status Gizi</CardTitle>
+        <CardHeader className="p-4 md:p-6">
+          <CardTitle className="text-base sm:text-lg md:text-xl">Distribusi Status Gizi</CardTitle>
         </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
+        <CardContent className="p-4 md:p-6">
+          <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie
                 data={chartData}
@@ -68,8 +68,8 @@ export function NutritionalStatusSummary({ data }: NutritionalStatusSummaryProps
                 cy="50%"
                 startAngle={180}
                 endAngle={0}
-                innerRadius={60}
-                outerRadius={100}
+                innerRadius={50}
+                outerRadius={80}
                 fill="#8884d8"
                 dataKey="value"
                 paddingAngle={2}
@@ -83,38 +83,39 @@ export function NutritionalStatusSummary({ data }: NutritionalStatusSummaryProps
                   backgroundColor: 'hsl(var(--card))',
                   border: '1px solid hsl(var(--border))',
                   borderRadius: '0.5rem',
+                  fontSize: '12px'
                 }}
               />
-              <Legend wrapperStyle={{ fontSize: '11px' }} />
+              <Legend wrapperStyle={{ fontSize: '10px' }} />
             </PieChart>
           </ResponsiveContainer>
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
         {chartData.map((item) => {
           const percentage = totalChildren > 0 ? ((item.value / totalChildren) * 100).toFixed(1) : '0';
           
           return (
             <Card 
               key={item.name} 
-              className="shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-105 active:scale-100"
+              className="shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer hover:scale-105 active:scale-100"
               onClick={() => handleCardClick(item.name)}
             >
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-2">
+              <CardContent className="p-3 md:p-4">
+                <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2">
                   <div 
-                    className="w-3 h-3 rounded-full" 
+                    className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full flex-shrink-0" 
                     style={{ backgroundColor: item.fill }}
                   />
-                  <p className="text-xs font-medium text-muted-foreground line-clamp-1">
+                  <p className="text-[10px] sm:text-xs font-medium text-muted-foreground line-clamp-1">
                     {item.name}
                   </p>
                 </div>
-                <p className="text-2xl font-bold" style={{ color: item.fill }}>
+                <p className="text-xl sm:text-2xl md:text-3xl font-bold" style={{ color: item.fill }}>
                   {item.value}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
                   {percentage}% dari total
                 </p>
               </CardContent>
