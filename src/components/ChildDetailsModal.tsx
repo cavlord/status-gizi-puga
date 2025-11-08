@@ -38,6 +38,18 @@ export function ChildDetailsModal({
       return { ...record, previousWeight: null, weightDiff: null };
     }
     
+    // Helper function to format date to DD/MM/YYYY
+    const formatDate = (dateStr: string) => {
+      // Handle if already formatted
+      if (dateStr.includes('/')) return dateStr;
+      
+      const date = new Date(dateStr);
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    };
+    
     const childRecords = allRecords
       .filter(r => r.Nama === record.Nama)
       .sort((a, b) => new Date(a['Tanggal Pengukuran']).getTime() - new Date(b['Tanggal Pengukuran']).getTime());
@@ -56,7 +68,7 @@ export function ChildDetailsModal({
         return { 
           ...record, 
           previousWeight, 
-          previousDate: previousRecord['Tanggal Pengukuran'],
+          previousDate: formatDate(previousRecord['Tanggal Pengukuran']),
           weightDiff: diff 
         };
       }
