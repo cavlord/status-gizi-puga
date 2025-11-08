@@ -55,22 +55,22 @@ export function PosyanduTable({
   return (
     <>
       <Card className="shadow-sm w-full">
-        <CardHeader className="p-3 md:p-6">
-          <CardTitle className="text-sm md:text-lg">Data Posyandu – Status Gizi</CardTitle>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mt-3 md:mt-4">
-            <div className="flex items-center gap-3 bg-muted/50 p-3 rounded-lg">
-              <Building2 className="h-5 w-5 text-primary" />
-              <div className="flex-1">
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">
+        <CardHeader className="p-3 md:p-4 lg:p-6">
+          <CardTitle className="text-sm md:text-base lg:text-lg">Data Posyandu – Status Gizi</CardTitle>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3 lg:gap-4 mt-2 md:mt-3 lg:mt-4">
+            <div className="flex items-center gap-2 md:gap-3 bg-muted/50 p-2 md:p-3 rounded-lg">
+              <Building2 className="h-4 w-4 md:h-5 md:w-5 text-primary flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <label className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 block">
                   Desa/Kelurahan
                 </label>
                 <Select value={selectedVillage} onValueChange={onVillageChange}>
-                  <SelectTrigger className="bg-background">
+                  <SelectTrigger className="bg-background h-8 md:h-10 text-xs md:text-sm">
                     <SelectValue placeholder="Pilih desa" />
                   </SelectTrigger>
                   <SelectContent className="bg-popover z-50">
                     {villages.map((village) => (
-                      <SelectItem key={village} value={village}>
+                      <SelectItem key={village} value={village} className="text-xs md:text-sm">
                         {village}
                       </SelectItem>
                     ))}
@@ -79,19 +79,19 @@ export function PosyanduTable({
               </div>
             </div>
 
-            <div className="flex items-center gap-3 bg-muted/50 p-3 rounded-lg">
-              <Calendar className="h-5 w-5 text-secondary" />
-              <div className="flex-1">
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">
+            <div className="flex items-center gap-2 md:gap-3 bg-muted/50 p-2 md:p-3 rounded-lg">
+              <Calendar className="h-4 w-4 md:h-5 md:w-5 text-secondary flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <label className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 block">
                   Bulan
                 </label>
                 <Select value={selectedMonth} onValueChange={onMonthChange}>
-                  <SelectTrigger className="bg-background">
+                  <SelectTrigger className="bg-background h-8 md:h-10 text-xs md:text-sm">
                     <SelectValue placeholder="Pilih bulan" />
                   </SelectTrigger>
                   <SelectContent className="bg-popover z-50">
                     {months.map((month) => (
-                      <SelectItem key={month} value={month}>
+                      <SelectItem key={month} value={month} className="text-xs md:text-sm">
                         {month}
                       </SelectItem>
                     ))}
@@ -101,24 +101,24 @@ export function PosyanduTable({
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-3 md:p-6">
+        <CardContent className="p-2 md:p-4 lg:p-6">
           {data.length === 0 ? (
-            <div className="text-center py-6 md:py-8 text-sm md:text-base text-muted-foreground">
+            <div className="text-center py-6 md:py-8 text-xs sm:text-sm md:text-base text-muted-foreground">
               Tidak ada data untuk filter yang dipilih
             </div>
           ) : (
-            <div className="overflow-x-auto -mx-3 md:mx-0">
-              <div className="min-w-max px-3 md:px-0">
-                <table className="w-full border-collapse text-xs md:text-sm">
+            <div className="overflow-x-auto -mx-2 md:mx-0">
+              <div className="min-w-max px-2 md:px-0">
+                <table className="w-full border-collapse text-[10px] sm:text-xs md:text-sm">
                   <thead>
                     <tr className="bg-muted/50">
-                      <th className="p-2 md:p-3 text-left font-semibold border whitespace-nowrap">BB/TB</th>
+                      <th className="p-1.5 md:p-2 lg:p-3 text-left font-semibold border whitespace-nowrap">BB/TB</th>
                       {posyandus.map((posyandu) => (
-                        <th key={posyandu} className="p-2 md:p-3 text-center font-semibold border whitespace-nowrap min-w-[60px] md:min-w-[80px]">
+                        <th key={posyandu} className="p-1.5 md:p-2 lg:p-3 text-center font-semibold border whitespace-nowrap min-w-[50px] sm:min-w-[60px] md:min-w-[80px]">
                           {posyandu}
                         </th>
                       ))}
-                      <th className="p-2 md:p-3 text-center font-semibold border whitespace-nowrap">Total</th>
+                      <th className="p-1.5 md:p-2 lg:p-3 text-center font-semibold border whitespace-nowrap">Total</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -126,17 +126,17 @@ export function PosyanduTable({
                       const total = posyandus.reduce((sum, posyandu) => sum + (Number(row[posyandu]) || 0), 0);
                       return (
                         <tr key={row.status} className="hover:bg-muted/30 transition-colors">
-                          <td className="p-2 md:p-3 border font-medium whitespace-nowrap text-[10px] md:text-sm">{row.status}</td>
+                          <td className="p-1.5 md:p-2 lg:p-3 border font-medium whitespace-nowrap text-[9px] sm:text-[10px] md:text-sm">{row.status}</td>
                           {posyandus.map((posyandu) => (
                             <td 
                               key={posyandu} 
-                              className="p-2 md:p-3 text-center border cursor-pointer hover:bg-muted/50 text-xs md:text-sm"
+                              className="p-1.5 md:p-2 lg:p-3 text-center border cursor-pointer hover:bg-muted/50 transition-colors text-[10px] sm:text-xs md:text-sm active:scale-95"
                               onClick={() => handleCellClick(posyandu, row.status)}
                             >
                               {row[posyandu] || 0}
                             </td>
                           ))}
-                          <td className="p-2 md:p-3 text-center border font-bold text-primary text-xs md:text-sm">
+                          <td className="p-1.5 md:p-2 lg:p-3 text-center border font-bold text-primary text-[10px] sm:text-xs md:text-sm">
                             {total}
                           </td>
                         </tr>

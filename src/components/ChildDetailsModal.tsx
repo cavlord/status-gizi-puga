@@ -69,49 +69,49 @@ export function ChildDetailsModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[98vw] w-full md:max-w-7xl max-h-[95vh] p-0 overflow-hidden">
-        <DialogHeader className="p-3 md:p-6 pb-2 md:pb-3 border-b">
-          <DialogTitle className="text-sm md:text-base lg:text-xl font-bold">
+      <DialogContent className="max-w-[98vw] w-full sm:max-w-[95vw] md:max-w-6xl lg:max-w-7xl max-h-[90vh] md:max-h-[95vh] p-0 overflow-hidden animate-scale-in">
+        <DialogHeader className="p-3 md:p-4 lg:p-6 pb-2 md:pb-3 border-b">
+          <DialogTitle className="text-xs sm:text-sm md:text-base lg:text-xl font-bold">
             Detail Data Anak - Posyandu {posyandu}
           </DialogTitle>
-          <p className="text-xs md:text-sm text-muted-foreground">
+          <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">
             Total: {uniqueRecords.length} anak
           </p>
         </DialogHeader>
-        <div className="overflow-auto max-h-[calc(95vh-100px)] md:max-h-[calc(95vh-120px)]">
+        <div className="overflow-auto max-h-[calc(90vh-80px)] md:max-h-[calc(95vh-120px)]">
           <div className="min-w-max">
-            <table className="w-full border-collapse text-[9px] sm:text-[10px] md:text-xs lg:text-sm">
+            <table className="w-full border-collapse text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs">
               <thead className="bg-muted sticky top-0 z-10 shadow-sm">
                 <tr>
-                  <th className="px-1.5 py-1.5 sm:px-2 sm:py-2 md:px-3 md:py-2.5 text-left border font-semibold">No</th>
-                  <th className="px-1.5 py-1.5 sm:px-2 sm:py-2 md:px-3 md:py-2.5 text-left border font-semibold min-w-[80px] sm:min-w-[100px] md:min-w-[120px] lg:min-w-[140px]">Nama</th>
-                  <th className="px-1.5 py-1.5 sm:px-2 sm:py-2 md:px-3 md:py-2.5 text-left border font-semibold">JK</th>
-                  <th className="px-1.5 py-1.5 sm:px-2 sm:py-2 md:px-3 md:py-2.5 text-left border font-semibold min-w-[50px] sm:min-w-[60px] md:min-w-[70px] lg:min-w-[80px]">Usia</th>
-                  <th className="px-1.5 py-1.5 sm:px-2 sm:py-2 md:px-3 md:py-2.5 text-left border font-semibold min-w-[60px] sm:min-w-[70px] md:min-w-[80px] lg:min-w-[100px]">Tgl Ukur</th>
-                  <th className="px-1.5 py-1.5 sm:px-2 sm:py-2 md:px-3 md:py-2.5 text-left border font-semibold min-w-[70px] sm:min-w-[80px] md:min-w-[90px] lg:min-w-[110px]">BB/TB</th>
-                  <th className="px-1.5 py-1.5 sm:px-2 sm:py-2 md:px-3 md:py-2.5 text-left border font-semibold min-w-[50px]">BB Saat Ini (kg)</th>
+                  <th className="px-1 py-1 sm:px-1.5 sm:py-1.5 md:px-2 md:py-2 text-left border font-semibold">No</th>
+                  <th className="px-1 py-1 sm:px-1.5 sm:py-1.5 md:px-2 md:py-2 text-left border font-semibold min-w-[60px] sm:min-w-[80px] md:min-w-[100px] lg:min-w-[120px]">Nama</th>
+                  <th className="px-1 py-1 sm:px-1.5 sm:py-1.5 md:px-2 md:py-2 text-left border font-semibold">JK</th>
+                  <th className="px-1 py-1 sm:px-1.5 sm:py-1.5 md:px-2 md:py-2 text-left border font-semibold min-w-[40px] sm:min-w-[50px] md:min-w-[60px] lg:min-w-[70px]">Usia</th>
+                  <th className="px-1 py-1 sm:px-1.5 sm:py-1.5 md:px-2 md:py-2 text-left border font-semibold min-w-[50px] sm:min-w-[60px] md:min-w-[70px] lg:min-w-[80px]">Tgl Ukur</th>
+                  <th className="px-1 py-1 sm:px-1.5 sm:py-1.5 md:px-2 md:py-2 text-left border font-semibold min-w-[60px] sm:min-w-[70px] md:min-w-[80px] lg:min-w-[90px]">BB/TB</th>
+                  <th className="px-1 py-1 sm:px-1.5 sm:py-1.5 md:px-2 md:py-2 text-left border font-semibold min-w-[40px] sm:min-w-[50px]">BB Saat Ini (kg)</th>
                   {showWeightComparison && (
                     <>
-                      <th className="px-1.5 py-1.5 sm:px-2 sm:py-2 md:px-3 md:py-2.5 text-left border font-semibold min-w-[60px]">BB Sebelumnya (kg)</th>
-                      <th className="px-1.5 py-1.5 sm:px-2 sm:py-2 md:px-3 md:py-2.5 text-left border font-semibold min-w-[50px]">Selisih (kg)</th>
+                      <th className="px-1 py-1 sm:px-1.5 sm:py-1.5 md:px-2 md:py-2 text-left border font-semibold min-w-[50px] sm:min-w-[60px]">BB Sebelumnya (kg)</th>
+                      <th className="px-1 py-1 sm:px-1.5 sm:py-1.5 md:px-2 md:py-2 text-left border font-semibold min-w-[40px] sm:min-w-[50px]">Selisih (kg)</th>
                     </>
                   )}
-                  <th className="px-1.5 py-1.5 sm:px-2 sm:py-2 md:px-3 md:py-2.5 text-left border font-semibold min-w-[40px]">TB (cm)</th>
-                  <th className="px-1.5 py-1.5 sm:px-2 sm:py-2 md:px-3 md:py-2.5 text-left border font-semibold min-w-[70px] sm:min-w-[90px] md:min-w-[100px] lg:min-w-[120px]">Desa/Kel</th>
-                  <th className="px-1.5 py-1.5 sm:px-2 sm:py-2 md:px-3 md:py-2.5 text-left border font-semibold min-w-[80px] sm:min-w-[100px] md:min-w-[120px] lg:min-w-[140px]">Nama Ortu</th>
+                  <th className="px-1 py-1 sm:px-1.5 sm:py-1.5 md:px-2 md:py-2 text-left border font-semibold min-w-[30px] sm:min-w-[40px]">TB (cm)</th>
+                  <th className="px-1 py-1 sm:px-1.5 sm:py-1.5 md:px-2 md:py-2 text-left border font-semibold min-w-[60px] sm:min-w-[70px] md:min-w-[90px] lg:min-w-[100px]">Desa/Kel</th>
+                  <th className="px-1 py-1 sm:px-1.5 sm:py-1.5 md:px-2 md:py-2 text-left border font-semibold min-w-[70px] sm:min-w-[80px] md:min-w-[100px] lg:min-w-[120px]">Nama Ortu</th>
                 </tr>
               </thead>
               <tbody>
                 {recordsWithComparison.map((record, index) => (
                   <tr key={index} className="hover:bg-muted/30 transition-colors">
-                    <td className="px-1.5 py-1 sm:px-2 sm:py-1.5 md:px-3 md:py-2 border text-center">{index + 1}</td>
-                    <td className="px-1.5 py-1 sm:px-2 sm:py-1.5 md:px-3 md:py-2 border font-medium">{record.Nama}</td>
-                    <td className="px-1.5 py-1 sm:px-2 sm:py-1.5 md:px-3 md:py-2 border text-center">{record.JK}</td>
-                    <td className="px-1.5 py-1 sm:px-2 sm:py-1.5 md:px-3 md:py-2 border text-[8px] sm:text-[9px] md:text-xs">{record['Usia Saat Ukur']}</td>
-                    <td className="px-1.5 py-1 sm:px-2 sm:py-1.5 md:px-3 md:py-2 border whitespace-nowrap text-[8px] sm:text-[9px] md:text-xs">{record['Tanggal Pengukuran']}</td>
-                    <td className="px-1.5 py-1 sm:px-2 sm:py-1.5 md:px-3 md:py-2 border">
+                    <td className="px-1 py-0.5 sm:px-1.5 sm:py-1 md:px-2 md:py-1.5 border text-center">{index + 1}</td>
+                    <td className="px-1 py-0.5 sm:px-1.5 sm:py-1 md:px-2 md:py-1.5 border font-medium">{record.Nama}</td>
+                    <td className="px-1 py-0.5 sm:px-1.5 sm:py-1 md:px-2 md:py-1.5 border text-center">{record.JK}</td>
+                    <td className="px-1 py-0.5 sm:px-1.5 sm:py-1 md:px-2 md:py-1.5 border text-[7px] sm:text-[8px] md:text-[9px]">{record['Usia Saat Ukur']}</td>
+                    <td className="px-1 py-0.5 sm:px-1.5 sm:py-1 md:px-2 md:py-1.5 border whitespace-nowrap text-[7px] sm:text-[8px] md:text-[9px]">{record['Tanggal Pengukuran']}</td>
+                    <td className="px-1 py-0.5 sm:px-1.5 sm:py-1 md:px-2 md:py-1.5 border">
                       <span
-                        className={`inline-block px-1 py-0.5 sm:px-1.5 sm:py-0.5 md:px-2 md:py-1 rounded text-[8px] sm:text-[9px] md:text-xs font-semibold whitespace-nowrap ${
+                        className={`inline-block px-0.5 py-0.5 sm:px-1 sm:py-0.5 md:px-1.5 md:py-1 rounded text-[7px] sm:text-[8px] md:text-[9px] font-semibold whitespace-nowrap ${
                           record['BB/TB'] === 'Gizi Baik'
                             ? 'bg-secondary/20 text-secondary-foreground'
                             : record['BB/TB'] === 'Gizi Kurang'
@@ -124,20 +124,20 @@ export function ChildDetailsModal({
                         {record['BB/TB']}
                       </span>
                     </td>
-                    <td className="px-1.5 py-1 sm:px-2 sm:py-1.5 md:px-3 md:py-2 border text-center font-semibold">{record.Berat}</td>
+                    <td className="px-1 py-0.5 sm:px-1.5 sm:py-1 md:px-2 md:py-1.5 border text-center font-semibold">{record.Berat}</td>
                     {showWeightComparison && (
                       <>
-                        <td className="px-1.5 py-1 sm:px-2 sm:py-1.5 md:px-3 md:py-2 border text-center">
+                        <td className="px-1 py-0.5 sm:px-1.5 sm:py-1 md:px-2 md:py-1.5 border text-center">
                           {record.previousWeight !== null ? (
                             <div>
                               <div className="font-medium">{record.previousWeight}</div>
-                              <div className="text-[7px] sm:text-[8px] md:text-[9px] text-muted-foreground">{record.previousDate}</div>
+                              <div className="text-[6px] sm:text-[7px] md:text-[8px] text-muted-foreground">{record.previousDate}</div>
                             </div>
                           ) : (
                             <span className="text-muted-foreground">-</span>
                           )}
                         </td>
-                        <td className="px-1.5 py-1 sm:px-2 sm:py-1.5 md:px-3 md:py-2 border text-center">
+                        <td className="px-1 py-0.5 sm:px-1.5 sm:py-1 md:px-2 md:py-1.5 border text-center">
                           {record.weightDiff !== null ? (
                             <span className={`font-bold ${
                               record.weightDiff > 0 
@@ -154,9 +154,9 @@ export function ChildDetailsModal({
                         </td>
                       </>
                     )}
-                    <td className="px-1.5 py-1 sm:px-2 sm:py-1.5 md:px-3 md:py-2 border text-center">{record.Tinggi}</td>
-                    <td className="px-1.5 py-1 sm:px-2 sm:py-1.5 md:px-3 md:py-2 border text-[8px] sm:text-[9px] md:text-xs">{record['Desa/Kel']}</td>
-                    <td className="px-1.5 py-1 sm:px-2 sm:py-1.5 md:px-3 md:py-2 border text-[8px] sm:text-[9px] md:text-xs">{record['Nama Ortu']}</td>
+                    <td className="px-1 py-0.5 sm:px-1.5 sm:py-1 md:px-2 md:py-1.5 border text-center">{record.Tinggi}</td>
+                    <td className="px-1 py-0.5 sm:px-1.5 sm:py-1 md:px-2 md:py-1.5 border text-[7px] sm:text-[8px] md:text-[9px]">{record['Desa/Kel']}</td>
+                    <td className="px-1 py-0.5 sm:px-1.5 sm:py-1 md:px-2 md:py-1.5 border text-[7px] sm:text-[8px] md:text-[9px]">{record['Nama Ortu']}</td>
                   </tr>
                 ))}
               </tbody>
