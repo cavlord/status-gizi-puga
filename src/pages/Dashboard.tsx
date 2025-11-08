@@ -190,6 +190,15 @@ const Dashboard = () => {
 
     const notGainingChildren: ChildRecord[] = [];
     
+    // Helper function to format date to DD/MM/YYYY
+    const formatDate = (dateStr: string) => {
+      const date = new Date(dateStr);
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    };
+    
     recordsByName.forEach((records, childName) => {
       // Sort all records by date
       const sortedRecords = records.sort((a, b) => 
@@ -210,7 +219,7 @@ const Dashboard = () => {
                recordDate.getFullYear() === previousYear;
       });
       
-      // Must have at least one record in each of the 2 months
+      // HARUS ada data di KEDUA bulan - jika tidak ada data bulan sebelumnya, skip
       if (currentMonthRecords.length === 0 || previousMonthRecords.length === 0) return;
       
       // Get the latest record from each month
@@ -223,7 +232,11 @@ const Dashboard = () => {
       // Check if weight did NOT increase (stayed same or decreased)
       if (!isNaN(previousWeight) && !isNaN(currentWeight)) {
         if (currentWeight <= previousWeight) {
-          notGainingChildren.push(latestRecord);
+          // Format tanggal ke DD/MM/YYYY
+          notGainingChildren.push({
+            ...latestRecord,
+            'Tanggal Pengukuran': formatDate(latestRecord['Tanggal Pengukuran'])
+          });
         }
       }
     });
