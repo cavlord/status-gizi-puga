@@ -164,11 +164,22 @@ const Dashboard = () => {
   const getNotGainingWeight = (): { count: number; children: ChildRecord[] } => {
     if (filteredByYear.length === 0) return { count: 0, children: [] };
     
+    // Helper function to parse DD/MM/YYYY date format
+    const parseDate = (dateStr: string): Date => {
+      if (dateStr.includes('/')) {
+        // DD/MM/YYYY format
+        const [day, month, year] = dateStr.split('/').map(Number);
+        return new Date(year, month - 1, day);
+      }
+      // Fallback to standard date parsing
+      return new Date(dateStr);
+    };
+    
     // Get the most recent date from all records
     const mostRecentDate = filteredByYear.reduce((latest, record) => {
-      const recordDate = new Date(record['Tanggal Pengukuran']);
+      const recordDate = parseDate(record['Tanggal Pengukuran']);
       return recordDate > latest ? recordDate : latest;
-    }, new Date(filteredByYear[0]['Tanggal Pengukuran']));
+    }, parseDate(filteredByYear[0]['Tanggal Pengukuran']));
     
     const mostRecentMonth = mostRecentDate.getMonth();
     const mostRecentYear = mostRecentDate.getFullYear();
@@ -202,19 +213,19 @@ const Dashboard = () => {
     recordsByName.forEach((records, childName) => {
       // Sort all records by date
       const sortedRecords = records.sort((a, b) => 
-        new Date(a['Tanggal Pengukuran']).getTime() - new Date(b['Tanggal Pengukuran']).getTime()
+        parseDate(a['Tanggal Pengukuran']).getTime() - parseDate(b['Tanggal Pengukuran']).getTime()
       );
       
       // Find records from the most recent month
       const currentMonthRecords = sortedRecords.filter(record => {
-        const recordDate = new Date(record['Tanggal Pengukuran']);
+        const recordDate = parseDate(record['Tanggal Pengukuran']);
         return recordDate.getMonth() === mostRecentMonth && 
                recordDate.getFullYear() === mostRecentYear;
       });
       
       // Find records from previous month
       const previousMonthRecords = sortedRecords.filter(record => {
-        const recordDate = new Date(record['Tanggal Pengukuran']);
+        const recordDate = parseDate(record['Tanggal Pengukuran']);
         return recordDate.getMonth() === previousMonth && 
                recordDate.getFullYear() === previousYear;
       });
