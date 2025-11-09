@@ -160,24 +160,21 @@ const Dashboard = () => {
 
   const totalCount = latestRecords.length;
 
-  // Calculate children not gaining weight using only the 2 most recent consecutive months
+  // HANYA membandingkan BB bulan terbaru vs 1 bulan sebelumnya
   const getNotGainingWeight = (): { count: number; children: ChildRecord[] } => {
     if (filteredByYear.length === 0) return { count: 0, children: [] };
     
     // Helper function to parse DD/MM/YYYY date format
     const parseDate = (dateStr: string): Date => {
       if (dateStr.includes('/')) {
-        // DD/MM/YYYY format
         const [day, month, year] = dateStr.split('/').map(Number);
         return new Date(year, month - 1, day);
       }
-      // Fallback to standard date parsing
       return new Date(dateStr);
     };
     
     // Helper function to format date to DD/MM/YYYY
-    const formatDate = (dateStr: string) => {
-      // If already in DD/MM/YYYY format, return as is
+    const formatDate = (dateStr: string): string => {
       if (dateStr.includes('/')) {
         const parts = dateStr.split('/');
         if (parts.length === 3 && !isNaN(Number(parts[0])) && !isNaN(Number(parts[1])) && !isNaN(Number(parts[2]))) {
@@ -185,11 +182,8 @@ const Dashboard = () => {
         }
       }
       
-      // Parse and format the date
       const date = new Date(dateStr);
-      if (isNaN(date.getTime())) {
-        return dateStr; // Return original if parsing fails
-      }
+      if (isNaN(date.getTime())) return dateStr;
       
       const day = String(date.getDate()).padStart(2, '0');
       const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -197,83 +191,88 @@ const Dashboard = () => {
       return `${day}/${month}/${year}`;
     };
     
-    // Get the most recent date from all records
-    const mostRecentDate = filteredByYear.reduce((latest, record) => {
-      const recordDate = parseDate(record['Tanggal Pengukuran']);
-      return recordDate > latest ? recordDate : latest;
-    }, parseDate(filteredByYear[0]['Tanggal Pengukuran']));
+    // 1. Cari bulan terbaru dari SEMUA data
+    const allDates = filteredByYear.map(r => parseDate(r['Tanggal Pengukuran']));
+    const mostRecentDate = new Date(Math.max(...allDates.map(d => d.getTime())));
+    const currentMonth = mostRecentDate.getMonth();
+    const currentYear = mostRecentDate.getFullYear();
     
-    const mostRecentMonth = mostRecentDate.getMonth();
-    const mostRecentYear = mostRecentDate.getFullYear();
+    // 2. Hitung bulan sebelumnya (bulan terbaru - 1)
+    const prevDate = new Date(currentYear, currentMonth - 1, 1);
+    const previousMonth = prevDate.getMonth();
+    const previousYear = prevDate.getFullYear();
     
-    // Get previous month (bulan terbaru - 1)
-    const previousMonthDate = new Date(mostRecentYear, mostRecentMonth - 1);
-    const previousMonth = previousMonthDate.getMonth();
-    const previousYear = previousMonthDate.getFullYear();
+    console.log('Bulan terbaru:', currentMonth + 1, currentYear);
+    console.log('Bulan sebelumnya:', previousMonth + 1, previousYear);
     
-    // Group all records by child name
-    const recordsByName = new Map<string, ChildRecord[]>();
+    // 3. Kelompokkan data per anak
+    const childrenMap = new Map<string, ChildRecord[]>();
     filteredByYear.forEach(record => {
       if (!record.Nama) return;
-      if (!recordsByName.has(record.Nama)) {
-        recordsByName.set(record.Nama, []);
+      if (!childrenMap.has(record.Nama)) {
+        childrenMap.set(record.Nama, []);
       }
-      recordsByName.get(record.Nama)!.push(record);
+      childrenMap.get(record.Nama)!.push(record);
     });
-
+    
     const notGainingChildren: ChildRecord[] = [];
     
-    recordsByName.forEach((records) => {
-      // Filter ONLY records from the most recent month
-      const currentMonthRecords = records.filter(record => {
-        const recordDate = parseDate(record['Tanggal Pengukuran']);
-        return recordDate.getMonth() === mostRecentMonth && 
-               recordDate.getFullYear() === mostRecentYear;
+    // 4. Untuk setiap anak, bandingkan BB bulan terbaru vs bulan sebelumnya
+    childrenMap.forEach((allRecords, childName) => {
+      // Ambil HANYA data dari bulan terbaru
+      const currentMonthData = allRecords.filter(r => {
+        const d = parseDate(r['Tanggal Pengukuran']);
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
       });
       
-      // Filter ONLY records from previous month (bulan terbaru - 1)
-      const previousMonthRecords = records.filter(record => {
-        const recordDate = parseDate(record['Tanggal Pengukuran']);
-        return recordDate.getMonth() === previousMonth && 
-               recordDate.getFullYear() === previousYear;
+      // Ambil HANYA data dari bulan sebelumnya (bulan terbaru - 1)
+      const previousMonthData = allRecords.filter(r => {
+        const d = parseDate(r['Tanggal Pengukuran']);
+        return d.getMonth() === previousMonth && d.getFullYear() === previousYear;
       });
       
-      // SKIP if no data in either month
-      if (currentMonthRecords.length === 0 || previousMonthRecords.length === 0) return;
+      // SKIP jika tidak ada data di salah satu dari kedua bulan
+      if (currentMonthData.length === 0 || previousMonthData.length === 0) {
+        return;
+      }
       
-      // Get the LATEST record from current month
-      const latestCurrentRecord = currentMonthRecords.reduce((latest, record) => {
-        const latestDate = parseDate(latest['Tanggal Pengukuran']);
-        const recordDate = parseDate(record['Tanggal Pengukuran']);
-        return recordDate > latestDate ? record : latest;
+      // Ambil data terbaru dari bulan terbaru
+      const latestCurrent = currentMonthData.reduce((latest, r) => {
+        return parseDate(r['Tanggal Pengukuran']) > parseDate(latest['Tanggal Pengukuran']) ? r : latest;
       });
       
-      // Get the LATEST record from previous month
-      const latestPreviousRecord = previousMonthRecords.reduce((latest, record) => {
-        const latestDate = parseDate(latest['Tanggal Pengukuran']);
-        const recordDate = parseDate(record['Tanggal Pengukuran']);
-        return recordDate > latestDate ? record : latest;
+      // Ambil data terbaru dari bulan sebelumnya
+      const latestPrevious = previousMonthData.reduce((latest, r) => {
+        return parseDate(r['Tanggal Pengukuran']) > parseDate(latest['Tanggal Pengukuran']) ? r : latest;
       });
       
-      const previousWeight = parseFloat(latestPreviousRecord.Berat);
-      const currentWeight = parseFloat(latestCurrentRecord.Berat);
+      // Parse berat badan
+      const currentWeight = parseFloat(latestCurrent.Berat);
+      const previousWeight = parseFloat(latestPrevious.Berat);
       
-      // ONLY add if weight did NOT increase (stayed same or decreased)
-      if (!isNaN(previousWeight) && !isNaN(currentWeight)) {
+      // Debug log
+      console.log(`${childName}: Previous=${previousWeight}kg (${latestPrevious['Tanggal Pengukuran']}), Current=${currentWeight}kg (${latestCurrent['Tanggal Pengukuran']})`);
+      
+      // HANYA tambahkan jika BB TIDAK NAIK (turun atau tetap)
+      // currentWeight > previousWeight = NAIK (JANGAN MASUKKAN)
+      // currentWeight <= previousWeight = TIDAK NAIK (MASUKKAN)
+      if (!isNaN(currentWeight) && !isNaN(previousWeight)) {
         if (currentWeight <= previousWeight) {
-          const formattedDate = formatDate(latestCurrentRecord['Tanggal Pengukuran']);
-          
-          // Only add if date formatting succeeded
+          const formattedDate = formatDate(latestCurrent['Tanggal Pengukuran']);
           if (!formattedDate.includes('NaN')) {
+            console.log(`  -> MASUK ke daftar Tidak Naik BB (${currentWeight} <= ${previousWeight})`);
             notGainingChildren.push({
-              ...latestCurrentRecord,
+              ...latestCurrent,
               'Tanggal Pengukuran': formattedDate
             });
           }
+        } else {
+          console.log(`  -> TIDAK masuk (BB naik: ${currentWeight} > ${previousWeight})`);
         }
       }
     });
     
+    console.log('Total anak Tidak Naik BB:', notGainingChildren.length);
     return { count: notGainingChildren.length, children: notGainingChildren };
   };
 
