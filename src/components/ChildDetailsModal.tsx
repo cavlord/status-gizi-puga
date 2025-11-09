@@ -38,11 +38,18 @@ export function ChildDetailsModal({
       return { ...record, previousWeight: null, weightDiff: null };
     }
     
+    // Helper function to parse DD/MM/YYYY date
+    const parseDate = (dateStr: string): Date => {
+      if (dateStr.includes('/')) {
+        const [day, month, year] = dateStr.split('/').map(Number);
+        return new Date(year, month - 1, day);
+      }
+      return new Date(dateStr);
+    };
+    
     // Helper function to format date to DD/MM/YYYY
     const formatDate = (dateStr: string) => {
-      // Handle if already formatted
       if (dateStr.includes('/')) return dateStr;
-      
       const date = new Date(dateStr);
       const day = String(date.getDate()).padStart(2, '0');
       const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -50,28 +57,46 @@ export function ChildDetailsModal({
       return `${day}/${month}/${year}`;
     };
     
-    const childRecords = allRecords
-      .filter(r => r.Nama === record.Nama)
-      .sort((a, b) => new Date(a['Tanggal Pengukuran']).getTime() - new Date(b['Tanggal Pengukuran']).getTime());
+    // Get current record's month and year
+    const currentDate = parseDate(record['Tanggal Pengukuran']);
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
     
-    const currentIndex = childRecords.findIndex(
-      r => r['Tanggal Pengukuran'] === record['Tanggal Pengukuran']
-    );
+    // Calculate previous month
+    const prevDate = new Date(currentYear, currentMonth - 1, 1);
+    const previousMonth = prevDate.getMonth();
+    const previousYear = prevDate.getFullYear();
     
-    if (currentIndex > 0) {
-      const previousRecord = childRecords[currentIndex - 1];
-      const previousWeight = parseFloat(previousRecord.Berat);
-      const currentWeight = parseFloat(record.Berat);
-      
-      if (!isNaN(previousWeight) && !isNaN(currentWeight)) {
-        const diff = currentWeight - previousWeight;
-        return { 
-          ...record, 
-          previousWeight, 
-          previousDate: formatDate(previousRecord['Tanggal Pengukuran']),
-          weightDiff: diff 
-        };
-      }
+    // Get all records for this child
+    const childRecords = allRecords.filter(r => r.Nama === record.Nama);
+    
+    // Find records ONLY from the previous month (bulan sebelumnya)
+    const previousMonthRecords = childRecords.filter(r => {
+      const d = parseDate(r['Tanggal Pengukuran']);
+      return d.getMonth() === previousMonth && d.getFullYear() === previousYear;
+    });
+    
+    // If no data from previous month, return null
+    if (previousMonthRecords.length === 0) {
+      return { ...record, previousWeight: null, weightDiff: null };
+    }
+    
+    // Get latest record from previous month
+    const previousRecord = previousMonthRecords.reduce((latest, r) => {
+      return parseDate(r['Tanggal Pengukuran']) > parseDate(latest['Tanggal Pengukuran']) ? r : latest;
+    });
+    
+    const previousWeight = parseFloat(previousRecord.Berat);
+    const currentWeight = parseFloat(record.Berat);
+    
+    if (!isNaN(previousWeight) && !isNaN(currentWeight)) {
+      const diff = currentWeight - previousWeight;
+      return { 
+        ...record, 
+        previousWeight, 
+        previousDate: formatDate(previousRecord['Tanggal Pengukuran']),
+        weightDiff: diff 
+      };
     }
     
     return { ...record, previousWeight: null, weightDiff: null };

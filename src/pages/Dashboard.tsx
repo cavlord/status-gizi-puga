@@ -202,8 +202,7 @@ const Dashboard = () => {
     const previousMonth = prevDate.getMonth();
     const previousYear = prevDate.getFullYear();
     
-    console.log('Bulan terbaru:', currentMonth + 1, currentYear);
-    console.log('Bulan sebelumnya:', previousMonth + 1, previousYear);
+    
     
     // 3. Kelompokkan data per anak
     const childrenMap = new Map<string, ChildRecord[]>();
@@ -250,29 +249,20 @@ const Dashboard = () => {
       const currentWeight = parseFloat(latestCurrent.Berat);
       const previousWeight = parseFloat(latestPrevious.Berat);
       
-      // Debug log
-      console.log(`${childName}: Previous=${previousWeight}kg (${latestPrevious['Tanggal Pengukuran']}), Current=${currentWeight}kg (${latestCurrent['Tanggal Pengukuran']})`);
-      
       // HANYA tambahkan jika BB TIDAK NAIK (turun atau tetap)
-      // currentWeight > previousWeight = NAIK (JANGAN MASUKKAN)
-      // currentWeight <= previousWeight = TIDAK NAIK (MASUKKAN)
       if (!isNaN(currentWeight) && !isNaN(previousWeight)) {
         if (currentWeight <= previousWeight) {
           const formattedDate = formatDate(latestCurrent['Tanggal Pengukuran']);
           if (!formattedDate.includes('NaN')) {
-            console.log(`  -> MASUK ke daftar Tidak Naik BB (${currentWeight} <= ${previousWeight})`);
             notGainingChildren.push({
               ...latestCurrent,
               'Tanggal Pengukuran': formattedDate
             });
           }
-        } else {
-          console.log(`  -> TIDAK masuk (BB naik: ${currentWeight} > ${previousWeight})`);
         }
       }
     });
     
-    console.log('Total anak Tidak Naik BB:', notGainingChildren.length);
     return { count: notGainingChildren.length, children: notGainingChildren };
   };
 
