@@ -203,7 +203,21 @@ const Dashboard = () => {
     
     // Helper function to format date to DD/MM/YYYY
     const formatDate = (dateStr: string) => {
+      // If already in DD/MM/YYYY format, return as is
+      if (dateStr.includes('/')) {
+        const parts = dateStr.split('/');
+        if (parts.length === 3 && !isNaN(Number(parts[0])) && !isNaN(Number(parts[1])) && !isNaN(Number(parts[2]))) {
+          return dateStr;
+        }
+      }
+      
+      // Parse and format the date
       const date = new Date(dateStr);
+      if (isNaN(date.getTime())) {
+        console.error('Invalid date:', dateStr);
+        return dateStr; // Return original if parsing fails
+      }
+      
       const day = String(date.getDate()).padStart(2, '0');
       const month = String(date.getMonth() + 1).padStart(2, '0');
       const year = date.getFullYear();
@@ -243,11 +257,16 @@ const Dashboard = () => {
       // Check if weight did NOT increase (stayed same or decreased)
       if (!isNaN(previousWeight) && !isNaN(currentWeight)) {
         if (currentWeight <= previousWeight) {
-          // Format tanggal ke DD/MM/YYYY
-          notGainingChildren.push({
-            ...latestRecord,
-            'Tanggal Pengukuran': formatDate(latestRecord['Tanggal Pengukuran'])
-          });
+          // Ensure date is properly formatted
+          const formattedDate = formatDate(latestRecord['Tanggal Pengukuran']);
+          
+          // Only add if date formatting succeeded
+          if (!formattedDate.includes('NaN')) {
+            notGainingChildren.push({
+              ...latestRecord,
+              'Tanggal Pengukuran': formattedDate
+            });
+          }
         }
       }
     });
