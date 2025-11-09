@@ -38,30 +38,16 @@ const Analytics = () => {
     const underFiveRecords = filterUnderFiveYears(allRecords);
     const query = searchQuery.toLowerCase().trim();
     
-    // Enhanced search with multiple strategies
+    // Search logic: full name or NIK (case-insensitive)
     const results = underFiveRecords.filter(record => {
       const nama = (record.Nama || '').toLowerCase().trim();
       const nik = (record.NIK || '').toString().toLowerCase().trim();
       
-      // Search in NIK (exact or partial)
+      // Search by NIK (partial match)
       if (nik && nik.includes(query)) return true;
       
-      // Search in name with multiple strategies:
-      // 1. Direct exact match
-      if (nama === query) return true;
-      
-      // 2. Name contains full query (handles full name search)
+      // Search by full name (partial match - can search any part of the name)
       if (nama.includes(query)) return true;
-      
-      // 3. Fuzzy matching: all query words present in name
-      const queryWords = query.split(/\s+/);
-      const nameWords = nama.split(/\s+/);
-      
-      // Check if all query words are in the name (in any order)
-      const allQueryWordsMatch = queryWords.every(qWord => 
-        nameWords.some(nWord => nWord.includes(qWord))
-      );
-      if (allQueryWordsMatch) return true;
       
       return false;
     });
