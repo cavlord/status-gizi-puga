@@ -175,32 +175,6 @@ const Dashboard = () => {
       return new Date(dateStr);
     };
     
-    // Get the most recent date from all records
-    const mostRecentDate = filteredByYear.reduce((latest, record) => {
-      const recordDate = parseDate(record['Tanggal Pengukuran']);
-      return recordDate > latest ? recordDate : latest;
-    }, parseDate(filteredByYear[0]['Tanggal Pengukuran']));
-    
-    const mostRecentMonth = mostRecentDate.getMonth();
-    const mostRecentYear = mostRecentDate.getFullYear();
-    
-    // Get previous month date
-    const previousMonthDate = new Date(mostRecentYear, mostRecentMonth - 1);
-    const previousMonth = previousMonthDate.getMonth();
-    const previousYear = previousMonthDate.getFullYear();
-    
-    // Group all records by child name first
-    const recordsByName = new Map<string, ChildRecord[]>();
-    filteredByYear.forEach(record => {
-      if (!record.Nama) return;
-      if (!recordsByName.has(record.Nama)) {
-        recordsByName.set(record.Nama, []);
-      }
-      recordsByName.get(record.Nama)!.push(record);
-    });
-
-    const notGainingChildren: ChildRecord[] = [];
-    
     // Helper function to format date to DD/MM/YYYY
     const formatDate = (dateStr: string) => {
       // If already in DD/MM/YYYY format, return as is
@@ -214,7 +188,6 @@ const Dashboard = () => {
       // Parse and format the date
       const date = new Date(dateStr);
       if (isNaN(date.getTime())) {
-        console.error('Invalid date:', dateStr);
         return dateStr; // Return original if parsing fails
       }
       
@@ -224,46 +197,76 @@ const Dashboard = () => {
       return `${day}/${month}/${year}`;
     };
     
-    recordsByName.forEach((records, childName) => {
-      // Sort all records by date
-      const sortedRecords = records.sort((a, b) => 
-        parseDate(a['Tanggal Pengukuran']).getTime() - parseDate(b['Tanggal Pengukuran']).getTime()
-      );
-      
-      // Find records from the most recent month
-      const currentMonthRecords = sortedRecords.filter(record => {
+    // Get the most recent date from all records
+    const mostRecentDate = filteredByYear.reduce((latest, record) => {
+      const recordDate = parseDate(record['Tanggal Pengukuran']);
+      return recordDate > latest ? recordDate : latest;
+    }, parseDate(filteredByYear[0]['Tanggal Pengukuran']));
+    
+    const mostRecentMonth = mostRecentDate.getMonth();
+    const mostRecentYear = mostRecentDate.getFullYear();
+    
+    // Get previous month (bulan terbaru - 1)
+    const previousMonthDate = new Date(mostRecentYear, mostRecentMonth - 1);
+    const previousMonth = previousMonthDate.getMonth();
+    const previousYear = previousMonthDate.getFullYear();
+    
+    // Group all records by child name
+    const recordsByName = new Map<string, ChildRecord[]>();
+    filteredByYear.forEach(record => {
+      if (!record.Nama) return;
+      if (!recordsByName.has(record.Nama)) {
+        recordsByName.set(record.Nama, []);
+      }
+      recordsByName.get(record.Nama)!.push(record);
+    });
+
+    const notGainingChildren: ChildRecord[] = [];
+    
+    recordsByName.forEach((records) => {
+      // Filter ONLY records from the most recent month
+      const currentMonthRecords = records.filter(record => {
         const recordDate = parseDate(record['Tanggal Pengukuran']);
         return recordDate.getMonth() === mostRecentMonth && 
                recordDate.getFullYear() === mostRecentYear;
       });
       
-      // Find records from previous month
-      const previousMonthRecords = sortedRecords.filter(record => {
+      // Filter ONLY records from previous month (bulan terbaru - 1)
+      const previousMonthRecords = records.filter(record => {
         const recordDate = parseDate(record['Tanggal Pengukuran']);
         return recordDate.getMonth() === previousMonth && 
                recordDate.getFullYear() === previousYear;
       });
       
-      // HARUS ada data di KEDUA bulan - jika tidak ada data bulan sebelumnya, skip
+      // SKIP if no data in either month
       if (currentMonthRecords.length === 0 || previousMonthRecords.length === 0) return;
       
-      // Get the latest record from each month
-      const latestRecord = currentMonthRecords[currentMonthRecords.length - 1];
-      const previousRecord = previousMonthRecords[previousMonthRecords.length - 1];
+      // Get the LATEST record from current month
+      const latestCurrentRecord = currentMonthRecords.reduce((latest, record) => {
+        const latestDate = parseDate(latest['Tanggal Pengukuran']);
+        const recordDate = parseDate(record['Tanggal Pengukuran']);
+        return recordDate > latestDate ? record : latest;
+      });
       
-      const previousWeight = parseFloat(previousRecord.Berat);
-      const currentWeight = parseFloat(latestRecord.Berat);
+      // Get the LATEST record from previous month
+      const latestPreviousRecord = previousMonthRecords.reduce((latest, record) => {
+        const latestDate = parseDate(latest['Tanggal Pengukuran']);
+        const recordDate = parseDate(record['Tanggal Pengukuran']);
+        return recordDate > latestDate ? record : latest;
+      });
       
-      // Check if weight did NOT increase (stayed same or decreased)
+      const previousWeight = parseFloat(latestPreviousRecord.Berat);
+      const currentWeight = parseFloat(latestCurrentRecord.Berat);
+      
+      // ONLY add if weight did NOT increase (stayed same or decreased)
       if (!isNaN(previousWeight) && !isNaN(currentWeight)) {
         if (currentWeight <= previousWeight) {
-          // Ensure date is properly formatted
-          const formattedDate = formatDate(latestRecord['Tanggal Pengukuran']);
+          const formattedDate = formatDate(latestCurrentRecord['Tanggal Pengukuran']);
           
           // Only add if date formatting succeeded
           if (!formattedDate.includes('NaN')) {
             notGainingChildren.push({
-              ...latestRecord,
+              ...latestCurrentRecord,
               'Tanggal Pengukuran': formattedDate
             });
           }
