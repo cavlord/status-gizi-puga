@@ -72,12 +72,26 @@ const Analytics = () => {
     );
   }
 
+  // Helper to parse DD/MM/YYYY date format
+  const parseDateDDMMYYYY = (dateStr: string): Date => {
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
+      const year = parseInt(parts[2], 10);
+      return new Date(year, month, day);
+    }
+    return new Date(0); // Return epoch if parsing fails
+  };
+
   const childHistory = selectedChild
     ? searchResults
         .filter(r => r.Nama === selectedChild)
-        .sort((a, b) => 
-          new Date(a['Tanggal Pengukuran']).getTime() - new Date(b['Tanggal Pengukuran']).getTime()
-        )
+        .sort((a, b) => {
+          const dateA = parseDateDDMMYYYY(a['Tanggal Pengukuran']);
+          const dateB = parseDateDDMMYYYY(b['Tanggal Pengukuran']);
+          return dateA.getTime() - dateB.getTime();
+        })
     : [];
 
   const uniqueChildren = Array.from(new Set(searchResults.map(r => r.Nama))).filter(Boolean);
