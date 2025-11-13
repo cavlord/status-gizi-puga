@@ -24,14 +24,12 @@ const navigation = [
 
 function AppSidebar() {
   const location = useLocation();
-  const { state, setOpen, isMobile, setOpenMobile } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
 
   const handleNavClick = () => {
     if (isMobile) {
       setOpenMobile(false);
-    } else {
-      setOpen(false);
     }
   };
 
