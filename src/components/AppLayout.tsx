@@ -24,8 +24,16 @@ const navigation = [
 
 function AppSidebar() {
   const location = useLocation();
-  const { state, setOpen } = useSidebar();
+  const { state, setOpen, isMobile, setOpenMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
+
+  const handleNavClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    } else {
+      setOpen(false);
+    }
+  };
 
   return (
     <Sidebar 
@@ -61,7 +69,7 @@ function AppSidebar() {
                     <SidebarMenuButton asChild>
                       <NavLink
                         to={item.href}
-                        onClick={() => setOpen(false)}
+                        onClick={handleNavClick}
                         className={cn(
                           "flex items-center gap-3 px-4 md:px-6 py-3 transition-all duration-300",
                           isActive
