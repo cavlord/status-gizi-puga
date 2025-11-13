@@ -13,7 +13,7 @@ import {
 import { useData } from "@/contexts/DataContext";
 import { YearFilter } from "@/components/YearFilter";
 import { NutritionalStatusChart } from "@/components/NutritionalStatusChart";
-import { NutritionalStatusSummary } from "@/components/NutritionalStatusSummary";
+import { VillageNutritionalStatus } from "@/components/VillageNutritionalStatus";
 import { ChildDetailsModal } from "@/components/ChildDetailsModal";
 import { PosyanduTable } from "@/components/PosyanduTable";
 import { useToast } from "@/hooks/use-toast";
@@ -338,9 +338,9 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      {/* Nutritional Status Distribution */}
+      {/* Village Nutritional Status Distribution */}
       <div>
-        <NutritionalStatusSummary data={mostRecentMonthRecords} />
+        <VillageNutritionalStatus data={mostRecentMonthRecords} year={selectedYear} />
       </div>
 
       {/* Modal for Not Gaining Weight Children */}
