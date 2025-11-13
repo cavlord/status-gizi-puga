@@ -278,10 +278,10 @@ const Dashboard = () => {
       <div className="flex flex-col gap-3 md:gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-heading font-bold text-foreground">
-            Dashboard Ringkasan
+            Dashboard Status Gizi
           </h2>
           <p className="text-xs sm:text-sm md:text-base text-muted-foreground mt-1">
-            Monitoring status gizi balita di wilayah kerja
+            Monitoring status gizi balita di wilayah kerja UPT Puskesmas Pulau Gadang
           </p>
         </div>
         <div className="w-full md:w-auto">

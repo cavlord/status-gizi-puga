@@ -119,7 +119,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           </main>
           <footer className="border-t bg-card py-3 md:py-4 px-4 md:px-6">
             <p className="text-xs md:text-sm text-muted-foreground text-center">
-              © {new Date().getFullYear()} UPT Puskesmas Pulau Gadang. Built & Design by Rossa Gusti Yolanda, S.Gz
+              © {new Date().getFullYear()} UPT Puskesmas Pulau Gadang. Build & Design by Rossa Gusti Yolanda, S.Gz
             </p>
           </footer>
         </div>
