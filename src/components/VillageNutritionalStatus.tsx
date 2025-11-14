@@ -7,7 +7,8 @@ import { MapPin, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface VillageNutritionalStatusProps {
-  data: ChildRecord[];
+  yearData: ChildRecord[];
+  monthData: ChildRecord[];
   year: string;
 }
 
@@ -36,7 +37,7 @@ interface VillageStats {
   total: number;
 }
 
-export function VillageNutritionalStatus({ data, year }: VillageNutritionalStatusProps) {
+export function VillageNutritionalStatus({ yearData, monthData, year }: VillageNutritionalStatusProps) {
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -58,23 +59,22 @@ export function VillageNutritionalStatus({ data, year }: VillageNutritionalStatu
     return `${day}/${month}/${year}`;
   };
 
-  // Group by village for pie chart - count unique children per village
+  // Group by village for pie chart - count unique children (Nama) per village from YEAR data
   const villageCountMap = new Map<string, Set<string>>();
   
-  data.forEach(record => {
+  yearData.forEach(record => {
     const village = record['Desa/Kel'];
     const name = record.Nama;
     
-    // Include all records with village name, even if child name is missing
-    if (!village || village.trim() === '') return;
+    // Only count records with both village and name
+    if (!village || village.trim() === '' || !name || name.trim() === '') return;
     
     if (!villageCountMap.has(village)) {
       villageCountMap.set(village, new Set());
     }
     
-    // Use name if available, otherwise use a unique identifier
-    const identifier = name && name.trim() !== '' ? name : `child_${record['Tanggal Pengukuran']}_${record['BB/TB']}`;
-    villageCountMap.get(village)!.add(identifier);
+    // Count unique names (CountUnique on Nama)
+    villageCountMap.get(village)!.add(name);
   });
 
   const villageChartData = Array.from(villageCountMap.entries())
@@ -87,10 +87,10 @@ export function VillageNutritionalStatus({ data, year }: VillageNutritionalStatu
 
   const totalChildren = Array.from(villageCountMap.values()).reduce((sum, set) => sum + set.size, 0);
 
-  // Group by nutritional status - include all villages
+  // Group by nutritional status from MONTH data - include all villages
   const statusMap = new Map<string, ChildRecord[]>();
   
-  data.forEach(record => {
+  monthData.forEach(record => {
     const status = record['BB/TB'];
     const village = record['Desa/Kel'];
     
@@ -120,6 +120,13 @@ export function VillageNutritionalStatus({ data, year }: VillageNutritionalStatu
   const totalGiziKurang = statusMap.get("Gizi Kurang")?.length || 0;
   const totalGiziBuruk = statusMap.get("Gizi Buruk")?.length || 0;
   const grandTotal = totalGiziBaik + totalGiziKurang + totalGiziBuruk;
+
+  // Prepare chart data for nutritional status
+  const statusChartData = [
+    { name: "Gizi Baik", value: totalGiziBaik, fill: STATUS_COLORS["Gizi Baik"] },
+    { name: "Gizi Kurang", value: totalGiziKurang, fill: STATUS_COLORS["Gizi Kurang"] },
+    { name: "Gizi Buruk", value: totalGiziBuruk, fill: STATUS_COLORS["Gizi Buruk"] },
+  ].filter(item => item.value > 0);
 
   return (
     <div className="space-y-4 transition-all duration-300">
@@ -191,7 +198,7 @@ export function VillageNutritionalStatus({ data, year }: VillageNutritionalStatu
         </CardContent>
       </Card>
 
-      {/* Status Gizi Table */}
+      {/* Status Gizi with Chart */}
       <Card className="border-0 shadow-lg">
         <CardHeader className="p-4 md:p-6">
           <CardTitle className="text-base sm:text-lg md:text-xl flex items-center gap-2">
@@ -203,6 +210,42 @@ export function VillageNutritionalStatus({ data, year }: VillageNutritionalStatu
           </p>
         </CardHeader>
         <CardContent className="p-4 md:p-6">
+          {/* Chart visualization */}
+          {statusChartData.length > 0 && (
+            <div className="mb-6">
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={statusChartData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={90}
+                    fill="#8884d8"
+                    dataKey="value"
+                    paddingAngle={3}
+                    animationBegin={0}
+                    animationDuration={800}
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {statusChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '0.5rem',
+                      fontSize: '12px'
+                    }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: '12px' }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+          
           <div className="grid grid-cols-3 gap-3 md:gap-4">
             {/* Gizi Baik */}
             <Card 
