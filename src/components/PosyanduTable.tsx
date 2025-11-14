@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Building2, Calendar } from "lucide-react";
 import { ChildRecord } from "@/lib/googleSheets";
 import { ChildDetailsModal } from "./ChildDetailsModal";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
 
 interface PosyanduTableProps {
   data: { status: string; [key: string]: number | string }[];
@@ -15,6 +16,12 @@ interface PosyanduTableProps {
   onMonthChange: (month: string) => void;
   allRecords: ChildRecord[];
 }
+
+const STATUS_COLORS = {
+  "Gizi Baik": "hsl(142 71% 45%)",
+  "Gizi Kurang": "hsl(38 92% 50%)",
+  "Gizi Buruk": "hsl(0 84% 60%)",
+};
 
 export function PosyanduTable({
   data,
@@ -34,6 +41,16 @@ export function PosyanduTable({
   const posyandus = data.length > 0 
     ? Object.keys(data[0]).filter(key => key !== 'status')
     : [];
+
+  // Prepare chart data - aggregate totals per status
+  const chartData = data.map(row => {
+    const total = posyandus.reduce((sum, posyandu) => sum + (Number(row[posyandu]) || 0), 0);
+    return {
+      status: row.status,
+      total: total,
+      fill: STATUS_COLORS[row.status as keyof typeof STATUS_COLORS] || "hsl(var(--primary))"
+    };
+  });
 
   const handleCellClick = (posyandu: string, status: string) => {
     setSelectedPosyandu(posyandu);
@@ -107,7 +124,46 @@ export function PosyanduTable({
               Tidak ada data untuk filter yang dipilih
             </div>
           ) : (
-            <div className="overflow-x-auto -mx-2 md:mx-0">
+            <>
+              {/* Bar Chart */}
+              <div className="mb-6" key={`${selectedVillage}-${selectedMonth}`}>
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis 
+                      dataKey="status" 
+                      tick={{ fontSize: 12 }}
+                      stroke="hsl(var(--muted-foreground))"
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 12 }}
+                      stroke="hsl(var(--muted-foreground))"
+                    />
+                    <Tooltip 
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '0.5rem',
+                        fontSize: '12px'
+                      }}
+                    />
+                    <Bar 
+                      dataKey="total" 
+                      name="Total Anak"
+                      animationBegin={0}
+                      animationDuration={800}
+                      radius={[8, 8, 0, 0]}
+                    >
+                      {chartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Table */}
+              <div className="overflow-x-auto -mx-2 md:mx-0">
               <div className="min-w-max px-2 md:px-0">
                 <table className="w-full border-collapse text-[10px] sm:text-xs md:text-sm">
                   <thead>
@@ -146,6 +202,7 @@ export function PosyanduTable({
                 </table>
               </div>
             </div>
+            </>
           )}
         </CardContent>
       </Card>
