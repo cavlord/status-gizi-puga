@@ -58,19 +58,23 @@ export function VillageNutritionalStatus({ data, year }: VillageNutritionalStatu
     return `${day}/${month}/${year}`;
   };
 
-  // Group by village for pie chart
+  // Group by village for pie chart - count unique children per village
   const villageCountMap = new Map<string, Set<string>>();
   
   data.forEach(record => {
     const village = record['Desa/Kel'];
     const name = record.Nama;
     
-    if (!village || !name) return;
+    // Include all records with village name, even if child name is missing
+    if (!village || village.trim() === '') return;
     
     if (!villageCountMap.has(village)) {
       villageCountMap.set(village, new Set());
     }
-    villageCountMap.get(village)!.add(name);
+    
+    // Use name if available, otherwise use a unique identifier
+    const identifier = name && name.trim() !== '' ? name : `child_${record['Tanggal Pengukuran']}_${record['BB/TB']}`;
+    villageCountMap.get(village)!.add(identifier);
   });
 
   const villageChartData = Array.from(villageCountMap.entries())
@@ -83,12 +87,15 @@ export function VillageNutritionalStatus({ data, year }: VillageNutritionalStatu
 
   const totalChildren = Array.from(villageCountMap.values()).reduce((sum, set) => sum + set.size, 0);
 
-  // Group by nutritional status for table
+  // Group by nutritional status - include all villages
   const statusMap = new Map<string, ChildRecord[]>();
   
   data.forEach(record => {
     const status = record['BB/TB'];
-    if (!status) return;
+    const village = record['Desa/Kel'];
+    
+    // Include all records with valid status, regardless of village
+    if (!status || status.trim() === '') return;
     
     if (["Gizi Baik", "Gizi Kurang", "Gizi Buruk"].includes(status)) {
       if (!statusMap.has(status)) {
