@@ -340,7 +340,11 @@ const Dashboard = () => {
 
       {/* Village Nutritional Status Distribution */}
       <div>
-        <VillageNutritionalStatus data={mostRecentMonthRecords} year={selectedYear} />
+        <VillageNutritionalStatus 
+          yearData={filteredByYear} 
+          monthData={mostRecentMonthRecords} 
+          year={selectedYear} 
+        />
       </div>
 
       {/* Modal for Not Gaining Weight Children */}
