@@ -142,20 +142,38 @@ export function VillageNutritionalStatus({ yearData, monthData, year }: VillageN
           </p>
         </CardHeader>
         <CardContent className="p-4 md:p-6">
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={280} className="md:h-[300px]">
             <PieChart>
               <Pie
                 data={villageChartData}
                 cx="50%"
                 cy="50%"
-                innerRadius={60}
-                outerRadius={100}
+                innerRadius={50}
+                outerRadius={85}
                 fill="#8884d8"
                 dataKey="value"
                 paddingAngle={3}
                 animationBegin={0}
                 animationDuration={800}
-                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                label={({ name, percent, cx, cy, midAngle, innerRadius, outerRadius }) => {
+                  const RADIAN = Math.PI / 180;
+                  const radius = outerRadius + 25;
+                  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                  
+                  return (
+                    <text 
+                      x={x} 
+                      y={y} 
+                      fill="hsl(var(--foreground))" 
+                      textAnchor={x > cx ? 'start' : 'end'} 
+                      dominantBaseline="central"
+                      className="text-[9px] sm:text-[10px] md:text-xs font-medium"
+                    >
+                      {`${name}: ${(percent * 100).toFixed(0)}%`}
+                    </text>
+                  );
+                }}
               >
                 {villageChartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -169,7 +187,10 @@ export function VillageNutritionalStatus({ yearData, monthData, year }: VillageN
                   fontSize: '12px'
                 }}
               />
-              <Legend wrapperStyle={{ fontSize: '12px' }} />
+              <Legend 
+                wrapperStyle={{ fontSize: '10px' }}
+                iconSize={8}
+              />
             </PieChart>
           </ResponsiveContainer>
           
@@ -213,20 +234,38 @@ export function VillageNutritionalStatus({ yearData, monthData, year }: VillageN
           {/* Chart visualization */}
           {statusChartData.length > 0 && (
             <div className="mb-6">
-              <ResponsiveContainer width="100%" height={250}>
+              <ResponsiveContainer width="100%" height={300} className="md:h-[250px]">
                 <PieChart>
                   <Pie
                     data={statusChartData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={50}
-                    outerRadius={90}
+                    innerRadius={40}
+                    outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
                     paddingAngle={3}
                     animationBegin={0}
                     animationDuration={800}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent, cx, cy, midAngle, innerRadius, outerRadius }) => {
+                      const RADIAN = Math.PI / 180;
+                      const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                      const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                      const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                      
+                      return (
+                        <text 
+                          x={x} 
+                          y={y} 
+                          fill="white" 
+                          textAnchor={x > cx ? 'start' : 'end'} 
+                          dominantBaseline="central"
+                          className="text-[10px] sm:text-xs font-semibold"
+                        >
+                          {`${(percent * 100).toFixed(0)}%`}
+                        </text>
+                      );
+                    }}
                   >
                     {statusChartData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -240,7 +279,10 @@ export function VillageNutritionalStatus({ yearData, monthData, year }: VillageN
                       fontSize: '12px'
                     }}
                   />
-                  <Legend wrapperStyle={{ fontSize: '12px' }} />
+                  <Legend 
+                    wrapperStyle={{ fontSize: '11px' }}
+                    iconSize={10}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>

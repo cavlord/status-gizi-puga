@@ -120,18 +120,27 @@ const Dashboard = () => {
   const getMostRecentMonthRecords = (records: ChildRecord[]): ChildRecord[] => {
     if (records.length === 0) return [];
     
+    // Helper to parse DD/MM/YYYY date format
+    const parseDate = (dateStr: string): Date => {
+      if (dateStr.includes('/')) {
+        const [day, month, year] = dateStr.split('/').map(Number);
+        return new Date(year, month - 1, day);
+      }
+      return new Date(dateStr);
+    };
+    
     // Find the most recent date
     const mostRecentDate = records.reduce((latest, record) => {
-      const recordDate = new Date(record['Tanggal Pengukuran']);
+      const recordDate = parseDate(record['Tanggal Pengukuran']);
       return recordDate > latest ? recordDate : latest;
-    }, new Date(records[0]['Tanggal Pengukuran']));
+    }, parseDate(records[0]['Tanggal Pengukuran']));
     
     const mostRecentMonth = mostRecentDate.getMonth();
     const mostRecentYear = mostRecentDate.getFullYear();
     
     // Filter records from that month and get latest per child
     const monthRecords = records.filter(record => {
-      const recordDate = new Date(record['Tanggal Pengukuran']);
+      const recordDate = parseDate(record['Tanggal Pengukuran']);
       return recordDate.getMonth() === mostRecentMonth && 
              recordDate.getFullYear() === mostRecentYear;
     });
