@@ -1,31 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { decode as base64Decode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
-const GOOGLE_SHEETS_API_KEY = Deno.env.get("GOOGLE_SHEETS_API_KEY");
-const SPREADSHEET_ID = "1o-Lok3oWtmGXaN5Q9CeFj4ji9WFOINYW3M_RBNBUw60";
-const SHEET_NAME = "LOGIN";
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-// Function to write to Google Sheets using Apps Script Web App
-// For production, you should set up a Google Apps Script Web App
-async function appendToSheet(email: string, hashedPassword: string, role: string): Promise<boolean> {
-  // Using Google Sheets API v4 - requires OAuth or service account for write
-  // For now, we'll use a workaround with Apps Script
-  
-  console.log("Appending to sheet:", { email, role });
-  
-  // In production, replace this with your Apps Script Web App URL
-  // For demo purposes, we'll simulate success
-  // The actual implementation would be:
-  // const webAppUrl = Deno.env.get("GOOGLE_APPS_SCRIPT_URL");
-  // await fetch(webAppUrl, { method: 'POST', body: JSON.stringify({...}) });
-  
-  return true;
-}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -33,37 +16,40 @@ serve(async (req) => {
   }
 
   try {
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const { email, otp, token } = await req.json();
 
-    if (!email || !otp || !token) {
+    if (!email || !otp) {
       return new Response(
         JSON.stringify({ error: "Data verifikasi tidak lengkap" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Decode the pending registration data
-    let pendingData;
-    try {
-      const decoded = new TextDecoder().decode(base64Decode(token));
-      pendingData = JSON.parse(decoded);
-    } catch (e) {
+    // Check user in database
+    const { data: user, error: fetchError } = await supabase
+      .from('users')
+      .select('id, email, otp, otp_expiry, verified')
+      .eq('email', email)
+      .maybeSingle();
+
+    if (fetchError || !user) {
+      console.error("User fetch error:", fetchError);
       return new Response(
-        JSON.stringify({ error: "Token tidak valid" }),
+        JSON.stringify({ error: "Email tidak ditemukan" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Verify email matches
-    if (pendingData.email !== email) {
+    if (user.verified) {
       return new Response(
-        JSON.stringify({ error: "Email tidak cocok" }),
+        JSON.stringify({ error: "Email sudah terverifikasi. Silakan login." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     // Verify OTP
-    if (pendingData.otp !== otp) {
+    if (user.otp !== otp) {
       return new Response(
         JSON.stringify({ error: "Kode OTP salah" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -71,16 +57,44 @@ serve(async (req) => {
     }
 
     // Check expiry
-    if (new Date() > new Date(pendingData.expiry)) {
+    if (new Date() > new Date(user.otp_expiry)) {
       return new Response(
         JSON.stringify({ error: "Kode OTP sudah kadaluarsa. Silakan daftar ulang." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Append to Google Sheet
-    // Note: For production, implement proper Google Sheets write using service account
-    await appendToSheet(pendingData.email, pendingData.password, pendingData.role);
+    // Mark user as verified
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ 
+        verified: true, 
+        otp: null, 
+        otp_expiry: null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', user.id);
+
+    if (updateError) {
+      console.error("Update error:", updateError);
+      return new Response(
+        JSON.stringify({ error: "Gagal memverifikasi email" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Add default role
+    const { error: roleError } = await supabase
+      .from('user_roles')
+      .insert({
+        user_id: user.id,
+        role: 'user'
+      });
+
+    if (roleError) {
+      console.log("Role insert info:", roleError.message);
+      // Don't fail if role already exists
+    }
 
     console.log("User verified and registered:", email);
 

@@ -1,17 +1,17 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-const GOOGLE_SHEETS_API_KEY = Deno.env.get("GOOGLE_SHEETS_API_KEY");
-const SPREADSHEET_ID = "1o-Lok3oWtmGXaN5Q9CeFj4ji9WFOINYW3M_RBNBUw60";
-const SHEET_NAME = "LOGIN";
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Simple hash function using Web Crypto API (bcrypt-like approach)
+// Simple hash function using Web Crypto API
 async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(password + "posyandu_salt_2024");
@@ -88,6 +88,7 @@ serve(async (req) => {
   }
 
   try {
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const { email, password } = await req.json();
 
     // Validate input
@@ -116,22 +117,25 @@ serve(async (req) => {
     }
 
     // Check if email already exists and is verified
-    const checkUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_NAME}!A:E?key=${GOOGLE_SHEETS_API_KEY}`;
-    const checkResponse = await fetch(checkUrl);
-    const checkData = await checkResponse.json();
-    
-    console.log("Checking existing users, rows:", checkData.values?.length || 0);
-    
-    if (checkData.values) {
-      for (let i = 1; i < checkData.values.length; i++) {
-        const row = checkData.values[i];
-        if (row && row[0] === email && row[4] === 'yes') {
-          return new Response(
-            JSON.stringify({ error: "Email sudah terdaftar. Silakan login." }),
-            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-      }
+    const { data: existingUser, error: checkError } = await supabase
+      .from('users')
+      .select('id, verified')
+      .eq('email', email)
+      .maybeSingle();
+
+    if (checkError) {
+      console.error("Database check error:", checkError);
+      return new Response(
+        JSON.stringify({ error: "Gagal memeriksa email" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (existingUser && existingUser.verified) {
+      return new Response(
+        JSON.stringify({ error: "Email sudah terdaftar. Silakan login." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Hash password
@@ -139,9 +143,50 @@ serve(async (req) => {
 
     // Generate OTP
     const otp = generateOTP();
-    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
-    // Encode registration data for verification step
+    // Insert or update user in database
+    if (existingUser) {
+      // Update existing unverified user
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          password_hash: hashedPassword,
+          otp,
+          otp_expiry: otpExpiry,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingUser.id);
+
+      if (updateError) {
+        console.error("Update error:", updateError);
+        return new Response(
+          JSON.stringify({ error: "Gagal memperbarui data registrasi" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    } else {
+      // Insert new user
+      const { error: insertError } = await supabase
+        .from('users')
+        .insert({
+          email,
+          password_hash: hashedPassword,
+          otp,
+          otp_expiry: otpExpiry,
+          verified: false
+        });
+
+      if (insertError) {
+        console.error("Insert error:", insertError);
+        return new Response(
+          JSON.stringify({ error: "Gagal menyimpan data registrasi" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // Encode registration data for verification step (backward compatible)
     const pendingData = base64Encode(JSON.stringify({
       email,
       password: hashedPassword,
@@ -150,7 +195,7 @@ serve(async (req) => {
       role: 'user'
     }));
 
-    // Try to send OTP email, but don't fail if it doesn't work (for testing without verified domain)
+    // Try to send OTP email
     try {
       await sendOTPEmail(email, otp);
       console.log("OTP email sent successfully to:", email);
@@ -165,8 +210,7 @@ serve(async (req) => {
         success: true, 
         message: "Kode verifikasi telah dikirim ke email Anda",
         token: pendingData,
-        // Include OTP in response for testing only (remove in production)
-        testOtp: otp
+        testOtp: otp // Remove in production
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
