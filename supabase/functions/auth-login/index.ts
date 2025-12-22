@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const GOOGLE_SHEETS_API_KEY = Deno.env.get("GOOGLE_SHEETS_API_KEY");
-const RECAPTCHA_SECRET_KEY = Deno.env.get("RECAPTCHA_SECRET_KEY");
 const SPREADSHEET_ID = "1o-Lok3oWtmGXaN5Q9CeFj4ji9WFOINYW3M_RBNBUw60";
 const SHEET_NAME = "LOGIN";
 
@@ -16,44 +15,7 @@ async function hashPassword(password: string): Promise<string> {
   const data = encoder.encode(password + "posyandu_salt_2024");
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-// Verify reCAPTCHA
-async function verifyCaptcha(token: string): Promise<boolean> {
-  const testSecret = "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe";
-  const primarySecret = (RECAPTCHA_SECRET_KEY ?? "").trim();
-
-  const attempt = async (secret: string) => {
-    const body = `secret=${encodeURIComponent(secret)}&response=${encodeURIComponent(token)}`;
-    const resp = await fetch("https://www.google.com/recaptcha/api/siteverify", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body,
-    });
-    const data = await resp.json();
-    console.log("reCAPTCHA verification result:", data);
-    return data as { success?: boolean; [k: string]: unknown };
-  };
-
-  try {
-    // 1) Try configured secret key first (if any)
-    if (primarySecret) {
-      const data = await attempt(primarySecret);
-      if (data.success === true) return true;
-
-      // If keys misconfigured, retry with Google test secret (helps dev/testing)
-      const codes = (data["error-codes"] as string[] | undefined) ?? [];
-      if (!codes.includes("invalid-keys")) return false;
-    }
-
-    // 2) Fallback to Google test secret
-    const testData = await attempt(testSecret);
-    return testData.success === true;
-  } catch (error) {
-    console.error("reCAPTCHA verification error:", error);
-    return false;
-  }
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 serve(async (req) => {
@@ -62,30 +24,14 @@ serve(async (req) => {
   }
 
   try {
-    const { email, password, captchaToken } = await req.json();
+    const { email, password } = await req.json();
 
     // Validate input
     if (!email || !password) {
-      return new Response(
-        JSON.stringify({ error: "Email dan password wajib diisi" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (!captchaToken) {
-      return new Response(
-        JSON.stringify({ error: "Silakan selesaikan verifikasi CAPTCHA" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Verify CAPTCHA
-    const captchaValid = await verifyCaptcha(captchaToken);
-    if (!captchaValid) {
-      return new Response(
-        JSON.stringify({ error: "Verifikasi CAPTCHA gagal. Silakan coba lagi." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Email dan password wajib diisi" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Hash the input password
@@ -94,62 +40,66 @@ serve(async (req) => {
     // Fetch user data from Google Sheets
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_NAME}!A:E?key=${GOOGLE_SHEETS_API_KEY}`;
     const response = await fetch(url);
-    
+
     if (!response.ok) {
       console.error("Google Sheets API error:", await response.text());
-      return new Response(
-        JSON.stringify({ error: "Gagal mengakses data. Silakan coba lagi." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Gagal mengakses data. Silakan coba lagi." }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const data = await response.json();
     console.log("Fetched user data, rows:", data.values?.length || 0);
 
     if (!data.values || data.values.length <= 1) {
-      return new Response(
-        JSON.stringify({ error: "Email atau password salah" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Email atau password salah" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Find user (skip header row)
     // Expected columns: email, password, role, otp_expiry, verified
-    let foundUser = null;
+    let foundUser: { email: string; password: string; role: string; verified: boolean } | null = null;
+
     for (let i = 1; i < data.values.length; i++) {
       const row = data.values[i];
       if (row && row[0] === email) {
         foundUser = {
           email: row[0],
           password: row[1],
-          role: row[2] || 'user',
-          verified: row[4] === 'yes'
+          role: row[2] || "user",
+          verified: row[4] === "yes",
         };
         break;
       }
     }
 
     if (!foundUser) {
-      return new Response(
-        JSON.stringify({ error: "Email atau password salah" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Email atau password salah" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Check if verified
     if (!foundUser.verified) {
       return new Response(
         JSON.stringify({ error: "Email belum diverifikasi. Silakan verifikasi email Anda terlebih dahulu." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
       );
     }
 
     // Verify password
     if (foundUser.password !== hashedPassword) {
-      return new Response(
-        JSON.stringify({ error: "Email atau password salah" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Email atau password salah" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     console.log("User logged in successfully:", email);
@@ -160,17 +110,19 @@ serve(async (req) => {
         user: {
           email: foundUser.email,
           role: foundUser.role,
-          verified: foundUser.verified
-        }
+          verified: foundUser.verified,
+        },
       }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
     );
-
   } catch (error: any) {
     console.error("Login error:", error);
-    return new Response(
-      JSON.stringify({ error: error.message || "Terjadi kesalahan saat login" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: error.message || "Terjadi kesalahan saat login" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
