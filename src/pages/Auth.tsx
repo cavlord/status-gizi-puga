@@ -9,10 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Loader2, ShieldCheck, RefreshCw } from 'lucide-react';
-import ReCAPTCHA from 'react-google-recaptcha';
-
-// Replace with your reCAPTCHA site key
-const RECAPTCHA_SITE_KEY = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'; // Test key - replace with real key
 
 type AuthMode = 'login' | 'register' | 'verify';
 
@@ -25,7 +21,6 @@ const AuthPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [pendingEmail, setPendingEmail] = useState('');
   const [pendingToken, setPendingToken] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -59,17 +54,8 @@ const AuthPage = () => {
   }, [resendCooldown]);
 
   const handleLogin = async (data: LoginFormData) => {
-    if (!captchaToken) {
-      toast({
-        title: 'Error',
-        description: 'Silakan selesaikan verifikasi CAPTCHA',
-        variant: 'destructive',
-      });
-      return;
-    }
-
     setIsLoading(true);
-    const result = await login(data.email, data.password, captchaToken);
+    const result = await login(data.email, data.password);
     setIsLoading(false);
 
     if (result.success) {
@@ -84,7 +70,6 @@ const AuthPage = () => {
         description: result.error || 'Terjadi kesalahan',
         variant: 'destructive',
       });
-      setCaptchaToken(null);
     }
   };
 
@@ -188,7 +173,6 @@ const AuthPage = () => {
 
   const switchMode = (newMode: AuthMode) => {
     setMode(newMode);
-    setCaptchaToken(null);
     loginForm.reset();
     registerForm.reset();
     otpForm.reset();
@@ -283,17 +267,10 @@ const AuthPage = () => {
                 )}
               </div>
 
-              <div className="flex justify-center">
-                <ReCAPTCHA
-                  sitekey={RECAPTCHA_SITE_KEY}
-                  onChange={(token) => setCaptchaToken(token)}
-                  theme="dark"
-                />
-              </div>
 
               <Button
                 type="submit"
-                disabled={isLoading || !captchaToken}
+                disabled={isLoading}
                 className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-purple-500/40 disabled:opacity-50 disabled:hover:scale-100"
               >
                 {isLoading ? (
