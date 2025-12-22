@@ -1,8 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const GOOGLE_SHEETS_API_KEY = Deno.env.get("GOOGLE_SHEETS_API_KEY");
-const SPREADSHEET_ID = "1o-Lok3oWtmGXaN5Q9CeFj4ji9WFOINYW3M_RBNBUw60";
-const SHEET_NAME = "LOGIN";
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -24,6 +24,7 @@ serve(async (req) => {
   }
 
   try {
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const { email, password } = await req.json();
 
     // Validate input
@@ -37,46 +38,22 @@ serve(async (req) => {
     // Hash the input password
     const hashedPassword = await hashPassword(password);
 
-    // Fetch user data from Google Sheets
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_NAME}!A:E?key=${GOOGLE_SHEETS_API_KEY}`;
-    const response = await fetch(url);
+    // Fetch user from database
+    const { data: user, error: fetchError } = await supabase
+      .from('users')
+      .select('id, email, password_hash, verified')
+      .eq('email', email)
+      .maybeSingle();
 
-    if (!response.ok) {
-      console.error("Google Sheets API error:", await response.text());
+    if (fetchError) {
+      console.error("Database fetch error:", fetchError);
       return new Response(JSON.stringify({ error: "Gagal mengakses data. Silakan coba lagi." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const data = await response.json();
-    console.log("Fetched user data, rows:", data.values?.length || 0);
-
-    if (!data.values || data.values.length <= 1) {
-      return new Response(JSON.stringify({ error: "Email atau password salah" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Find user (skip header row)
-    // Expected columns: email, password, role, otp_expiry, verified
-    let foundUser: { email: string; password: string; role: string; verified: boolean } | null = null;
-
-    for (let i = 1; i < data.values.length; i++) {
-      const row = data.values[i];
-      if (row && row[0] === email) {
-        foundUser = {
-          email: row[0],
-          password: row[1],
-          role: row[2] || "user",
-          verified: row[4] === "yes",
-        };
-        break;
-      }
-    }
-
-    if (!foundUser) {
+    if (!user) {
       return new Response(JSON.stringify({ error: "Email atau password salah" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -84,7 +61,7 @@ serve(async (req) => {
     }
 
     // Check if verified
-    if (!foundUser.verified) {
+    if (!user.verified) {
       return new Response(
         JSON.stringify({ error: "Email belum diverifikasi. Silakan verifikasi email Anda terlebih dahulu." }),
         {
@@ -95,12 +72,21 @@ serve(async (req) => {
     }
 
     // Verify password
-    if (foundUser.password !== hashedPassword) {
+    if (user.password_hash !== hashedPassword) {
       return new Response(JSON.stringify({ error: "Email atau password salah" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Fetch user role
+    const { data: userRole, error: roleError } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    const role = userRole?.role || 'user';
 
     console.log("User logged in successfully:", email);
 
@@ -108,9 +94,10 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         user: {
-          email: foundUser.email,
-          role: foundUser.role,
-          verified: foundUser.verified,
+          id: user.id,
+          email: user.email,
+          role: role,
+          verified: user.verified,
         },
       }),
       {
