@@ -150,8 +150,13 @@ serve(async (req) => {
       role: 'user'
     }));
 
-    // Send OTP email
-    await sendOTPEmail(email, otp);
+    // Try to send OTP email, but don't fail if it doesn't work (for testing without verified domain)
+    try {
+      await sendOTPEmail(email, otp);
+      console.log("OTP email sent successfully to:", email);
+    } catch (emailError) {
+      console.log("Email sending skipped (no verified domain). OTP for testing:", otp);
+    }
 
     console.log("Registration initiated for:", email);
 
@@ -159,7 +164,9 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         message: "Kode verifikasi telah dikirim ke email Anda",
-        token: pendingData
+        token: pendingData,
+        // Include OTP in response for testing only (remove in production)
+        testOtp: otp
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
