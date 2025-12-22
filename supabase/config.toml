@@ -1,1 +1,13 @@
 project_id = "ystpkgdmhraxpyaumoug"
+
+[functions.auth-register]
+verify_jwt = false
+
+[functions.auth-login]
+verify_jwt = false
+
+[functions.auth-verify-otp]
+verify_jwt = false
+
+[functions.auth-resend-otp]
+verify_jwt = false

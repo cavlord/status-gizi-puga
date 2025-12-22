@@ -1,7 +1,9 @@
 import { ReactNode } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Database, BarChart3, Settings, Menu } from "lucide-react";
+import { LayoutDashboard, Database, BarChart3, Settings, Menu, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
@@ -25,6 +27,7 @@ const navigation = [
 function AppSidebar() {
   const location = useLocation();
   const { state, isMobile, setOpenMobile } = useSidebar();
+  const { user, logout } = useAuth();
   const isCollapsed = state === "collapsed";
 
   const handleNavClick = () => {
@@ -85,6 +88,24 @@ function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* User info and logout */}
+        <div className="mt-auto p-4 border-t border-sidebar-border">
+          {!isCollapsed && user && (
+            <div className="mb-3">
+              <p className="text-xs text-sidebar-foreground/60">Masuk sebagai</p>
+              <p className="text-sm text-sidebar-foreground truncate">{user.email}</p>
+            </div>
+          )}
+          <Button
+            variant="ghost"
+            onClick={logout}
+            className="w-full justify-start gap-3 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          >
+            <LogOut className="h-5 w-5" />
+            {!isCollapsed && <span>Keluar</span>}
+          </Button>
+        </div>
       </SidebarContent>
     </Sidebar>
   );
