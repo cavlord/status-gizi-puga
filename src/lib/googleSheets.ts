@@ -1,3 +1,5 @@
+import { supabase } from "@/integrations/supabase/client";
+
 const SPREADSHEET_ID = '1o-Lok3oWtmGXaN5Q9CeFj4ji9WFOINYW3M_RBNBUw60';
 const SHEET_NAME = 'RECORDS';
 
@@ -42,25 +44,80 @@ export interface ChildRecord {
   'status desa': string;
 }
 
-export async function fetchSheetData(userEmail?: string): Promise<ChildRecord[]> {
+// Map database column names to ChildRecord field names
+function mapDbToRecord(dbRecord: any): ChildRecord {
+  return {
+    NIK: dbRecord.nik || '',
+    Nama: dbRecord.nama || '',
+    JK: dbRecord.jk || '',
+    'Tgl Lahir': dbRecord.tgl_lahir || '',
+    'BB Lahir': dbRecord.bb_lahir || '',
+    'TB Lahir': dbRecord.tb_lahir || '',
+    'Nama Ortu': dbRecord.nama_ortu || '',
+    Prov: dbRecord.prov || '',
+    'Kab/Kota': dbRecord.kab_kota || '',
+    Kec: dbRecord.kec || '',
+    Pukesmas: dbRecord.puskesmas || '',
+    'Desa/Kel': dbRecord.desa_kel || '',
+    Posyandu: dbRecord.posyandu || '',
+    RT: dbRecord.rt || '',
+    RW: dbRecord.rw || '',
+    Alamat: dbRecord.alamat || '',
+    'Usia Saat Ukur': dbRecord.usia_saat_ukur || '',
+    'Tanggal Pengukuran': dbRecord.tanggal_pengukuran || '',
+    'Bulan Pengukuran': dbRecord.bulan_pengukuran || '',
+    'Status Bulan': dbRecord.status_bulan || '',
+    'status tahun': dbRecord.status_tahun || '',
+    Berat: dbRecord.berat || '',
+    Tinggi: dbRecord.tinggi || '',
+    'Cara Ukur': dbRecord.cara_ukur || '',
+    LiLA: dbRecord.lila || '',
+    'BB/U': dbRecord.bb_u || '',
+    'ZS BB/U': dbRecord.zs_bb_u || '',
+    'TB/U': dbRecord.tb_u || '',
+    'ZS TB/U': dbRecord.zs_tb_u || '',
+    'BB/TB': dbRecord.bb_tb || '',
+    'ZS BB/TB': dbRecord.zs_bb_tb || '',
+    'Naik Berat Badan': dbRecord.naik_berat_badan || '',
+    'PMT Diterima (kg)': dbRecord.pmt_diterima || '',
+    'Jml Vit A': dbRecord.jml_vit_a || '',
+    KPSP: dbRecord.kpsp || '',
+    KIA: dbRecord.kia || '',
+    'Detail Status': dbRecord.detail_status || '',
+    'status desa': dbRecord.status_desa || '',
+  };
+}
+
+export async function fetchSheetData(): Promise<ChildRecord[]> {
+  try {
+    // Fetch from database instead of Google Sheets
+    const { data, error } = await supabase
+      .from('child_records')
+      .select('*');
+    
+    if (error) {
+      console.error('Error fetching from database:', error);
+      throw new Error('Failed to fetch data from database');
+    }
+    
+    if (!data || data.length === 0) {
+      return [];
+    }
+    
+    // Map database records to ChildRecord format
+    return data.map(mapDbToRecord);
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    throw error;
+  }
+}
+
+// Import data from Google Sheets (admin only)
+export async function importFromGoogleSheets(userEmail: string): Promise<{ success: boolean; message: string; count?: number }> {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   
-  // Get user email from localStorage if not provided
-  const email = userEmail || (() => {
-    try {
-      const authData = localStorage.getItem('auth_user');
-      if (authData) {
-        const parsed = JSON.parse(authData);
-        return parsed.email;
-      }
-    } catch {
-      // Ignore parsing errors
-    }
-    return undefined;
-  })();
-  
-  const url = `${supabaseUrl}/functions/v1/google-sheets-proxy`;
+  const url = `${supabaseUrl}/functions/v1/import-from-sheets`;
   
   try {
     const response = await fetch(url, {
@@ -72,39 +129,20 @@ export async function fetchSheetData(userEmail?: string): Promise<ChildRecord[]>
       body: JSON.stringify({
         spreadsheetId: SPREADSHEET_ID,
         sheetName: SHEET_NAME,
-        email,
+        email: userEmail,
       }),
     });
     
+    const result = await response.json();
+    
     if (!response.ok) {
-      throw new Error('Failed to fetch data from Google Sheets');
+      return { success: false, message: result.error || 'Import failed' };
     }
     
-    const data = await response.json();
-    const rows = data.values;
-    
-    if (!rows || rows.length === 0) {
-      return [];
-    }
-    
-    const headers = rows[0];
-    const records: ChildRecord[] = [];
-    
-    for (let i = 1; i < rows.length; i++) {
-      const row = rows[i];
-      const record: any = {};
-      
-      headers.forEach((header: string, index: number) => {
-        record[header] = row[index] || '';
-      });
-      
-      records.push(record as ChildRecord);
-    }
-    
-    return records;
+    return { success: true, message: result.message, count: result.count };
   } catch (error) {
-    console.error('Error fetching sheet data:', error);
-    throw error;
+    console.error('Error importing from Google Sheets:', error);
+    return { success: false, message: 'Failed to connect to import service' };
   }
 }
 
