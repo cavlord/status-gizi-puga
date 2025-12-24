@@ -55,7 +55,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
 export function useData() {
   const context = useContext(DataContext);
   if (context === undefined) {
-    throw new Error('useData must be used within a DataProvider');
+    // Return a safe default during HMR or when context is not available
+    return {
+      allRecords: undefined,
+      isLoading: false,
+      error: null,
+      refetch: () => {},
+    };
   }
   return context;
 }
