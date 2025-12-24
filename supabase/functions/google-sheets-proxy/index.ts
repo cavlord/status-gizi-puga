@@ -5,9 +5,9 @@ const GOOGLE_SHEETS_API_KEY = Deno.env.get("GOOGLE_SHEETS_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-// Whitelist of allowed spreadsheet IDs (add your spreadsheet ID here)
+// Whitelist of allowed spreadsheet IDs
 const ALLOWED_SPREADSHEET_IDS = [
-  "1CxMzBQ6b4gg1Cw5D5fz_b-8m2P7lZv-pB2e8vYS2s-s", // Example ID - update with actual production spreadsheet
+  "1o-Lok3oWtmGXaN5Q9CeFj4ji9WFOINYW3M_RBNBUw60", // Production spreadsheet
 ];
 
 const corsHeaders = {
