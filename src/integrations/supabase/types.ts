@@ -14,6 +14,138 @@ export type Database = {
   }
   public: {
     Tables: {
+      child_records: {
+        Row: {
+          alamat: string | null
+          bb_lahir: string | null
+          bb_tb: string | null
+          bb_u: string | null
+          berat: string | null
+          bulan_pengukuran: string | null
+          cara_ukur: string | null
+          created_at: string
+          desa_kel: string | null
+          detail_status: string | null
+          id: string
+          jk: string | null
+          jml_vit_a: string | null
+          kab_kota: string | null
+          kec: string | null
+          kia: string | null
+          kpsp: string | null
+          lila: string | null
+          naik_berat_badan: string | null
+          nama: string
+          nama_ortu: string | null
+          nik: string
+          pmt_diterima: string | null
+          posyandu: string | null
+          prov: string | null
+          puskesmas: string | null
+          rt: string | null
+          rw: string | null
+          status_bulan: string | null
+          status_desa: string | null
+          status_tahun: string | null
+          tanggal_pengukuran: string | null
+          tb_lahir: string | null
+          tb_u: string | null
+          tgl_lahir: string | null
+          tinggi: string | null
+          updated_at: string
+          usia_saat_ukur: string | null
+          zs_bb_tb: string | null
+          zs_bb_u: string | null
+          zs_tb_u: string | null
+        }
+        Insert: {
+          alamat?: string | null
+          bb_lahir?: string | null
+          bb_tb?: string | null
+          bb_u?: string | null
+          berat?: string | null
+          bulan_pengukuran?: string | null
+          cara_ukur?: string | null
+          created_at?: string
+          desa_kel?: string | null
+          detail_status?: string | null
+          id?: string
+          jk?: string | null
+          jml_vit_a?: string | null
+          kab_kota?: string | null
+          kec?: string | null
+          kia?: string | null
+          kpsp?: string | null
+          lila?: string | null
+          naik_berat_badan?: string | null
+          nama: string
+          nama_ortu?: string | null
+          nik: string
+          pmt_diterima?: string | null
+          posyandu?: string | null
+          prov?: string | null
+          puskesmas?: string | null
+          rt?: string | null
+          rw?: string | null
+          status_bulan?: string | null
+          status_desa?: string | null
+          status_tahun?: string | null
+          tanggal_pengukuran?: string | null
+          tb_lahir?: string | null
+          tb_u?: string | null
+          tgl_lahir?: string | null
+          tinggi?: string | null
+          updated_at?: string
+          usia_saat_ukur?: string | null
+          zs_bb_tb?: string | null
+          zs_bb_u?: string | null
+          zs_tb_u?: string | null
+        }
+        Update: {
+          alamat?: string | null
+          bb_lahir?: string | null
+          bb_tb?: string | null
+          bb_u?: string | null
+          berat?: string | null
+          bulan_pengukuran?: string | null
+          cara_ukur?: string | null
+          created_at?: string
+          desa_kel?: string | null
+          detail_status?: string | null
+          id?: string
+          jk?: string | null
+          jml_vit_a?: string | null
+          kab_kota?: string | null
+          kec?: string | null
+          kia?: string | null
+          kpsp?: string | null
+          lila?: string | null
+          naik_berat_badan?: string | null
+          nama?: string
+          nama_ortu?: string | null
+          nik?: string
+          pmt_diterima?: string | null
+          posyandu?: string | null
+          prov?: string | null
+          puskesmas?: string | null
+          rt?: string | null
+          rw?: string | null
+          status_bulan?: string | null
+          status_desa?: string | null
+          status_tahun?: string | null
+          tanggal_pengukuran?: string | null
+          tb_lahir?: string | null
+          tb_u?: string | null
+          tgl_lahir?: string | null
+          tinggi?: string | null
+          updated_at?: string
+          usia_saat_ukur?: string | null
+          zs_bb_tb?: string | null
+          zs_bb_u?: string | null
+          zs_tb_u?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string

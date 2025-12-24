@@ -1,5 +1,5 @@
 import { createContext, useContext, ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchSheetData, ChildRecord } from "@/lib/googleSheets";
 
 export { type ChildRecord };
@@ -8,11 +8,14 @@ interface DataContextType {
   allRecords: ChildRecord[] | undefined;
   isLoading: boolean;
   error: Error | null;
+  refetch: () => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export function DataProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
+  
   // Get user email from localStorage to determine if user is authenticated
   const getUserEmail = (): string | undefined => {
     try {
@@ -29,16 +32,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const userEmail = getUserEmail();
 
-  const { data: allRecords, isLoading, error } = useQuery<ChildRecord[]>({
-    queryKey: ['sheetData', userEmail],
-    queryFn: () => fetchSheetData(userEmail),
+  const { data: allRecords, isLoading, error, refetch } = useQuery<ChildRecord[]>({
+    queryKey: ['sheetData'],
+    queryFn: () => fetchSheetData(),
     staleTime: 30 * 60 * 1000, // 30 minutes
     gcTime: 60 * 60 * 1000, // 1 hour
     enabled: !!userEmail, // Only fetch when user is authenticated
   });
 
+  const handleRefetch = () => {
+    queryClient.invalidateQueries({ queryKey: ['sheetData'] });
+    refetch();
+  };
+
   return (
-    <DataContext.Provider value={{ allRecords, isLoading: !!userEmail && isLoading, error: error as Error | null }}>
+    <DataContext.Provider value={{ allRecords, isLoading: !!userEmail && isLoading, error: error as Error | null, refetch: handleRefetch }}>
       {children}
     </DataContext.Provider>
   );

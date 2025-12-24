@@ -1,20 +1,70 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings as SettingsIcon, RefreshCw, Info } from "lucide-react";
+import { Settings as SettingsIcon, RefreshCw, Info, Upload, Database, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { importFromGoogleSheets } from "@/lib/googleSheets";
+import { useData } from "@/contexts/DataContext";
 
 const Settings = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { refetch } = useData();
+  const [isImporting, setIsImporting] = useState(false);
 
   const handleRefreshData = () => {
     queryClient.invalidateQueries({ queryKey: ['sheetData'] });
+    refetch();
     toast({
       title: "Data Diperbarui",
-      description: "Data berhasil dimuat ulang dari Google Sheets",
+      description: "Data berhasil dimuat ulang dari database",
     });
   };
+
+  const handleImportFromSheets = async () => {
+    if (!user?.email) {
+      toast({
+        title: "Error",
+        description: "Anda harus login untuk melakukan import",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      const result = await importFromGoogleSheets(user.email);
+      
+      if (result.success) {
+        toast({
+          title: "Import Berhasil",
+          description: result.message,
+        });
+        // Refresh data after import
+        queryClient.invalidateQueries({ queryKey: ['sheetData'] });
+        refetch();
+      } else {
+        toast({
+          title: "Import Gagal",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Terjadi kesalahan saat import data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const isAdmin = user?.role === 'admin';
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -33,11 +83,11 @@ const Settings = () => {
       <Card className="border-0 shadow-lg">
         <CardHeader>
           <CardTitle className="text-xl font-heading flex items-center gap-2">
-            <RefreshCw className="h-5 w-5 text-primary" />
+            <Database className="h-5 w-5 text-primary" />
             Manajemen Data
           </CardTitle>
           <CardDescription>
-            Kelola dan perbarui data dari Google Sheets
+            Kelola data dari database Lovable Cloud
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -45,7 +95,7 @@ const Settings = () => {
             <div>
               <h3 className="font-medium">Perbarui Data</h3>
               <p className="text-sm text-muted-foreground">
-                Muat ulang data terbaru dari Google Sheets
+                Muat ulang data terbaru dari database
               </p>
             </div>
             <Button onClick={handleRefreshData} className="gap-2">
@@ -53,6 +103,38 @@ const Settings = () => {
               Refresh Data
             </Button>
           </div>
+
+          {isAdmin && (
+            <div className="flex items-center justify-between p-4 bg-gradient-to-br from-primary/10 to-accent/10 rounded-lg border border-primary/20">
+              <div>
+                <h3 className="font-medium flex items-center gap-2">
+                  <Upload className="h-4 w-4 text-primary" />
+                  Import dari Google Sheets
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Import data terbaru dari Google Sheets ke database (Admin only)
+                </p>
+              </div>
+              <Button 
+                onClick={handleImportFromSheets} 
+                className="gap-2"
+                disabled={isImporting}
+                variant="default"
+              >
+                {isImporting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Importing...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-4 w-4" />
+                    Import Data
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -84,7 +166,7 @@ const Settings = () => {
             <div className="p-4 bg-muted/50 rounded-lg">
               <h3 className="font-medium mb-2">Sumber Data</h3>
               <p className="text-sm text-muted-foreground">
-                Google Sheets (Auto-sync)
+                Database Lovable Cloud
               </p>
             </div>
             <div className="p-4 bg-muted/50 rounded-lg">
@@ -102,9 +184,10 @@ const Settings = () => {
             </h3>
             <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
               <li>Data balita yang ditampilkan hanya untuk usia di bawah 5 tahun</li>
-              <li>Data diperbarui secara otomatis dari Google Sheets</li>
+              <li>Data disimpan di database Lovable Cloud yang aman</li>
               <li>Gunakan filter tahun, desa, dan bulan untuk analisis spesifik</li>
               <li>Klik pada kartu status gizi untuk melihat detail anak per kategori</li>
+              {isAdmin && <li>Admin dapat mengimport data terbaru dari Google Sheets</li>}
             </ul>
           </div>
         </CardContent>
