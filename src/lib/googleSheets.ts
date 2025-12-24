@@ -42,9 +42,23 @@ export interface ChildRecord {
   'status desa': string;
 }
 
-export async function fetchSheetData(): Promise<ChildRecord[]> {
+export async function fetchSheetData(userEmail?: string): Promise<ChildRecord[]> {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  
+  // Get user email from localStorage if not provided
+  const email = userEmail || (() => {
+    try {
+      const authData = localStorage.getItem('auth_user');
+      if (authData) {
+        const parsed = JSON.parse(authData);
+        return parsed.email;
+      }
+    } catch {
+      // Ignore parsing errors
+    }
+    return undefined;
+  })();
   
   const url = `${supabaseUrl}/functions/v1/google-sheets-proxy`;
   
@@ -58,6 +72,7 @@ export async function fetchSheetData(): Promise<ChildRecord[]> {
       body: JSON.stringify({
         spreadsheetId: SPREADSHEET_ID,
         sheetName: SHEET_NAME,
+        email,
       }),
     });
     
