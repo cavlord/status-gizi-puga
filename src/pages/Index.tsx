@@ -30,7 +30,7 @@ const Index = () => {
 
   const { data: allRecords, isLoading, error } = useQuery({
     queryKey: ['sheetData'],
-    queryFn: fetchSheetData,
+    queryFn: () => fetchSheetData(),
     staleTime: 5 * 60 * 1000,
   });
 

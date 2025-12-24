@@ -13,9 +13,9 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export function DataProvider({ children }: { children: ReactNode }) {
-  const { data: allRecords, isLoading, error } = useQuery({
+  const { data: allRecords, isLoading, error } = useQuery<ChildRecord[]>({
     queryKey: ['sheetData'],
-    queryFn: fetchSheetData,
+    queryFn: () => fetchSheetData(),
     staleTime: 30 * 60 * 1000, // 30 minutes
     gcTime: 60 * 60 * 1000, // 1 hour
   });
