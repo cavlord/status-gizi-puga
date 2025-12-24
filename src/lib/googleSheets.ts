@@ -1,4 +1,3 @@
-const API_KEY = 'AIzaSyBNkFJW0WOXOd2xFfsllmO-tdrXANMZjkA';
 const SPREADSHEET_ID = '1o-Lok3oWtmGXaN5Q9CeFj4ji9WFOINYW3M_RBNBUw60';
 const SHEET_NAME = 'RECORDS';
 
@@ -44,10 +43,24 @@ export interface ChildRecord {
 }
 
 export async function fetchSheetData(): Promise<ChildRecord[]> {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_NAME}?key=${API_KEY}`;
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  
+  const url = `${supabaseUrl}/functions/v1/google-sheets-proxy`;
   
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseKey}`,
+      },
+      body: JSON.stringify({
+        spreadsheetId: SPREADSHEET_ID,
+        sheetName: SHEET_NAME,
+      }),
+    });
+    
     if (!response.ok) {
       throw new Error('Failed to fetch data from Google Sheets');
     }
