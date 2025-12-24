@@ -34,7 +34,7 @@ serve(async (req) => {
     // Check user exists and is not verified
     const { data: user, error: fetchError } = await supabase
       .from('users')
-      .select('id, email, password_hash, verified')
+      .select('id, email, verified')
       .eq('email', email)
       .maybeSingle();
 
@@ -77,8 +77,6 @@ serve(async (req) => {
     // Create token for backward compatibility
     const pendingData = base64Encode(JSON.stringify({
       email,
-      password: user.password_hash,
-      otp,
       expiry: otpExpiry,
       role: 'user'
     }));
@@ -132,20 +130,21 @@ serve(async (req) => {
       });
 
       if (!response.ok) {
-        console.log("Email sending skipped. OTP for testing:", otp);
+        console.log("Email sending failed");
+        // Don't expose OTP - email must work for production
       } else {
         console.log("New OTP sent to:", email);
       }
     } catch (emailError) {
-      console.log("Email sending skipped. OTP for testing:", otp);
+      console.log("Email sending failed:", emailError);
+      // Don't expose OTP - email must work for production
     }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: "Kode verifikasi baru telah dikirim",
-        token: pendingData,
-        testOtp: otp // Remove in production
+        token: pendingData
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

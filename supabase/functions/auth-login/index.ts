@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -8,15 +9,6 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-// Hash function matching the register function
-async function hashPassword(password: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password + "posyandu_salt_2024");
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -34,9 +26,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    // Hash the input password
-    const hashedPassword = await hashPassword(password);
 
     // Fetch user from database
     const { data: user, error: fetchError } = await supabase
@@ -71,8 +60,10 @@ serve(async (req) => {
       );
     }
 
-    // Verify password
-    if (user.password_hash !== hashedPassword) {
+    // Verify password using bcrypt
+    const isValidPassword = await bcrypt.compare(password, user.password_hash);
+    
+    if (!isValidPassword) {
       return new Response(JSON.stringify({ error: "Email atau password salah" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

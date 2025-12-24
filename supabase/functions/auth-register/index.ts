@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
+import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -10,15 +11,6 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-// Simple hash function using Web Crypto API
-async function hashPassword(password: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password + "posyandu_salt_2024");
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
 
 // Generate 6-digit OTP
 function generateOTP(): string {
@@ -138,8 +130,8 @@ serve(async (req) => {
       );
     }
 
-    // Hash password
-    const hashedPassword = await hashPassword(password);
+    // Hash password using bcrypt (secure password hashing)
+    const hashedPassword = await bcrypt.hash(password);
 
     // Generate OTP
     const otp = generateOTP();
@@ -189,8 +181,6 @@ serve(async (req) => {
     // Encode registration data for verification step (backward compatible)
     const pendingData = base64Encode(JSON.stringify({
       email,
-      password: hashedPassword,
-      otp,
       expiry: otpExpiry,
       role: 'user'
     }));
@@ -200,7 +190,8 @@ serve(async (req) => {
       await sendOTPEmail(email, otp);
       console.log("OTP email sent successfully to:", email);
     } catch (emailError) {
-      console.log("Email sending skipped (no verified domain). OTP for testing:", otp);
+      console.log("Email sending failed:", emailError);
+      // Don't expose OTP - email must work for production
     }
 
     console.log("Registration initiated for:", email);
@@ -209,8 +200,7 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         message: "Kode verifikasi telah dikirim ke email Anda",
-        token: pendingData,
-        testOtp: otp // Remove in production
+        token: pendingData
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
