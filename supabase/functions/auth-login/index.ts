@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+import { compareSync } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -60,8 +60,8 @@ serve(async (req) => {
       );
     }
 
-    // Verify password using bcrypt
-    const isValidPassword = await bcrypt.compare(password, user.password_hash);
+    // Verify password using bcrypt (sync version for Edge Functions)
+    const isValidPassword = compareSync(password, user.password_hash);
     
     if (!isValidPassword) {
       return new Response(JSON.stringify({ error: "Email atau password salah" }), {
