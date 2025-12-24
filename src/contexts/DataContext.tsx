@@ -2,6 +2,8 @@ import { createContext, useContext, ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchSheetData, ChildRecord } from "@/lib/googleSheets";
 
+export { type ChildRecord };
+
 interface DataContextType {
   allRecords: ChildRecord[] | undefined;
   isLoading: boolean;
