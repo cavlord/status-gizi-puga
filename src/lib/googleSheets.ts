@@ -150,11 +150,11 @@ export function getUniqueYears(records: ChildRecord[]): string[] {
   const years = new Set<string>();
   records.forEach(record => {
     if (record['Tanggal Pengukuran']) {
-      // Parse date in MM/DD/YYYY format
+      // Parse date in DD/MM/YYYY format
       const dateParts = record['Tanggal Pengukuran'].split('/');
       if (dateParts.length === 3) {
-        const year = dateParts[2]; // Year is the third part
-        if (!isNaN(parseInt(year))) {
+        const year = dateParts[2]; // Year is the third part (DD/MM/YYYY)
+        if (!isNaN(parseInt(year)) && year.length === 4) {
           years.add(year);
         }
       }
@@ -201,10 +201,10 @@ export function deduplicateByName(records: ChildRecord[]): ChildRecord[] {
 export function filterByYear(records: ChildRecord[], year: string): ChildRecord[] {
   return records.filter(record => {
     if (!record['Tanggal Pengukuran']) return false;
-    // Parse date in MM/DD/YYYY format
+    // Parse date in DD/MM/YYYY format
     const dateParts = record['Tanggal Pengukuran'].split('/');
     if (dateParts.length === 3) {
-      const recordYear = dateParts[2]; // Year is the third part
+      const recordYear = dateParts[2]; // Year is the third part (DD/MM/YYYY)
       return recordYear === year;
     }
     return false;
