@@ -19,7 +19,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // Get user email from localStorage to determine if user is authenticated
   const getUserEmail = (): string | undefined => {
     try {
-      const authData = localStorage.getItem('auth_user');
+      const authData = localStorage.getItem('posyandu_auth');
       if (authData) {
         const parsed = JSON.parse(authData);
         return parsed.email;
