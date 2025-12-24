@@ -90,22 +90,36 @@ function mapDbToRecord(dbRecord: any): ChildRecord {
 
 export async function fetchSheetData(): Promise<ChildRecord[]> {
   try {
+    // Supabase returns max 1000 rows by default; fetch in pages.
+    const pageSize = 1000;
+    let from = 0;
+    const allRows: any[] = [];
+
     // Fetch from database instead of Google Sheets
-    const { data, error } = await supabase
-      .from('child_records')
-      .select('*');
-    
-    if (error) {
-      console.error('Error fetching from database:', error);
-      throw new Error('Failed to fetch data from database');
+    // NOTE: keep looping until the returned page is smaller than pageSize
+    while (true) {
+      const { data, error } = await supabase
+        .from('child_records')
+        .select('*')
+        .range(from, from + pageSize - 1);
+
+      if (error) {
+        console.error('Error fetching from database:', error);
+        throw new Error('Failed to fetch data from database');
+      }
+
+      if (!data || data.length === 0) break;
+
+      allRows.push(...data);
+
+      if (data.length < pageSize) break;
+      from += pageSize;
     }
-    
-    if (!data || data.length === 0) {
-      return [];
-    }
-    
+
+    if (allRows.length === 0) return [];
+
     // Map database records to ChildRecord format
-    return data.map(mapDbToRecord);
+    return allRows.map(mapDbToRecord);
   } catch (error) {
     console.error('Error fetching data:', error);
     throw error;
