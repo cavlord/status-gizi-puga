@@ -178,7 +178,7 @@ export function filterUnderFiveYears(records: ChildRecord[]): ChildRecord[] {
     const ageStr = record['Usia Saat Ukur'];
     if (!ageStr || ageStr.trim() === '') return false;
     
-    // Extract years from format like "4 Tahun 3 Bulan" or "4 tahun"
+    // Extract years from format like "4 Tahun - 3 Bulan - 0 Hari" or "4 Tahun 3 Bulan"
     const yearMatch = ageStr.match(/(\d+)\s*[Tt]ahun/);
     if (!yearMatch) return false;
     
