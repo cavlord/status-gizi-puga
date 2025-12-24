@@ -11,8 +11,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Generate 6-digit OTP using cryptographically secure random numbers
 function generateOTP(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  const array = new Uint32Array(1);
+  crypto.getRandomValues(array);
+  // Generate 6-digit OTP (100000-999999)
+  const otp = (array[0] % 900000) + 100000;
+  return otp.toString();
 }
 
 serve(async (req) => {
