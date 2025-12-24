@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
-import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+import { hashSync } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -130,8 +130,8 @@ serve(async (req) => {
       );
     }
 
-    // Hash password using bcrypt (secure password hashing)
-    const hashedPassword = await bcrypt.hash(password);
+    // Hash password using bcrypt (sync version for Edge Functions)
+    const hashedPassword = hashSync(password);
 
     // Generate OTP
     const otp = generateOTP();
