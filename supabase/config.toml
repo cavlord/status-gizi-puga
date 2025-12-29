@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.import-from-sheets]
 verify_jwt = false
+
+[functions.verify-admin]
+verify_jwt = false
