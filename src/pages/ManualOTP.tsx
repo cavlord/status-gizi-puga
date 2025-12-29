@@ -1,19 +1,57 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Mail, Send, Copy, Check } from "lucide-react";
+import { ArrowLeft, Mail, Send, Copy, Check, ShieldAlert, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ManualOTP() {
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [generatedOTP, setGeneratedOTP] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Verify admin status on mount
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!isAuthenticated || !user?.email) {
+        setIsCheckingAdmin(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-admin`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: JSON.stringify({ email: user.email }),
+          }
+        );
+
+        const data = await response.json();
+        setIsAdmin(data.isAdmin === true);
+      } catch (error) {
+        console.error("Error checking admin status:", error);
+        setIsAdmin(false);
+      } finally {
+        setIsCheckingAdmin(false);
+      }
+    };
+
+    checkAdminStatus();
+  }, [isAuthenticated, user?.email]);
 
   const generateOTP = (): string => {
     return Math.floor(100000 + Math.random() * 900000).toString();
@@ -34,7 +72,7 @@ export default function ManualOTP() {
     setIsLoading(true);
     try {
       // Check if user exists
-      const { data: user, error: fetchError } = await supabase
+      const { data: targetUser, error: fetchError } = await supabase
         .from('users')
         .select('id, email, verified')
         .eq('email', email)
@@ -44,12 +82,12 @@ export default function ManualOTP() {
         throw new Error("Gagal memeriksa email");
       }
 
-      if (!user) {
+      if (!targetUser) {
         toast.error("Email tidak ditemukan. User harus mendaftar terlebih dahulu.");
         return;
       }
 
-      if (user.verified) {
+      if (targetUser.verified) {
         toast.info("Email sudah terverifikasi");
         return;
       }
@@ -66,7 +104,7 @@ export default function ManualOTP() {
           otp_expiry: otpExpiry,
           updated_at: new Date().toISOString()
         })
-        .eq('id', user.id);
+        .eq('id', targetUser.id);
 
       if (updateError) {
         throw new Error("Gagal menyimpan OTP");
@@ -98,19 +136,74 @@ export default function ManualOTP() {
     setCopied(false);
   };
 
+  // Loading state while checking admin
+  if (isCheckingAdmin) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md shadow-xl border-0 bg-card/95 backdrop-blur">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+            <p className="text-muted-foreground">Memeriksa akses...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md shadow-xl border-0 bg-card/95 backdrop-blur">
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <ShieldAlert className="h-16 w-16 text-destructive mb-4" />
+            <h2 className="text-xl font-bold mb-2">Akses Ditolak</h2>
+            <p className="text-muted-foreground mb-6">
+              Anda harus login terlebih dahulu.
+            </p>
+            <Button onClick={() => navigate("/auth")}>
+              Login
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Not admin
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md shadow-xl border-0 bg-card/95 backdrop-blur">
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <ShieldAlert className="h-16 w-16 text-destructive mb-4" />
+            <h2 className="text-xl font-bold mb-2">Akses Ditolak</h2>
+            <p className="text-muted-foreground mb-6">
+              Halaman ini hanya dapat diakses oleh Admin.
+            </p>
+            <Button variant="outline" onClick={() => navigate("/")}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Kembali ke Dashboard
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-xl border-0 bg-card/95 backdrop-blur">
-        <CardHeader className="text-center space-y-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="absolute left-4 top-4"
-            onClick={() => navigate("/auth")}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Kembali
-          </Button>
+      <Card className="w-full max-w-md shadow-xl border-0 bg-card/95 backdrop-blur relative">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="absolute left-4 top-4"
+          onClick={() => navigate("/")}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Kembali
+        </Button>
+        <CardHeader className="text-center space-y-2 pt-12">
           <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
             <Mail className="h-8 w-8 text-primary" />
           </div>
@@ -140,7 +233,7 @@ export default function ManualOTP() {
               >
                 {isLoading ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
                     Memproses...
                   </>
                 ) : (
