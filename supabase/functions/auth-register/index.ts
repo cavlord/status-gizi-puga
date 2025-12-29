@@ -4,6 +4,7 @@ import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/b
 import { hashSync } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const RESEND_FROM_EMAIL = Deno.env.get("RESEND_FROM_EMAIL") || "Posyandu Dashboard <onboarding@resend.dev>";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -29,7 +30,7 @@ async function sendOTPEmail(email: string, otp: string): Promise<void> {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "Posyandu Dashboard <onboarding@resend.dev>",
+      from: RESEND_FROM_EMAIL,
       to: [email],
       subject: "Kode Verifikasi Registrasi - Posyandu Dashboard",
       html: `
