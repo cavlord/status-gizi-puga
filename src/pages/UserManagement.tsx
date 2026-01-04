@@ -111,33 +111,33 @@ export default function UserManagement() {
   }, [isAdmin]);
 
   const fetchUsers = async () => {
+    if (!user?.email) return;
+    
     setIsLoading(true);
     try {
-      // Fetch all users
-      const { data: usersData, error: usersError } = await supabase
-        .from('users')
-        .select('id, email, verified, created_at, otp, otp_expiry')
-        .order('created_at', { ascending: false });
+      // Use edge function to fetch users (bypasses RLS)
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-get-users`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ adminEmail: user.email }),
+        }
+      );
 
-      if (usersError) throw usersError;
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || "Gagal mengambil data user");
+      }
 
-      // Fetch user roles
-      const { data: rolesData, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('user_id, role');
-
-      if (rolesError) throw rolesError;
-
-      // Merge users with roles
-      const usersWithRoles = (usersData || []).map(u => ({
-        ...u,
-        role: rolesData?.find(r => r.user_id === u.id)?.role || 'user'
-      }));
-
-      setUsers(usersWithRoles);
-    } catch (error) {
+      setUsers(data.users || []);
+    } catch (error: any) {
       console.error("Error fetching users:", error);
-      toast.error("Gagal memuat data user");
+      toast.error(error.message || "Gagal memuat data user");
     } finally {
       setIsLoading(false);
     }
@@ -148,6 +148,8 @@ export default function UserManagement() {
   };
 
   const handleGenerateOTP = async (targetUser: UserData) => {
+    if (!user?.email) return;
+    
     setSelectedUser(targetUser);
     setIsProcessing(true);
     
@@ -156,16 +158,29 @@ export default function UserManagement() {
       // OTP berlaku selama 1 jam
       const otpExpiry = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({
-          otp,
-          otp_expiry: otpExpiry,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', targetUser.id);
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-update-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ 
+            adminEmail: user.email,
+            userId: targetUser.id,
+            action: 'generate_otp',
+            otp,
+            otpExpiry
+          }),
+        }
+      );
 
-      if (updateError) throw updateError;
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || "Gagal membuat OTP");
+      }
 
       setGeneratedOTP(otp);
       setShowOTPDialog(true);
@@ -173,9 +188,9 @@ export default function UserManagement() {
       
       // Refresh user list
       fetchUsers();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating OTP:", error);
-      toast.error("Gagal membuat OTP");
+      toast.error(error.message || "Gagal membuat OTP");
     } finally {
       setIsProcessing(false);
     }
@@ -193,50 +208,75 @@ export default function UserManagement() {
   };
 
   const confirmDeactivateUser = async () => {
-    if (!selectedUser) return;
+    if (!selectedUser || !user?.email) return;
     
     setIsProcessing(true);
     try {
-      // Set verified to false to deactivate user
-      const { error } = await supabase
-        .from('users')
-        .update({
-          verified: false,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', selectedUser.id);
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-update-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ 
+            adminEmail: user.email,
+            userId: selectedUser.id,
+            action: 'deactivate'
+          }),
+        }
+      );
 
-      if (error) throw error;
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || "Gagal menonaktifkan user");
+      }
 
       toast.success(`User ${selectedUser.email} berhasil dinonaktifkan`);
       setShowDeactivateDialog(false);
       fetchUsers();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deactivating user:", error);
-      toast.error("Gagal menonaktifkan user");
+      toast.error(error.message || "Gagal menonaktifkan user");
     } finally {
       setIsProcessing(false);
     }
   };
 
   const handleActivateUser = async (targetUser: UserData) => {
+    if (!user?.email) return;
+    
     setIsProcessing(true);
     try {
-      const { error } = await supabase
-        .from('users')
-        .update({
-          verified: true,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', targetUser.id);
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-update-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ 
+            adminEmail: user.email,
+            userId: targetUser.id,
+            action: 'activate'
+          }),
+        }
+      );
 
-      if (error) throw error;
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || "Gagal mengaktifkan user");
+      }
 
       toast.success(`User ${targetUser.email} berhasil diaktifkan`);
       fetchUsers();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error activating user:", error);
-      toast.error("Gagal mengaktifkan user");
+      toast.error(error.message || "Gagal mengaktifkan user");
     } finally {
       setIsProcessing(false);
     }
