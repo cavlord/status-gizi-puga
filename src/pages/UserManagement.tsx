@@ -153,7 +153,8 @@ export default function UserManagement() {
     
     try {
       const otp = generateOTP();
-      const otpExpiry = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+      // OTP berlaku selama 1 jam
+      const otpExpiry = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 
       const { error: updateError } = await supabase
         .from('users')
@@ -468,7 +469,7 @@ export default function UserManagement() {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground mt-4">
-              Kode berlaku selama 10 menit
+              Kode berlaku selama 1 jam
             </p>
           </div>
           <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
