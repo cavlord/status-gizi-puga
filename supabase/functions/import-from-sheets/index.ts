@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const GOOGLE_SHEETS_API_KEY = Deno.env.get("GOOGLE_SHEETS_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -10,28 +11,50 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Google Sheets ID format validation (alphanumeric, hyphens, underscores)
+const spreadsheetIdRegex = /^[a-zA-Z0-9_-]{20,60}$/;
+
+// Input validation schema
+const importSchema = z.object({
+  spreadsheetId: z.string()
+    .regex(spreadsheetIdRegex, { message: "Format spreadsheetId tidak valid" })
+    .max(60, { message: "SpreadsheetId terlalu panjang" }),
+  sheetName: z.string()
+    .min(1, { message: "sheetName wajib diisi" })
+    .max(100, { message: "sheetName terlalu panjang" })
+    .regex(/^[a-zA-Z0-9\s_-]+$/, { message: "sheetName mengandung karakter tidak valid" }),
+  email: z.string()
+    .email({ message: "Format email tidak valid" })
+    .max(255, { message: "Email terlalu panjang" }),
+});
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { spreadsheetId, sheetName, email } = await req.json();
-
-    if (!spreadsheetId || !sheetName) {
+    // Parse and validate input
+    let body;
+    try {
+      body = await req.json();
+    } catch {
       return new Response(
-        JSON.stringify({ error: "spreadsheetId and sheetName are required" }),
+        JSON.stringify({ error: "Request body tidak valid" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Verify user is authenticated and is admin
-    if (!email) {
+    const validationResult = importSchema.safeParse(body);
+    if (!validationResult.success) {
+      const firstError = validationResult.error.errors[0]?.message || "Input tidak valid";
       return new Response(
-        JSON.stringify({ error: "Authentication required" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: firstError }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    const { spreadsheetId, sheetName, email } = validationResult.data;
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -39,7 +62,7 @@ serve(async (req) => {
     const { data: user, error: userError } = await supabase
       .from('users')
       .select('id, verified')
-      .eq('email', email)
+      .eq('email', email.toLowerCase())
       .maybeSingle();
 
     if (userError || !user || !user.verified) {
@@ -210,7 +233,7 @@ serve(async (req) => {
   } catch (error: any) {
     console.error("Import error:", error);
     return new Response(
-      JSON.stringify({ error: error.message || "Failed to import data" }),
+      JSON.stringify({ error: "Terjadi kesalahan internal" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

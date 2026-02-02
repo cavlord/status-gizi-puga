@@ -1,10 +1,32 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// UUID validation regex
+const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+// Input validation schema
+const updateUserSchema = z.object({
+  adminEmail: z.string()
+    .email({ message: "Format email admin tidak valid" })
+    .max(255, { message: "Email terlalu panjang" }),
+  userId: z.string()
+    .regex(uuidRegex, { message: "Format userId tidak valid" }),
+  action: z.enum(["generate_otp", "activate", "deactivate"], {
+    errorMap: () => ({ message: "Action tidak valid. Gunakan: generate_otp, activate, atau deactivate" })
+  }),
+  otp: z.string()
+    .regex(/^\d{6}$/, { message: "OTP harus berupa 6 digit angka" })
+    .optional(),
+  otpExpiry: z.string()
+    .datetime({ message: "Format otpExpiry tidak valid" })
+    .optional(),
+});
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -13,11 +35,32 @@ serve(async (req) => {
   }
 
   try {
-    const { adminEmail, userId, action, otp, otpExpiry, verified } = await req.json();
-
-    if (!adminEmail || !userId || !action) {
+    // Parse and validate input
+    let body;
+    try {
+      body = await req.json();
+    } catch {
       return new Response(
-        JSON.stringify({ error: "Parameter tidak lengkap" }),
+        JSON.stringify({ error: "Request body tidak valid" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const validationResult = updateUserSchema.safeParse(body);
+    if (!validationResult.success) {
+      const firstError = validationResult.error.errors[0]?.message || "Input tidak valid";
+      return new Response(
+        JSON.stringify({ error: firstError }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { adminEmail, userId, action, otp, otpExpiry } = validationResult.data;
+
+    // Additional validation: generate_otp action requires otp and otpExpiry
+    if (action === "generate_otp" && (!otp || !otpExpiry)) {
+      return new Response(
+        JSON.stringify({ error: "Action generate_otp membutuhkan otp dan otpExpiry" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -32,7 +75,7 @@ serve(async (req) => {
     const { data: adminUser, error: adminUserError } = await supabase
       .from("users")
       .select("id")
-      .eq("email", adminEmail)
+      .eq("email", adminEmail.toLowerCase())
       .maybeSingle();
 
     if (adminUserError || !adminUser) {
@@ -59,7 +102,21 @@ serve(async (req) => {
       );
     }
 
-    let updateData: any = {
+    // Verify target user exists
+    const { data: targetUser, error: targetUserError } = await supabase
+      .from("users")
+      .select("id")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (targetUserError || !targetUser) {
+      return new Response(
+        JSON.stringify({ error: "User target tidak ditemukan" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    let updateData: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
     };
 
@@ -74,14 +131,9 @@ serve(async (req) => {
       case "deactivate":
         updateData.verified = false;
         break;
-      default:
-        return new Response(
-          JSON.stringify({ error: "Action tidak valid" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
     }
 
-    console.log("Updating user with data:", updateData);
+    console.log("Updating user with action:", action);
 
     const { error: updateError } = await supabase
       .from("users")
@@ -106,7 +158,7 @@ serve(async (req) => {
   } catch (error: any) {
     console.error("Error in admin-update-user:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "Terjadi kesalahan internal" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
