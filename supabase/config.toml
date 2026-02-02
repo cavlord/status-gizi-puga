@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.admin-update-user]
 verify_jwt = false
+
+[functions.get-child-records]
+verify_jwt = false
