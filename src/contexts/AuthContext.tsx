@@ -24,6 +24,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const AUTH_STORAGE_KEY = 'posyandu_auth';
 const IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes in milliseconds
 
+// Helper to check if we should redirect after logout
+const redirectToAuth = () => {
+  // Only redirect if not already on auth page
+  if (window.location.pathname !== '/auth') {
+    window.location.href = '/auth';
+  }
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,6 +50,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: "Anda telah logout otomatis karena tidak ada aktivitas selama 5 menit.",
         variant: "destructive",
       });
+      // Force redirect to login page
+      redirectToAuth();
     }
   }, [user, logout, toast]);
 
@@ -64,6 +74,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     }
     setIsLoading(false);
+  }, []);
+
+  // Listen for storage changes (for multi-tab logout sync)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === AUTH_STORAGE_KEY) {
+        if (!e.newValue) {
+          // User logged out in another tab
+          setUser(null);
+          redirectToAuth();
+        } else {
+          try {
+            const parsed = JSON.parse(e.newValue);
+            setUser(parsed);
+          } catch {
+            // Invalid data
+          }
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
