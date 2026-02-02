@@ -90,30 +90,62 @@ function mapDbToRecord(dbRecord: any): ChildRecord {
 
 export async function fetchSheetData(): Promise<ChildRecord[]> {
   try {
-    // Supabase returns max 1000 rows by default; fetch in pages.
+    // Get user email from localStorage
+    const authData = localStorage.getItem('posyandu_auth');
+    if (!authData) {
+      console.log('No auth data found');
+      return [];
+    }
+    
+    let email: string;
+    try {
+      const parsed = JSON.parse(authData);
+      email = parsed.email;
+      if (!email) {
+        console.log('No email in auth data');
+        return [];
+      }
+    } catch {
+      console.log('Failed to parse auth data');
+      return [];
+    }
+
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    
+    // Fetch all records using pagination via edge function
     const pageSize = 1000;
-    let from = 0;
+    let offset = 0;
     const allRows: any[] = [];
 
-    // Fetch from database instead of Google Sheets
-    // NOTE: keep looping until the returned page is smaller than pageSize
     while (true) {
-      const { data, error } = await supabase
-        .from('child_records')
-        .select('*')
-        .range(from, from + pageSize - 1);
+      const response = await fetch(`${supabaseUrl}/functions/v1/get-child-records`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseKey}`,
+        },
+        body: JSON.stringify({
+          email,
+          offset,
+          limit: pageSize,
+        }),
+      });
 
-      if (error) {
-        console.error('Error fetching from database:', error);
-        throw new Error('Failed to fetch data from database');
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error fetching from edge function:', errorData.error);
+        throw new Error(errorData.error || 'Failed to fetch data');
       }
 
-      if (!data || data.length === 0) break;
+      const result = await response.json();
+      
+      if (!result.data || result.data.length === 0) break;
 
-      allRows.push(...data);
+      allRows.push(...result.data);
 
-      if (data.length < pageSize) break;
-      from += pageSize;
+      if (!result.hasMore) break;
+      offset += pageSize;
     }
 
     if (allRows.length === 0) return [];
