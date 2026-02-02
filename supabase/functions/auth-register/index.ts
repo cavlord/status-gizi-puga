@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 import { hashSync } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const RESEND_FROM_EMAIL = Deno.env.get("RESEND_FROM_EMAIL") || "Posyandu Dashboard <onboarding@resend.dev>";
@@ -12,6 +13,17 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Input validation schema
+const registerSchema = z.object({
+  email: z.string()
+    .email({ message: "Format email tidak valid" })
+    .max(255, { message: "Email terlalu panjang (maksimal 255 karakter)" })
+    .transform(val => val.toLowerCase().trim()),
+  password: z.string()
+    .min(8, { message: "Password minimal 8 karakter" })
+    .max(128, { message: "Password terlalu panjang (maksimal 128 karakter)" })
+});
 
 // Generate 6-digit OTP using cryptographically secure random numbers
 function generateOTP(): string {
@@ -86,32 +98,29 @@ serve(async (req) => {
 
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    const { email, password } = await req.json();
-
-    // Validate input
-    if (!email || !password) {
+    
+    // Parse and validate input
+    let body;
+    try {
+      body = await req.json();
+    } catch {
       return new Response(
-        JSON.stringify({ error: "Email dan password wajib diisi" }),
+        JSON.stringify({ error: "Request body tidak valid" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    // Validate input with zod schema
+    const validationResult = registerSchema.safeParse(body);
+    if (!validationResult.success) {
+      const firstError = validationResult.error.errors[0]?.message || "Input tidak valid";
       return new Response(
-        JSON.stringify({ error: "Format email tidak valid" }),
+        JSON.stringify({ error: firstError }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Validate password length
-    if (password.length < 8) {
-      return new Response(
-        JSON.stringify({ error: "Password minimal 8 karakter" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const { email, password } = validationResult.data;
 
     // Check if email already exists and is verified
     const { data: existingUser, error: checkError } = await supabase
@@ -213,7 +222,7 @@ serve(async (req) => {
   } catch (error: any) {
     console.error("Registration error:", error);
     return new Response(
-      JSON.stringify({ error: error.message || "Terjadi kesalahan saat registrasi" }),
+      JSON.stringify({ error: "Terjadi kesalahan saat registrasi" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
