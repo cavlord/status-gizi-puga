@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { useIdleTimeout } from '@/hooks/useIdleTimeout';
+import { useToast } from '@/hooks/use-toast';
 
 export interface User {
   email: string;
@@ -20,10 +22,35 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const AUTH_STORAGE_KEY = 'posyandu_auth';
+const IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  const logout = useCallback(() => {
+    setUser(null);
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+  }, []);
+
+  const handleIdleTimeout = useCallback(() => {
+    if (user) {
+      logout();
+      toast({
+        title: "Sesi Berakhir",
+        description: "Anda telah logout otomatis karena tidak ada aktivitas selama 5 menit.",
+        variant: "destructive",
+      });
+    }
+  }, [user, logout, toast]);
+
+  // Use idle timeout hook - only active when user is authenticated
+  useIdleTimeout({
+    timeout: IDLE_TIMEOUT_MS,
+    onIdle: handleIdleTimeout,
+    enabled: !!user,
+  });
 
   useEffect(() => {
     // Check for existing session
@@ -142,11 +169,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error('Resend OTP error:', error);
       return { success: false, error: 'Terjadi kesalahan saat mengirim OTP' };
     }
-  };
-
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem(AUTH_STORAGE_KEY);
   };
 
   return (
