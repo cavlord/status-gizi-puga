@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, createContext, useContext, useMemo } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,7 +17,20 @@ import ManualOTP from "./pages/ManualOTP";
 import UserManagement from "./pages/UserManagement";
 import LoadingScreen from "./components/LoadingScreen";
 
-const queryClient = new QueryClient();
+// Create QueryClient instance that persists across renders
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 0, // Data is considered stale immediately
+      gcTime: 5 * 60 * 1000, // 5 minutes garbage collection
+      refetchOnMount: true, // Always refetch when component mounts
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+// Export queryClient for use in AuthContext
+export { queryClient };
 
 // Protected Route wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {

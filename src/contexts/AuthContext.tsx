@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useIdleTimeout } from '@/hooks/useIdleTimeout';
 import { useToast } from '@/hooks/use-toast';
 
@@ -36,11 +37,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const logout = useCallback(() => {
     setUser(null);
     localStorage.removeItem(AUTH_STORAGE_KEY);
-  }, []);
+    // Clear all cached data on logout
+    queryClient.clear();
+  }, [queryClient]);
 
   const handleIdleTimeout = useCallback(() => {
     if (user) {
@@ -101,6 +105,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
+      // Clear all cached data BEFORE login to ensure fresh data
+      queryClient.clear();
+      
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth-login`, {
         method: 'POST',
         headers: {

@@ -21,7 +21,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const { data: allRecords, isLoading, error, refetch } = useQuery<ChildRecord[]>({
     queryKey: ['sheetData', user?.email],
     queryFn: async () => {
-      console.log('Fetching data from database...');
+      console.log('Fetching data from database for user:', user?.email);
       const data = await fetchSheetData();
       console.log('Fetched records count:', data?.length);
       if (data && data.length > 0) {
@@ -39,9 +39,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }
       return data;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 0, // Always consider data stale to ensure fresh fetch
     gcTime: 30 * 60 * 1000, // 30 minutes
     enabled: isAuthenticated && !!user?.email,
+    refetchOnMount: true, // Always refetch when component mounts
   });
 
   // Invalidate cache when user logs out
