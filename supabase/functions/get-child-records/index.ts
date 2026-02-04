@@ -16,7 +16,8 @@ const requestSchema = z.object({
     .email({ message: "Format email tidak valid" })
     .max(255, { message: "Email terlalu panjang" }),
   offset: z.number().int().min(0).optional().default(0),
-  limit: z.number().int().min(1).max(1000).optional().default(1000),
+  limit: z.number().int().min(1).max(10000).optional().default(5000),
+  fetchAll: z.boolean().optional().default(false),
 });
 
 serve(async (req) => {
@@ -45,7 +46,7 @@ serve(async (req) => {
       );
     }
 
-    const { email, offset, limit } = validationResult.data;
+    const { email, offset, limit, fetchAll } = validationResult.data;
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -70,7 +71,62 @@ serve(async (req) => {
       );
     }
 
-    // Fetch child records using service role (bypasses RLS)
+    // If fetchAll is true, get total count first then fetch all in parallel batches
+    if (fetchAll) {
+      const { count, error: countError } = await supabase
+        .from('child_records')
+        .select('*', { count: 'exact', head: true });
+
+      if (countError) {
+        console.error("Error getting count:", countError);
+        return new Response(
+          JSON.stringify({ error: "Gagal menghitung data", data: [] }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const totalCount = count || 0;
+      const batchSize = 5000;
+      const batches = Math.ceil(totalCount / batchSize);
+      
+      // Fetch all batches in parallel
+      const batchPromises = [];
+      for (let i = 0; i < batches; i++) {
+        const batchOffset = i * batchSize;
+        batchPromises.push(
+          supabase
+            .from('child_records')
+            .select('*')
+            .range(batchOffset, batchOffset + batchSize - 1)
+        );
+      }
+
+      const results = await Promise.all(batchPromises);
+      const allRecords: any[] = [];
+      
+      for (const result of results) {
+        if (result.error) {
+          console.error("Error fetching batch:", result.error);
+          continue;
+        }
+        if (result.data) {
+          allRecords.push(...result.data);
+        }
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          data: allRecords,
+          count: allRecords.length,
+          total: totalCount,
+          hasMore: false
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Standard paginated fetch
     const { data: records, error: recordsError } = await supabase
       .from('child_records')
       .select('*')
