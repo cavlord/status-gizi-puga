@@ -113,45 +113,33 @@ export async function fetchSheetData(): Promise<ChildRecord[]> {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
     
-    // Fetch all records using pagination via edge function
-    const pageSize = 1000;
-    let offset = 0;
-    const allRows: any[] = [];
+    // Fetch all records in one request with parallel batching on server
+    const response = await fetch(`${supabaseUrl}/functions/v1/get-child-records`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseKey}`,
+      },
+      body: JSON.stringify({
+        email,
+        fetchAll: true,
+      }),
+    });
 
-    while (true) {
-      const response = await fetch(`${supabaseUrl}/functions/v1/get-child-records`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseKey}`,
-        },
-        body: JSON.stringify({
-          email,
-          offset,
-          limit: pageSize,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Error fetching from edge function:', errorData.error);
-        throw new Error(errorData.error || 'Failed to fetch data');
-      }
-
-      const result = await response.json();
-      
-      if (!result.data || result.data.length === 0) break;
-
-      allRows.push(...result.data);
-
-      if (!result.hasMore) break;
-      offset += pageSize;
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Error fetching from edge function:', errorData.error);
+      throw new Error(errorData.error || 'Failed to fetch data');
     }
 
-    if (allRows.length === 0) return [];
+    const result = await response.json();
+    
+    if (!result.data || result.data.length === 0) {
+      return [];
+    }
 
     // Map database records to ChildRecord format
-    return allRows.map(mapDbToRecord);
+    return result.data.map(mapDbToRecord);
   } catch (error) {
     console.error('Error fetching data:', error);
     throw error;
