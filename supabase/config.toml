@@ -1,8 +1,5 @@
 project_id = "ystpkgdmhraxpyaumoug"
 
-[functions.admin-manual-otp]
-verify_jwt = false
-
 [functions.auth-register]
 verify_jwt = false
 

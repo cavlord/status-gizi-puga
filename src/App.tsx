@@ -13,7 +13,6 @@ import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/Auth";
-import ManualOTP from "./pages/ManualOTP";
 import UserManagement from "./pages/UserManagement";
 import LoadingScreen from "./components/LoadingScreen";
 
@@ -93,10 +92,7 @@ const AppContent = () => {
           </AuthRoute>
         }
       />
-      <Route
-        path="/manual-otp"
-        element={<ManualOTP />}
-      />
+      
       <Route
         path="/"
         element={
