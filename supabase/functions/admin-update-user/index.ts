@@ -17,8 +17,8 @@ const updateUserSchema = z.object({
     .max(255, { message: "Email terlalu panjang" }),
   userId: z.string()
     .regex(uuidRegex, { message: "Format userId tidak valid" }),
-  action: z.enum(["generate_otp", "activate", "deactivate"], {
-    errorMap: () => ({ message: "Action tidak valid. Gunakan: generate_otp, activate, atau deactivate" })
+  action: z.enum(["generate_otp", "activate", "deactivate", "delete"], {
+    errorMap: () => ({ message: "Action tidak valid. Gunakan: generate_otp, activate, deactivate, atau delete" })
   }),
   otp: z.string()
     .regex(/^\d{6}$/, { message: "OTP harus berupa 6 digit angka" })
@@ -113,6 +113,40 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "User target tidak ditemukan" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Handle delete action separately
+    if (action === "delete") {
+      // Prevent admin from deleting themselves
+      if (targetUser.id === adminUser.id) {
+        return new Response(
+          JSON.stringify({ error: "Tidak dapat menghapus akun sendiri" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Delete user roles first (foreign key)
+      await supabase.from("user_roles").delete().eq("user_id", userId);
+
+      // Delete user
+      const { error: deleteError } = await supabase
+        .from("users")
+        .delete()
+        .eq("id", userId);
+
+      if (deleteError) {
+        console.error("Error deleting user:", deleteError);
+        return new Response(
+          JSON.stringify({ error: "Gagal menghapus user" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      console.log(`User ${userId} deleted successfully by admin ${adminEmail}`);
+      return new Response(
+        JSON.stringify({ success: true, message: "User berhasil dihapus" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
