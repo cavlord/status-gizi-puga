@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Mail, Send, Copy, Check, ShieldAlert, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -53,10 +52,6 @@ export default function ManualOTP() {
     checkAdminStatus();
   }, [isAuthenticated, user?.email]);
 
-  const generateOTP = (): string => {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-  };
-
   const handleGenerateAndSaveOTP = async () => {
     if (!email) {
       toast.error("Masukkan email terlebih dahulu");
@@ -71,48 +66,35 @@ export default function ManualOTP() {
 
     setIsLoading(true);
     try {
-      // Check if user exists
-      const { data: targetUser, error: fetchError } = await supabase
-        .from('users')
-        .select('id, email, verified')
-        .eq('email', email)
-        .maybeSingle();
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-manual-otp`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ adminEmail: user?.email, targetEmail: email }),
+        }
+      );
 
-      if (fetchError) {
-        throw new Error("Gagal memeriksa email");
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Gagal membuat OTP");
       }
 
-      if (!targetUser) {
-        toast.error("Email tidak ditemukan. User harus mendaftar terlebih dahulu.");
-        return;
-      }
-
-      if (targetUser.verified) {
+      if (data.alreadyVerified) {
         toast.info("Email sudah terverifikasi");
         return;
       }
 
-      // Generate OTP
-      const otp = generateOTP();
-      const otpExpiry = new Date(Date.now() + 10 * 60 * 1000).toISOString();
-
-      // Update user with new OTP
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({
-          otp,
-          otp_expiry: otpExpiry,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', targetUser.id);
-
-      if (updateError) {
-        throw new Error("Gagal menyimpan OTP");
+      if (data.otp) {
+        setGeneratedOTP(data.otp);
+        toast.success("OTP berhasil dibuat! Kirim kode ini ke user secara manual.");
+      } else {
+        throw new Error(data.error || "Gagal membuat OTP");
       }
-
-      setGeneratedOTP(otp);
-      toast.success("OTP berhasil dibuat! Kirim kode ini ke user secara manual.");
-
     } catch (error: any) {
       console.error("Error generating OTP:", error);
       toast.error(error.message || "Gagal membuat OTP");
