@@ -14,7 +14,8 @@ import {
   UserX,
   UserCheck,
   Key,
-  RefreshCw
+  RefreshCw,
+  Trash2
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -65,6 +66,7 @@ export default function UserManagement() {
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [showOTPDialog, setShowOTPDialog] = useState(false);
   const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [generatedOTP, setGeneratedOTP] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -281,6 +283,48 @@ export default function UserManagement() {
       setIsProcessing(false);
     }
   };
+  const handleDeleteUser = (targetUser: UserData) => {
+    setSelectedUser(targetUser);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!selectedUser || !user?.email) return;
+    
+    setIsProcessing(true);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-update-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ 
+            adminEmail: user.email,
+            userId: selectedUser.id,
+            action: 'delete'
+          }),
+        }
+      );
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || "Gagal menghapus user");
+      }
+
+      toast.success(`User ${selectedUser.email} berhasil dihapus`);
+      setShowDeleteDialog(false);
+      fetchUsers();
+    } catch (error: any) {
+      console.error("Error deleting user:", error);
+      toast.error(error.message || "Gagal menghapus user");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const handleCopyOTP = () => {
     if (generatedOTP) {
@@ -471,6 +515,15 @@ export default function UserManagement() {
                               Aktifkan
                             </Button>
                           )}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDeleteUser(u)}
+                            disabled={isProcessing || u.email === user?.email}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -547,6 +600,33 @@ export default function UserManagement() {
                 <UserX className="h-4 w-4 mr-2" />
               )}
               Nonaktifkan
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus User?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Anda akan menghapus user <strong>{selectedUser?.email}</strong> secara permanen. 
+              Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDeleteUser}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isProcessing ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Trash2 className="h-4 w-4 mr-2" />
+              )}
+              Hapus Permanen
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
