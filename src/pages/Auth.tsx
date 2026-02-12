@@ -3,27 +3,24 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { loginSchema, registerSchema, otpSchema, LoginFormData, RegisterFormData, OtpFormData } from '@/lib/validation';
+import { loginSchema, registerSchema, LoginFormData, RegisterFormData } from '@/lib/validation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Loader2, ShieldCheck, RefreshCw } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Loader2, ShieldCheck, CheckCircle } from 'lucide-react';
 
-type AuthMode = 'login' | 'register' | 'verify';
+type AuthMode = 'login' | 'register' | 'registered';
 
 const AuthPage = () => {
   const navigate = useNavigate();
-  const { login, register: registerUser, verifyOtp, resendOtp, isAuthenticated } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const { toast } = useToast();
   
   const [mode, setMode] = useState<AuthMode>('login');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [pendingEmail, setPendingEmail] = useState('');
-  const [pendingToken, setPendingToken] = useState('');
-  const [resendCooldown, setResendCooldown] = useState(0);
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -35,23 +32,12 @@ const AuthPage = () => {
     defaultValues: { email: '', password: '', confirmPassword: '' },
   });
 
-  const otpForm = useForm<OtpFormData>({
-    resolver: zodResolver(otpSchema),
-    defaultValues: { otp: '' },
-  });
-
   useEffect(() => {
     if (isAuthenticated) {
       navigate('/');
     }
   }, [isAuthenticated, navigate]);
 
-  useEffect(() => {
-    if (resendCooldown > 0) {
-      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [resendCooldown]);
 
   const handleLogin = async (data: LoginFormData) => {
     setIsLoading(true);
@@ -92,14 +78,11 @@ const AuthPage = () => {
         throw new Error(result.error || 'Registrasi gagal');
       }
 
-      setPendingEmail(data.email);
-      setPendingToken(result.token);
-      setMode('verify');
-      setResendCooldown(60);
+      setMode('registered');
       
       toast({
-        title: 'Kode Verifikasi Terkirim',
-        description: 'Silakan cek email Anda untuk kode verifikasi',
+        title: 'Pendaftaran Berhasil',
+        description: 'Akun Anda sedang menunggu persetujuan admin',
       });
     } catch (error: any) {
       toast({
@@ -111,71 +94,10 @@ const AuthPage = () => {
       setIsLoading(false);
     }
   };
-
-  const handleVerifyOtp = async (data: OtpFormData) => {
-    setIsLoading(true);
-    
-    try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth-verify-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({ email: pendingEmail, otp: data.otp, token: pendingToken }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Verifikasi gagal');
-      }
-
-      toast({
-        title: 'Verifikasi Berhasil',
-        description: 'Akun Anda telah aktif. Silakan login.',
-      });
-      
-      setMode('login');
-      loginForm.setValue('email', pendingEmail);
-    } catch (error: any) {
-      toast({
-        title: 'Verifikasi Gagal',
-        description: error.message || 'Kode OTP tidak valid',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleResendOtp = async () => {
-    if (resendCooldown > 0) return;
-    
-    setIsLoading(true);
-    const result = await resendOtp(pendingEmail);
-    setIsLoading(false);
-
-    if (result.success) {
-      setResendCooldown(60);
-      toast({
-        title: 'Kode Terkirim',
-        description: 'Kode verifikasi baru telah dikirim ke email Anda',
-      });
-    } else {
-      toast({
-        title: 'Gagal Mengirim',
-        description: result.error || 'Terjadi kesalahan',
-        variant: 'destructive',
-      });
-    }
-  };
-
   const switchMode = (newMode: AuthMode) => {
     setMode(newMode);
     loginForm.reset();
     registerForm.reset();
-    otpForm.reset();
   };
 
   return (
@@ -214,12 +136,12 @@ const AuthPage = () => {
             <h1 className="text-2xl font-bold text-white mb-2 font-heading">
               {mode === 'login' && 'Selamat Datang'}
               {mode === 'register' && 'Daftar Akun'}
-              {mode === 'verify' && 'Verifikasi Email'}
+              {mode === 'registered' && 'Pendaftaran Berhasil'}
             </h1>
             <p className="text-white/60 text-sm">
               {mode === 'login' && 'Masuk ke Dashboard Posyandu'}
               {mode === 'register' && 'Buat akun baru untuk akses dashboard'}
-              {mode === 'verify' && `Masukkan kode yang dikirim ke ${pendingEmail}`}
+              {mode === 'registered' && 'Akun Anda telah terdaftar'}
             </p>
           </div>
 
@@ -390,61 +312,28 @@ const AuthPage = () => {
             </form>
           )}
 
-          {/* OTP Verification Form */}
-          {mode === 'verify' && (
-            <form onSubmit={otpForm.handleSubmit(handleVerifyOtp)} className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="otp" className="text-white/80 text-sm">Kode Verifikasi (6 digit)</Label>
-                <Input
-                  id="otp"
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  placeholder="000000"
-                  className="text-center text-2xl tracking-[0.5em] bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-purple-400 focus:ring-purple-400/20 h-14 rounded-xl transition-all duration-300 font-mono"
-                  {...otpForm.register('otp')}
-                />
-                {otpForm.formState.errors.otp && (
-                  <p className="text-red-400 text-xs mt-1 text-center">{otpForm.formState.errors.otp.message}</p>
-                )}
+          {/* Registration Success */}
+          {mode === 'registered' && (
+            <div className="space-y-5 text-center">
+              <div className="flex justify-center">
+                <CheckCircle className="w-16 h-16 text-green-400" />
               </div>
-
+              <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+                <p className="text-white/80 text-sm leading-relaxed">
+                  Akun Anda telah berhasil didaftarkan. Anda dapat login setelah mendapat <strong className="text-white">izin akses dari Admin</strong>.
+                </p>
+                <p className="text-white/50 text-xs mt-3">
+                  Hubungi admin untuk mendapatkan akses ke dashboard.
+                </p>
+              </div>
               <Button
-                type="submit"
-                disabled={isLoading}
-                className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-purple-500/40 disabled:opacity-50 disabled:hover:scale-100"
+                type="button"
+                onClick={() => switchMode('login')}
+                className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/30 transition-all duration-300"
               >
-                {isLoading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <>
-                    Verifikasi <ArrowRight className="w-5 h-5 ml-2" />
-                  </>
-                )}
+                Kembali ke Login
               </Button>
-
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={handleResendOtp}
-                  disabled={resendCooldown > 0 || isLoading}
-                  className="inline-flex items-center text-purple-400 hover:text-purple-300 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-                >
-                  <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                  {resendCooldown > 0 ? `Kirim ulang (${resendCooldown}s)` : 'Kirim ulang kode'}
-                </button>
-              </div>
-
-              <p className="text-center text-white/60 text-sm">
-                <button
-                  type="button"
-                  onClick={() => switchMode('register')}
-                  className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
-                >
-                  ← Kembali ke registrasi
-                </button>
-              </p>
-            </form>
+            </div>
           )}
         </div>
 

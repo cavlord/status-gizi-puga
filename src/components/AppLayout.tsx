@@ -21,11 +21,11 @@ import {
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
-  { name: "Pengaturan", href: "/settings", icon: Settings },
 ];
 
 const adminNavigation = [
   { name: "Manajemen User", href: "/users", icon: Users },
+  { name: "Pengaturan", href: "/settings", icon: Settings },
 ];
 
 function AppSidebar() {
