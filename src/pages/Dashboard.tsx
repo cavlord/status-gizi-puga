@@ -278,8 +278,8 @@ const Dashboard = () => {
   const notGainingWeightData = getNotGainingWeight();
 
   // Akumulatif Tidak Naik BB sepanjang tahun
-  const getCumulativeNotGainingWeight = (): number => {
-    if (filteredByYear.length === 0) return 0;
+  const getCumulativeNotGainingWeight = (): { count: number; children: ChildRecord[] } => {
+    if (filteredByYear.length === 0) return { count: 0, children: [] };
 
     const parseDate = (dateStr: string): Date => {
       if (dateStr.includes('/')) {
@@ -289,7 +289,21 @@ const Dashboard = () => {
       return new Date(dateStr);
     };
 
-    // Kelompokkan data per anak
+    const formatDate = (dateStr: string): string => {
+      if (dateStr.includes('/')) {
+        const parts = dateStr.split('/');
+        if (parts.length === 3 && !isNaN(Number(parts[0])) && !isNaN(Number(parts[1])) && !isNaN(Number(parts[2]))) {
+          return dateStr;
+        }
+      }
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr;
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const yr = date.getFullYear();
+      return `${day}/${month}/${yr}`;
+    };
+
     const childrenMap = new Map<string, ChildRecord[]>();
     filteredByYear.forEach(record => {
       if (!record.Nama) return;
@@ -299,7 +313,6 @@ const Dashboard = () => {
       childrenMap.get(record.Nama)!.push(record);
     });
 
-    // Cari semua bulan unik yang ada, urutkan
     const monthSet = new Set<string>();
     filteredByYear.forEach(r => {
       const d = parseDate(r['Tanggal Pengukuran']);
@@ -307,9 +320,9 @@ const Dashboard = () => {
     });
     const sortedMonths = Array.from(monthSet).sort();
 
-    const cumulativeSet = new Set<string>(); // set of "childName-monthKey" to avoid double count
+    const cumulativeChildren: ChildRecord[] = [];
+    const seen = new Set<string>();
 
-    // Untuk setiap pasangan bulan berturut-turut
     for (let i = 1; i < sortedMonths.length; i++) {
       const prevKey = sortedMonths[i - 1];
       const currKey = sortedMonths[i];
@@ -334,18 +347,27 @@ const Dashboard = () => {
         const prevWeight = parseFloat(latestPrev.Berat);
         const currWeight = parseFloat(latestCurr.Berat);
 
-        if (!isNaN(prevWeight) && !isNaN(currWeight) && currWeight <= prevWeight) {
-          cumulativeSet.add(`${childName}-${currKey}`);
+        const key = `${childName}-${currKey}`;
+        if (!isNaN(prevWeight) && !isNaN(currWeight) && currWeight <= prevWeight && !seen.has(key)) {
+          seen.add(key);
+          const formattedDate = formatDate(latestCurr['Tanggal Pengukuran']);
+          if (!formattedDate.includes('NaN')) {
+            cumulativeChildren.push({
+              ...latestCurr,
+              'Tanggal Pengukuran': formattedDate
+            });
+          }
         }
       });
     }
 
-    return cumulativeSet.size;
+    return { count: cumulativeChildren.length, children: cumulativeChildren };
   };
 
-  const cumulativeNotGaining = getCumulativeNotGainingWeight();
+  const cumulativeNotGainingData = getCumulativeNotGainingWeight();
 
   const [showNotGainingModal, setShowNotGainingModal] = useState(false);
+  const [showCumulativeModal, setShowCumulativeModal] = useState(false);
 
   const chartData = getNutritionalStatusByMonth(filteredByYear);
 
@@ -398,7 +420,10 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-destructive/80 to-destructive text-white transition-all duration-300 hover:shadow-xl hover:scale-[1.02]">
+        <Card 
+          className="border-0 shadow-lg bg-gradient-to-br from-destructive/80 to-destructive text-white cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] active:scale-100"
+          onClick={() => setShowCumulativeModal(true)}
+        >
           <CardHeader className="pb-2 md:pb-3 p-4 md:p-6">
             <CardTitle className="flex items-center gap-2 text-xs sm:text-sm md:text-base font-medium opacity-90">
               <AlertTriangle className="h-4 w-4 md:h-5 md:w-5 flex-shrink-0" />
@@ -406,8 +431,8 @@ const Dashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 md:p-6 pt-0">
-            <div className="text-2xl sm:text-3xl md:text-4xl font-bold">{cumulativeNotGaining}</div>
-            <p className="text-xs md:text-sm opacity-80 mt-1">Akumulatif {selectedYear}</p>
+            <div className="text-2xl sm:text-3xl md:text-4xl font-bold">{cumulativeNotGainingData.count}</div>
+            <p className="text-xs md:text-sm opacity-80 mt-1">Akumulatif {selectedYear} (Klik untuk detail)</p>
           </CardContent>
         </Card>
       </div>
@@ -429,6 +454,16 @@ const Dashboard = () => {
         onClose={() => setShowNotGainingModal(false)}
         records={notGainingWeightData.children}
         posyandu="Tidak Naik BB (2 Bulan Berturut-turut)"
+        showWeightComparison={true}
+        allRecords={filteredByYear}
+      />
+
+      {/* Modal for Cumulative Not Gaining Weight */}
+      <ChildDetailsModal
+        isOpen={showCumulativeModal}
+        onClose={() => setShowCumulativeModal(false)}
+        records={cumulativeNotGainingData.children}
+        posyandu={`Tidak Naik BB Akumulatif ${selectedYear}`}
         showWeightComparison={true}
         allRecords={filteredByYear}
       />
