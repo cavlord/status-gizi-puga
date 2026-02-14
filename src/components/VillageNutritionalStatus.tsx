@@ -3,13 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { ChildRecord } from "@/lib/googleSheets";
 import { ChildDetailsModal } from "./ChildDetailsModal";
-import { MapPin, Users } from "lucide-react";
+import { MapPin, Users, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface VillageNutritionalStatusProps {
   yearData: ChildRecord[];
   monthData: ChildRecord[];
   year: string;
+  notGainingWeightData?: { count: number; children: ChildRecord[] };
+  onShowNotGainingModal?: () => void;
 }
 
 const STATUS_COLORS = {
@@ -37,7 +39,7 @@ interface VillageStats {
   total: number;
 }
 
-export function VillageNutritionalStatus({ yearData, monthData, year }: VillageNutritionalStatusProps) {
+export function VillageNutritionalStatus({ yearData, monthData, year, notGainingWeightData, onShowNotGainingModal }: VillageNutritionalStatusProps) {
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -288,7 +290,7 @@ export function VillageNutritionalStatus({ yearData, monthData, year }: VillageN
             </div>
           )}
           
-          <div className="grid grid-cols-3 gap-3 md:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4">
             {/* Gizi Baik */}
             <Card 
               className="shadow-sm cursor-pointer hover:shadow-md transition-all hover:scale-105"
@@ -348,6 +350,31 @@ export function VillageNutritionalStatus({ yearData, monthData, year }: VillageN
                 </Badge>
               </CardContent>
             </Card>
+
+            {/* Tidak Naik BB */}
+            {notGainingWeightData && (
+              <Card 
+                className="shadow-sm cursor-pointer hover:shadow-md transition-all hover:scale-105"
+                style={{ borderTop: `4px solid hsl(0 84% 60%)` }}
+                onClick={() => onShowNotGainingModal?.()}
+              >
+                <CardContent className="p-3 md:p-4 text-center">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground mb-2 flex items-center justify-center gap-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    Tidak Naik BB
+                  </p>
+                  <p className="text-2xl sm:text-3xl md:text-4xl font-bold" style={{ color: "hsl(0 84% 60%)" }}>
+                    {notGainingWeightData.count}
+                  </p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-2">
+                    2 Bulan Berturut
+                  </p>
+                  <Badge variant="outline" className="mt-2 text-[10px]">
+                    Klik untuk detail
+                  </Badge>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </CardContent>
       </Card>
