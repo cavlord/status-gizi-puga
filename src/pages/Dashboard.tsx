@@ -18,7 +18,7 @@ import { ChildDetailsModal } from "@/components/ChildDetailsModal";
 import { PosyanduTable } from "@/components/PosyanduTable";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, Users } from "lucide-react";
+import { TrendingUp, Users, AlertTriangle } from "lucide-react";
 
 const Dashboard = () => {
   const { toast } = useToast();
@@ -277,6 +277,74 @@ const Dashboard = () => {
 
   const notGainingWeightData = getNotGainingWeight();
 
+  // Akumulatif Tidak Naik BB sepanjang tahun
+  const getCumulativeNotGainingWeight = (): number => {
+    if (filteredByYear.length === 0) return 0;
+
+    const parseDate = (dateStr: string): Date => {
+      if (dateStr.includes('/')) {
+        const [day, month, year] = dateStr.split('/').map(Number);
+        return new Date(year, month - 1, day);
+      }
+      return new Date(dateStr);
+    };
+
+    // Kelompokkan data per anak
+    const childrenMap = new Map<string, ChildRecord[]>();
+    filteredByYear.forEach(record => {
+      if (!record.Nama) return;
+      if (!childrenMap.has(record.Nama)) {
+        childrenMap.set(record.Nama, []);
+      }
+      childrenMap.get(record.Nama)!.push(record);
+    });
+
+    // Cari semua bulan unik yang ada, urutkan
+    const monthSet = new Set<string>();
+    filteredByYear.forEach(r => {
+      const d = parseDate(r['Tanggal Pengukuran']);
+      monthSet.add(`${d.getFullYear()}-${String(d.getMonth()).padStart(2, '0')}`);
+    });
+    const sortedMonths = Array.from(monthSet).sort();
+
+    const cumulativeSet = new Set<string>(); // set of "childName-monthKey" to avoid double count
+
+    // Untuk setiap pasangan bulan berturut-turut
+    for (let i = 1; i < sortedMonths.length; i++) {
+      const prevKey = sortedMonths[i - 1];
+      const currKey = sortedMonths[i];
+      const [prevYear, prevMonth] = prevKey.split('-').map(Number);
+      const [currYear, currMonth] = currKey.split('-').map(Number);
+
+      childrenMap.forEach((records, childName) => {
+        const prevData = records.filter(r => {
+          const d = parseDate(r['Tanggal Pengukuran']);
+          return d.getFullYear() === prevYear && d.getMonth() === prevMonth;
+        });
+        const currData = records.filter(r => {
+          const d = parseDate(r['Tanggal Pengukuran']);
+          return d.getFullYear() === currYear && d.getMonth() === currMonth;
+        });
+
+        if (prevData.length === 0 || currData.length === 0) return;
+
+        const latestPrev = prevData.reduce((a, b) => parseDate(a['Tanggal Pengukuran']) > parseDate(b['Tanggal Pengukuran']) ? a : b);
+        const latestCurr = currData.reduce((a, b) => parseDate(a['Tanggal Pengukuran']) > parseDate(b['Tanggal Pengukuran']) ? a : b);
+
+        const prevWeight = parseFloat(latestPrev.Berat);
+        const currWeight = parseFloat(latestCurr.Berat);
+
+        if (!isNaN(prevWeight) && !isNaN(currWeight) && currWeight <= prevWeight) {
+          cumulativeSet.add(`${childName}-${currKey}`);
+        }
+      });
+    }
+
+    return cumulativeSet.size;
+  };
+
+  const cumulativeNotGaining = getCumulativeNotGainingWeight();
+
   const [showNotGainingModal, setShowNotGainingModal] = useState(false);
 
   const chartData = getNutritionalStatusByMonth(filteredByYear);
@@ -303,7 +371,7 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 lg:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 lg:gap-6">
         <Card className="border-0 shadow-lg bg-gradient-to-br from-primary to-accent text-primary-foreground transition-all duration-300 hover:shadow-xl hover:scale-[1.02]">
           <CardHeader className="pb-2 md:pb-3 p-4 md:p-6">
             <CardTitle className="flex items-center gap-2 text-xs sm:text-sm md:text-base font-medium opacity-90">
@@ -330,6 +398,18 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-destructive/80 to-destructive text-white transition-all duration-300 hover:shadow-xl hover:scale-[1.02]">
+          <CardHeader className="pb-2 md:pb-3 p-4 md:p-6">
+            <CardTitle className="flex items-center gap-2 text-xs sm:text-sm md:text-base font-medium opacity-90">
+              <AlertTriangle className="h-4 w-4 md:h-5 md:w-5 flex-shrink-0" />
+              <span>Tidak Naik BB</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 md:p-6 pt-0">
+            <div className="text-2xl sm:text-3xl md:text-4xl font-bold">{cumulativeNotGaining}</div>
+            <p className="text-xs md:text-sm opacity-80 mt-1">Akumulatif {selectedYear}</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Village Nutritional Status Distribution */}
