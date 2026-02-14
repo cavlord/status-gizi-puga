@@ -18,7 +18,7 @@ import { ChildDetailsModal } from "@/components/ChildDetailsModal";
 import { PosyanduTable } from "@/components/PosyanduTable";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, Users, AlertTriangle } from "lucide-react";
+import { TrendingUp, Users } from "lucide-react";
 
 const Dashboard = () => {
   const { toast } = useToast();
@@ -303,7 +303,7 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 lg:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 lg:gap-6">
         <Card className="border-0 shadow-lg bg-gradient-to-br from-primary to-accent text-primary-foreground transition-all duration-300 hover:shadow-xl hover:scale-[1.02]">
           <CardHeader className="pb-2 md:pb-3 p-4 md:p-6">
             <CardTitle className="flex items-center gap-2 text-xs sm:text-sm md:text-base font-medium opacity-90">
@@ -330,21 +330,6 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        <Card 
-          className="border-0 shadow-lg bg-gradient-to-br from-destructive/80 to-destructive text-white cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] active:scale-100"
-          onClick={() => setShowNotGainingModal(true)}
-        >
-          <CardHeader className="pb-2 md:pb-3 p-4 md:p-6">
-            <CardTitle className="flex items-center gap-2 text-xs sm:text-sm md:text-base font-medium opacity-90">
-              <AlertTriangle className="h-4 w-4 md:h-5 md:w-5 flex-shrink-0" />
-              <span>Tidak Naik BB</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 md:p-6 pt-0">
-            <div className="text-2xl sm:text-3xl md:text-4xl font-bold">{notGainingWeightData.count}</div>
-            <p className="text-xs md:text-sm opacity-80 mt-1">2 Bulan Berturut-turut (Klik untuk detail)</p>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Village Nutritional Status Distribution */}
@@ -352,7 +337,9 @@ const Dashboard = () => {
         <VillageNutritionalStatus 
           yearData={filteredByYear} 
           monthData={mostRecentMonthRecords} 
-          year={selectedYear} 
+          year={selectedYear}
+          notGainingWeightData={notGainingWeightData}
+          onShowNotGainingModal={() => setShowNotGainingModal(true)}
         />
       </div>
 
