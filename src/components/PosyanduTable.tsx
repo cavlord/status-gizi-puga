@@ -15,12 +15,14 @@ interface PosyanduTableProps {
   onVillageChange: (village: string) => void;
   onMonthChange: (month: string) => void;
   allRecords: ChildRecord[];
+  yearData?: ChildRecord[];
 }
 
-const STATUS_COLORS = {
+const STATUS_COLORS: Record<string, string> = {
   "Gizi Baik": "hsl(142 71% 45%)",
   "Gizi Kurang": "hsl(38 92% 50%)",
   "Gizi Buruk": "hsl(0 84% 60%)",
+  "Tidak Naik BB": "hsl(0 84% 60%)",
 };
 
 export function PosyanduTable({
@@ -32,34 +34,143 @@ export function PosyanduTable({
   onVillageChange,
   onMonthChange,
   allRecords,
+  yearData = [],
 }: PosyanduTableProps) {
   const [selectedPosyandu, setSelectedPosyandu] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [tidakNaikChildren, setTidakNaikChildren] = useState<ChildRecord[]>([]);
 
   // Get all unique Posyandu names from data
   const posyandus = data.length > 0 
     ? Object.keys(data[0]).filter(key => key !== 'status')
     : [];
 
+  // Compute "Tidak Naik BB" per posyandu for the selected village and month
+  const computeTidakNaikBB = (): { row: { status: string; [key: string]: number | string }; children: ChildRecord[] } => {
+    const row: { status: string; [key: string]: number | string } = { status: 'Tidak Naik BB' };
+    const children: ChildRecord[] = [];
+    
+    if (!selectedVillage || !selectedMonth || yearData.length === 0) {
+      posyandus.forEach(p => { row[p] = 0; });
+      return { row, children };
+    }
+
+    const parseDate = (dateStr: string): Date => {
+      if (dateStr.includes('/')) {
+        const [day, month, year] = dateStr.split('/').map(Number);
+        return new Date(year, month - 1, day);
+      }
+      return new Date(dateStr);
+    };
+
+    const formatDate = (dateStr: string): string => {
+      if (dateStr.includes('/')) {
+        const parts = dateStr.split('/');
+        if (parts.length === 3 && !isNaN(Number(parts[0])) && !isNaN(Number(parts[1])) && !isNaN(Number(parts[2]))) {
+          return dateStr;
+        }
+      }
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr;
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const yr = date.getFullYear();
+      return `${day}/${month}/${yr}`;
+    };
+
+    // Filter yearData by village
+    const villageData = yearData.filter(r => r['Desa/Kel'] === selectedVillage);
+
+    // Find the month index for selectedMonth
+    const monthOrder = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const currentMonthIdx = monthOrder.indexOf(selectedMonth);
+    if (currentMonthIdx <= 0) {
+      posyandus.forEach(p => { row[p] = 0; });
+      return { row, children };
+    }
+    const prevMonthName = monthOrder[currentMonthIdx - 1];
+
+    // Group by child name
+    const childrenMap = new Map<string, ChildRecord[]>();
+    villageData.forEach(record => {
+      if (!record.Nama) return;
+      if (!childrenMap.has(record.Nama)) {
+        childrenMap.set(record.Nama, []);
+      }
+      childrenMap.get(record.Nama)!.push(record);
+    });
+
+    // Per posyandu count
+    const posyanduCount = new Map<string, number>();
+    posyandus.forEach(p => posyanduCount.set(p, 0));
+
+    childrenMap.forEach((records, childName) => {
+      const currMonthData = records.filter(r => r['Bulan Pengukuran'] === selectedMonth);
+      const prevMonthData = records.filter(r => r['Bulan Pengukuran'] === prevMonthName);
+
+      if (currMonthData.length === 0 || prevMonthData.length === 0) return;
+
+      const latestCurr = currMonthData.reduce((a, b) => parseDate(a['Tanggal Pengukuran']) > parseDate(b['Tanggal Pengukuran']) ? a : b);
+      const latestPrev = prevMonthData.reduce((a, b) => parseDate(a['Tanggal Pengukuran']) > parseDate(b['Tanggal Pengukuran']) ? a : b);
+
+      const currWeight = parseFloat(latestCurr.Berat);
+      const prevWeight = parseFloat(latestPrev.Berat);
+
+      if (!isNaN(currWeight) && !isNaN(prevWeight) && currWeight <= prevWeight) {
+        const posyandu = latestCurr.Posyandu;
+        if (posyandu && posyanduCount.has(posyandu)) {
+          posyanduCount.set(posyandu, (posyanduCount.get(posyandu) || 0) + 1);
+        }
+        const formattedDate = formatDate(latestCurr['Tanggal Pengukuran']);
+        if (!formattedDate.includes('NaN')) {
+          children.push({
+            ...latestCurr,
+            'Tanggal Pengukuran': formattedDate
+          });
+        }
+      }
+    });
+
+    posyandus.forEach(p => { row[p] = posyanduCount.get(p) || 0; });
+    return { row, children };
+  };
+
+  const tidakNaikBBResult = computeTidakNaikBB();
+  const dataWithTidakNaik = [...data, tidakNaikBBResult.row];
+
   // Prepare chart data - aggregate totals per status
-  const chartData = data.map(row => {
+  const chartData = dataWithTidakNaik.map(row => {
     const total = posyandus.reduce((sum, posyandu) => sum + (Number(row[posyandu]) || 0), 0);
     return {
       status: row.status,
       total: total,
-      fill: STATUS_COLORS[row.status as keyof typeof STATUS_COLORS] || "hsl(var(--primary))"
+      fill: STATUS_COLORS[row.status as string] || "hsl(var(--primary))"
     };
   });
 
   const handleCellClick = (posyandu: string, status: string) => {
-    setSelectedPosyandu(posyandu);
-    setSelectedStatus(status);
-    setIsModalOpen(true);
+    if (status === 'Tidak Naik BB') {
+      // Filter children by posyandu
+      const filtered = tidakNaikBBResult.children.filter(r => r.Posyandu === posyandu);
+      setTidakNaikChildren(filtered);
+      setSelectedPosyandu(posyandu);
+      setSelectedStatus(status);
+      setIsModalOpen(true);
+    } else {
+      setTidakNaikChildren([]);
+      setSelectedPosyandu(posyandu);
+      setSelectedStatus(status);
+      setIsModalOpen(true);
+    }
   };
 
   const getFilteredRecords = () => {
     if (!selectedPosyandu || !selectedStatus) return [];
+    
+    if (selectedStatus === 'Tidak Naik BB') {
+      return tidakNaikChildren;
+    }
     
     return allRecords.filter(record => {
       return record.Posyandu === selectedPosyandu &&
@@ -119,7 +230,7 @@ export function PosyanduTable({
           </div>
         </CardHeader>
         <CardContent className="p-2 md:p-4 lg:p-6">
-          {data.length === 0 ? (
+          {dataWithTidakNaik.length === 0 || (data.length === 0) ? (
             <div className="text-center py-6 md:py-8 text-xs sm:text-sm md:text-base text-muted-foreground">
               Tidak ada data untuk filter yang dipilih
             </div>
@@ -178,21 +289,22 @@ export function PosyanduTable({
                     </tr>
                   </thead>
                   <tbody>
-                    {data.map((row) => {
+                    {dataWithTidakNaik.map((row) => {
                       const total = posyandus.reduce((sum, posyandu) => sum + (Number(row[posyandu]) || 0), 0);
+                      const isTidakNaik = row.status === 'Tidak Naik BB';
                       return (
-                        <tr key={row.status} className="hover:bg-muted/30 transition-colors">
-                          <td className="p-1.5 md:p-2 lg:p-3 border font-medium whitespace-nowrap text-[9px] sm:text-[10px] md:text-sm">{row.status}</td>
+                        <tr key={row.status} className={`hover:bg-muted/30 transition-colors ${isTidakNaik ? 'border-t-2 border-t-destructive/30' : ''}`}>
+                          <td className={`p-1.5 md:p-2 lg:p-3 border font-medium whitespace-nowrap text-[9px] sm:text-[10px] md:text-sm uppercase ${isTidakNaik ? 'text-destructive font-bold' : ''}`}>{row.status}</td>
                           {posyandus.map((posyandu) => (
                             <td 
                               key={posyandu} 
-                              className="p-1.5 md:p-2 lg:p-3 text-center border cursor-pointer hover:bg-muted/50 transition-colors text-[10px] sm:text-xs md:text-sm active:scale-95"
+                              className={`p-1.5 md:p-2 lg:p-3 text-center border cursor-pointer hover:bg-muted/50 transition-colors text-[10px] sm:text-xs md:text-sm active:scale-95 ${isTidakNaik ? 'text-destructive font-semibold' : ''}`}
                               onClick={() => handleCellClick(posyandu, row.status)}
                             >
                               {row[posyandu] || 0}
                             </td>
                           ))}
-                          <td className="p-1.5 md:p-2 lg:p-3 text-center border font-bold text-primary text-[10px] sm:text-xs md:text-sm">
+                          <td className={`p-1.5 md:p-2 lg:p-3 text-center border font-bold text-[10px] sm:text-xs md:text-sm ${isTidakNaik ? 'text-destructive' : 'text-primary'}`}>
                             {total}
                           </td>
                         </tr>
@@ -212,6 +324,8 @@ export function PosyanduTable({
         onClose={() => setIsModalOpen(false)}
         records={getFilteredRecords()}
         posyandu={`${selectedPosyandu || ''} - ${selectedStatus || ''}`}
+        showWeightComparison={selectedStatus === 'Tidak Naik BB'}
+        allRecords={selectedStatus === 'Tidak Naik BB' ? yearData : []}
       />
     </>
   );

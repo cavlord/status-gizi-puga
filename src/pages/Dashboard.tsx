@@ -517,6 +517,7 @@ const Dashboard = () => {
               allRecords={selectedVillage && selectedMonth
                 ? filterByMonth(filterByVillage(filteredByYear, selectedVillage), selectedMonth)
                 : []}
+              yearData={filteredByYear}
             />
           </CardContent>
         </Card>
