@@ -21,7 +21,7 @@ const LoadingScreen = () => {
             UPT PUSKESMAS PULAU GADANG
           </h1>
           <h2 className="text-xl md:text-2xl font-semibold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]">
-            XIII KOTO KAMPARS
+            XIII KOTO KAMPAR
           </h2>
         </div>
 
