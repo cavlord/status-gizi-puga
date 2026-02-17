@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Calendar, TrendingDown, Users, ChevronRight } from "lucide-react";
+import { Building2, Calendar, Users, TrendingDown, CheckCircle, AlertTriangle, XCircle } from "lucide-react";
 import { ChildRecord } from "@/lib/googleSheets";
 import { ChildDetailsModal } from "./ChildDetailsModal";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface PosyanduTableProps {
   data: { status: string; [key: string]: number | string }[];
@@ -18,11 +18,27 @@ interface PosyanduTableProps {
   yearData?: ChildRecord[];
 }
 
-const STATUS_CONFIG: Record<string, { color: string; bgClass: string; textClass: string; icon: string }> = {
-  "Gizi Baik": { color: "hsl(142 71% 45%)", bgClass: "bg-green-50 dark:bg-green-950/30", textClass: "text-green-700 dark:text-green-400", icon: "✅" },
-  "Gizi Kurang": { color: "hsl(38 92% 50%)", bgClass: "bg-amber-50 dark:bg-amber-950/30", textClass: "text-amber-700 dark:text-amber-400", icon: "⚠️" },
-  "Gizi Buruk": { color: "hsl(0 84% 60%)", bgClass: "bg-red-50 dark:bg-red-950/30", textClass: "text-red-700 dark:text-red-400", icon: "🚨" },
-  "Tidak Naik BB": { color: "hsl(0 84% 60%)", bgClass: "bg-red-50 dark:bg-red-950/30", textClass: "text-red-700 dark:text-red-400", icon: "📉" },
+const STATUS_CONFIG: Record<string, { icon: React.ReactNode; rowClass: string; badgeClass: string }> = {
+  "Gizi Baik": {
+    icon: <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />,
+    rowClass: "hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20",
+    badgeClass: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
+  },
+  "Gizi Kurang": {
+    icon: <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />,
+    rowClass: "hover:bg-amber-50/50 dark:hover:bg-amber-950/20",
+    badgeClass: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400",
+  },
+  "Gizi Buruk": {
+    icon: <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />,
+    rowClass: "hover:bg-red-50/50 dark:hover:bg-red-950/20",
+    badgeClass: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
+  },
+  "Tidak Naik BB": {
+    icon: <TrendingDown className="h-4 w-4 text-red-600 dark:text-red-400" />,
+    rowClass: "hover:bg-red-50/50 dark:hover:bg-red-950/20 border-t-2 border-dashed border-border",
+    badgeClass: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
+  },
 };
 
 export function PosyanduTable({
@@ -45,7 +61,7 @@ export function PosyanduTable({
     ? Object.keys(data[0]).filter(key => key !== 'status')
     : [];
 
-  // Compute "Tidak Naik BB" per posyandu for the selected village and month
+  // Compute "Tidak Naik BB" per posyandu
   const computeTidakNaikBB = (): { row: { status: string; [key: string]: number | string }; children: ChildRecord[] } => {
     const row: { status: string; [key: string]: number | string } = { status: 'Tidak Naik BB' };
     const children: ChildRecord[] = [];
@@ -133,15 +149,6 @@ export function PosyanduTable({
   const tidakNaikBBResult = computeTidakNaikBB();
   const dataWithTidakNaik = [...data, tidakNaikBBResult.row];
 
-  const chartData = dataWithTidakNaik.map(row => {
-    const total = posyandus.reduce((sum, posyandu) => sum + (Number(row[posyandu]) || 0), 0);
-    return {
-      status: row.status,
-      total: total,
-      fill: STATUS_CONFIG[row.status as string]?.color || "hsl(var(--primary))"
-    };
-  });
-
   const handleCellClick = (posyandu: string, status: string) => {
     if (status === 'Tidak Naik BB') {
       const filtered = tidakNaikBBResult.children.filter(r => r.Posyandu === posyandu);
@@ -171,11 +178,11 @@ export function PosyanduTable({
 
   return (
     <>
-      <Card className="shadow-sm w-full overflow-hidden">
+      <Card className="shadow-sm w-full overflow-hidden animate-fade-in">
         <CardHeader className="p-3 md:p-4 lg:p-6 border-b border-border/50">
           <CardTitle className="text-sm md:text-base lg:text-lg flex items-center gap-2">
             <Users className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-            Data Posyandu – Status Gizi
+            Status Gizi Per Posyandu
           </CardTitle>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3 lg:gap-4 mt-2 md:mt-3 lg:mt-4">
             <div className="flex items-center gap-2 md:gap-3 bg-muted/50 p-2 md:p-3 rounded-lg">
@@ -221,120 +228,85 @@ export function PosyanduTable({
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-2 md:p-4 lg:p-6">
+        <CardContent className="p-0">
           {dataWithTidakNaik.length === 0 || (data.length === 0) ? (
             <div className="text-center py-6 md:py-8 text-xs sm:text-sm md:text-base text-muted-foreground">
               Tidak ada data untuk filter yang dipilih
             </div>
           ) : (
-            <>
-              {/* Bar Chart */}
-              <div className="mb-6" key={`${selectedVillage}-${selectedMonth}`}>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={chartData} barCategoryGap="20%">
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                    <XAxis 
-                      dataKey="status" 
-                      tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-                      stroke="hsl(var(--border))"
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <YAxis 
-                      tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-                      stroke="hsl(var(--border))"
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <Tooltip 
-                      contentStyle={{
-                        backgroundColor: 'hsl(var(--card))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '0.75rem',
-                        fontSize: '12px',
-                        boxShadow: '0 4px 12px hsl(var(--foreground) / 0.1)',
-                      }}
-                      cursor={{ fill: 'hsl(var(--muted) / 0.5)', radius: 8 }}
-                    />
-                    <Bar 
-                      dataKey="total" 
-                      name="Total Anak"
-                      animationBegin={0}
-                      animationDuration={1000}
-                      animationEasing="ease-out"
-                      radius={[10, 10, 0, 0]}
-                    >
-                      {chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/30 hover:bg-muted/30">
+                    <TableHead className="text-xs md:text-sm font-semibold text-foreground w-[160px] md:w-[200px] sticky left-0 bg-muted/30 z-10">
+                      STATUS
+                    </TableHead>
+                    {posyandus.map((posyandu) => (
+                      <TableHead 
+                        key={posyandu} 
+                        className="text-xs md:text-sm font-semibold text-foreground text-center uppercase min-w-[80px]"
+                      >
+                        {posyandu}
+                      </TableHead>
+                    ))}
+                    <TableHead className="text-xs md:text-sm font-semibold text-foreground text-center min-w-[70px] bg-muted/50">
+                      TOTAL
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {dataWithTidakNaik.map((row) => {
+                    const total = posyandus.reduce((sum, posyandu) => sum + (Number(row[posyandu]) || 0), 0);
+                    const config = STATUS_CONFIG[row.status as string] || {
+                      icon: <Users className="h-4 w-4 text-muted-foreground" />,
+                      rowClass: "",
+                      badgeClass: "bg-muted text-muted-foreground",
+                    };
 
-              {/* Modern Card-based Table */}
-              <div className="space-y-3">
-                {dataWithTidakNaik.map((row, rowIdx) => {
-                  const total = posyandus.reduce((sum, posyandu) => sum + (Number(row[posyandu]) || 0), 0);
-                  const isTidakNaik = row.status === 'Tidak Naik BB';
-                  const config = STATUS_CONFIG[row.status as string] || { bgClass: 'bg-muted/30', textClass: 'text-foreground', icon: '📊' };
-
-                  return (
-                    <div
-                      key={row.status}
-                      className={`rounded-xl border transition-all duration-300 animate-fade-in overflow-hidden ${
-                        isTidakNaik 
-                          ? 'border-destructive/30 shadow-[0_0_0_1px_hsl(var(--destructive)/0.1)]' 
-                          : 'border-border/60 hover:shadow-md'
-                      }`}
-                      style={{ animationDelay: `${rowIdx * 100}ms`, animationFillMode: 'both' }}
-                    >
-                      {/* Status Header */}
-                      <div className={`flex items-center justify-between px-3 md:px-4 py-2.5 md:py-3 ${config.bgClass}`}>
-                        <div className="flex items-center gap-2">
-                          <span className="text-base md:text-lg">{config.icon}</span>
-                          <span className={`text-xs md:text-sm font-bold uppercase tracking-wide ${config.textClass}`}>
-                            {row.status}
-                          </span>
-                        </div>
-                        <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs md:text-sm font-bold ${config.bgClass} ${config.textClass} border ${
-                          isTidakNaik ? 'border-destructive/20' : 'border-current/10'
-                        }`}>
-                          <span>Total:</span>
-                          <span className="text-sm md:text-base">{total}</span>
-                        </div>
-                      </div>
-
-                      {/* Posyandu Grid */}
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-px bg-border/30">
-                        {posyandus.map((posyandu, idx) => {
+                    return (
+                      <TableRow
+                        key={row.status}
+                        className={`transition-colors duration-150 ${config.rowClass}`}
+                      >
+                        <TableCell className="sticky left-0 bg-card z-10">
+                          <div className="flex items-center gap-2">
+                            {config.icon}
+                            <span className="text-xs md:text-sm font-medium uppercase tracking-wide">
+                              {row.status}
+                            </span>
+                          </div>
+                        </TableCell>
+                        {posyandus.map((posyandu) => {
                           const value = Number(row[posyandu]) || 0;
                           return (
-                            <button
+                            <TableCell
                               key={posyandu}
-                              onClick={() => handleCellClick(posyandu, row.status as string)}
-                              className={`group relative flex flex-col items-center justify-center p-2.5 md:p-3 bg-card hover:bg-muted/40 
-                                transition-all duration-200 active:scale-[0.97] cursor-pointer`}
-                              style={{ animationDelay: `${(rowIdx * 100) + (idx * 50)}ms` }}
+                              className="text-center p-2 md:p-3"
                             >
-                              <span className="text-[10px] sm:text-xs text-muted-foreground font-medium truncate w-full text-center uppercase mb-1">
-                                {posyandu}
-                              </span>
-                              <span className={`text-lg md:text-xl font-bold tabular-nums ${
-                                value > 0 ? config.textClass : 'text-muted-foreground/50'
-                              }`}>
+                              <button
+                                onClick={() => handleCellClick(posyandu, row.status as string)}
+                                className={`inline-flex items-center justify-center min-w-[32px] h-7 md:h-8 px-2 rounded-md text-xs md:text-sm font-semibold tabular-nums transition-all duration-150 
+                                  ${value > 0 
+                                    ? `${config.badgeClass} hover:opacity-80 cursor-pointer active:scale-95` 
+                                    : 'text-muted-foreground/40 cursor-pointer hover:bg-muted/50'
+                                  }`}
+                              >
                                 {value}
-                              </span>
-                              <ChevronRight className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground/0 group-hover:text-muted-foreground/50 transition-all duration-200" />
-                            </button>
+                              </button>
+                            </TableCell>
                           );
                         })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </>
+                        <TableCell className="text-center bg-muted/20">
+                          <span className={`inline-flex items-center justify-center min-w-[36px] h-7 md:h-8 px-2.5 rounded-md text-xs md:text-sm font-bold tabular-nums ${config.badgeClass}`}>
+                            {total}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
