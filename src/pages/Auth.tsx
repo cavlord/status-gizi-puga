@@ -139,7 +139,7 @@ const AuthPage = () => {
               {mode === 'registered' && 'Pendaftaran Berhasil'}
             </h1>
             <p className="text-white/60 text-sm">
-              {mode === 'login' && 'Masuk ke Dashboard Posyandu'}
+              {mode === 'login' && 'Login ke Dashboard Posyandu'}
               {mode === 'register' && 'Buat akun baru untuk akses dashboard'}
               {mode === 'registered' && 'Akun Anda telah terdaftar'}
             </p>
@@ -199,7 +199,7 @@ const AuthPage = () => {
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
                   <>
-                    Masuk <ArrowRight className="w-5 h-5 ml-2" />
+                    Login <ArrowRight className="w-5 h-5 ml-2" />
                   </>
                 )}
               </Button>
@@ -306,7 +306,7 @@ const AuthPage = () => {
                   onClick={() => switchMode('login')}
                   className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
                 >
-                  Masuk
+                  Login
                 </button>
               </p>
             </form>
