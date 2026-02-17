@@ -23,7 +23,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const AUTH_STORAGE_KEY = 'posyandu_auth';
-const IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes in milliseconds
+const IDLE_TIMEOUT_MS = 15 * 1000; // 15 seconds for testing (change back to 5 * 60 * 1000)
 
 // Helper to check if we should redirect after logout
 const redirectToAuth = () => {
