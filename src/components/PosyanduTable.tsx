@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Calendar } from "lucide-react";
+import { Building2, Calendar, TrendingDown, Users, ChevronRight } from "lucide-react";
 import { ChildRecord } from "@/lib/googleSheets";
 import { ChildDetailsModal } from "./ChildDetailsModal";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 interface PosyanduTableProps {
   data: { status: string; [key: string]: number | string }[];
@@ -18,11 +18,11 @@ interface PosyanduTableProps {
   yearData?: ChildRecord[];
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  "Gizi Baik": "hsl(142 71% 45%)",
-  "Gizi Kurang": "hsl(38 92% 50%)",
-  "Gizi Buruk": "hsl(0 84% 60%)",
-  "Tidak Naik BB": "hsl(0 84% 60%)",
+const STATUS_CONFIG: Record<string, { color: string; bgClass: string; textClass: string; icon: string }> = {
+  "Gizi Baik": { color: "hsl(142 71% 45%)", bgClass: "bg-green-50 dark:bg-green-950/30", textClass: "text-green-700 dark:text-green-400", icon: "✅" },
+  "Gizi Kurang": { color: "hsl(38 92% 50%)", bgClass: "bg-amber-50 dark:bg-amber-950/30", textClass: "text-amber-700 dark:text-amber-400", icon: "⚠️" },
+  "Gizi Buruk": { color: "hsl(0 84% 60%)", bgClass: "bg-red-50 dark:bg-red-950/30", textClass: "text-red-700 dark:text-red-400", icon: "🚨" },
+  "Tidak Naik BB": { color: "hsl(0 84% 60%)", bgClass: "bg-red-50 dark:bg-red-950/30", textClass: "text-red-700 dark:text-red-400", icon: "📉" },
 };
 
 export function PosyanduTable({
@@ -41,7 +41,6 @@ export function PosyanduTable({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tidakNaikChildren, setTidakNaikChildren] = useState<ChildRecord[]>([]);
 
-  // Get all unique Posyandu names from data
   const posyandus = data.length > 0 
     ? Object.keys(data[0]).filter(key => key !== 'status')
     : [];
@@ -79,10 +78,7 @@ export function PosyanduTable({
       return `${day}/${month}/${yr}`;
     };
 
-    // Filter yearData by village
     const villageData = yearData.filter(r => r['Desa/Kel'] === selectedVillage);
-
-    // Find the month index for selectedMonth
     const monthOrder = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
     const currentMonthIdx = monthOrder.indexOf(selectedMonth);
     if (currentMonthIdx <= 0) {
@@ -91,7 +87,6 @@ export function PosyanduTable({
     }
     const prevMonthName = monthOrder[currentMonthIdx - 1];
 
-    // Group by child name
     const childrenMap = new Map<string, ChildRecord[]>();
     villageData.forEach(record => {
       if (!record.Nama) return;
@@ -101,7 +96,6 @@ export function PosyanduTable({
       childrenMap.get(record.Nama)!.push(record);
     });
 
-    // Per posyandu count
     const posyanduCount = new Map<string, number>();
     posyandus.forEach(p => posyanduCount.set(p, 0));
 
@@ -139,30 +133,25 @@ export function PosyanduTable({
   const tidakNaikBBResult = computeTidakNaikBB();
   const dataWithTidakNaik = [...data, tidakNaikBBResult.row];
 
-  // Prepare chart data - aggregate totals per status
   const chartData = dataWithTidakNaik.map(row => {
     const total = posyandus.reduce((sum, posyandu) => sum + (Number(row[posyandu]) || 0), 0);
     return {
       status: row.status,
       total: total,
-      fill: STATUS_COLORS[row.status as string] || "hsl(var(--primary))"
+      fill: STATUS_CONFIG[row.status as string]?.color || "hsl(var(--primary))"
     };
   });
 
   const handleCellClick = (posyandu: string, status: string) => {
     if (status === 'Tidak Naik BB') {
-      // Filter children by posyandu
       const filtered = tidakNaikBBResult.children.filter(r => r.Posyandu === posyandu);
       setTidakNaikChildren(filtered);
-      setSelectedPosyandu(posyandu);
-      setSelectedStatus(status);
-      setIsModalOpen(true);
     } else {
       setTidakNaikChildren([]);
-      setSelectedPosyandu(posyandu);
-      setSelectedStatus(status);
-      setIsModalOpen(true);
     }
+    setSelectedPosyandu(posyandu);
+    setSelectedStatus(status);
+    setIsModalOpen(true);
   };
 
   const getFilteredRecords = () => {
@@ -182,9 +171,12 @@ export function PosyanduTable({
 
   return (
     <>
-      <Card className="shadow-sm w-full">
-        <CardHeader className="p-3 md:p-4 lg:p-6">
-          <CardTitle className="text-sm md:text-base lg:text-lg">Data Posyandu – Status Gizi</CardTitle>
+      <Card className="shadow-sm w-full overflow-hidden">
+        <CardHeader className="p-3 md:p-4 lg:p-6 border-b border-border/50">
+          <CardTitle className="text-sm md:text-base lg:text-lg flex items-center gap-2">
+            <Users className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+            Data Posyandu – Status Gizi
+          </CardTitle>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3 lg:gap-4 mt-2 md:mt-3 lg:mt-4">
             <div className="flex items-center gap-2 md:gap-3 bg-muted/50 p-2 md:p-3 rounded-lg">
               <Building2 className="h-4 w-4 md:h-5 md:w-5 text-primary flex-shrink-0" />
@@ -239,31 +231,38 @@ export function PosyanduTable({
               {/* Bar Chart */}
               <div className="mb-6" key={`${selectedVillage}-${selectedMonth}`}>
                 <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <BarChart data={chartData} barCategoryGap="20%">
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                     <XAxis 
                       dataKey="status" 
-                      tick={{ fontSize: 12 }}
-                      stroke="hsl(var(--muted-foreground))"
+                      tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                      stroke="hsl(var(--border))"
+                      axisLine={false}
+                      tickLine={false}
                     />
                     <YAxis 
-                      tick={{ fontSize: 12 }}
-                      stroke="hsl(var(--muted-foreground))"
+                      tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                      stroke="hsl(var(--border))"
+                      axisLine={false}
+                      tickLine={false}
                     />
                     <Tooltip 
                       contentStyle={{
                         backgroundColor: 'hsl(var(--card))',
                         border: '1px solid hsl(var(--border))',
-                        borderRadius: '0.5rem',
-                        fontSize: '12px'
+                        borderRadius: '0.75rem',
+                        fontSize: '12px',
+                        boxShadow: '0 4px 12px hsl(var(--foreground) / 0.1)',
                       }}
+                      cursor={{ fill: 'hsl(var(--muted) / 0.5)', radius: 8 }}
                     />
                     <Bar 
                       dataKey="total" 
                       name="Total Anak"
                       animationBegin={0}
-                      animationDuration={800}
-                      radius={[8, 8, 0, 0]}
+                      animationDuration={1000}
+                      animationEasing="ease-out"
+                      radius={[10, 10, 0, 0]}
                     >
                       {chartData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -273,47 +272,68 @@ export function PosyanduTable({
                 </ResponsiveContainer>
               </div>
 
-              {/* Table */}
-              <div className="overflow-x-auto -mx-2 md:mx-0">
-              <div className="min-w-max px-2 md:px-0">
-                <table className="w-full border-collapse text-[10px] sm:text-xs md:text-sm">
-                  <thead>
-                    <tr className="bg-muted/50">
-                      <th className="p-1.5 md:p-2 lg:p-3 text-left font-semibold border whitespace-nowrap">BB/TB</th>
-                      {posyandus.map((posyandu) => (
-                        <th key={posyandu} className="p-1.5 md:p-2 lg:p-3 text-center font-semibold border whitespace-nowrap min-w-[50px] sm:min-w-[60px] md:min-w-[80px]">
-                          {posyandu}
-                        </th>
-                      ))}
-                      <th className="p-1.5 md:p-2 lg:p-3 text-center font-semibold border whitespace-nowrap">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {dataWithTidakNaik.map((row) => {
-                      const total = posyandus.reduce((sum, posyandu) => sum + (Number(row[posyandu]) || 0), 0);
-                      const isTidakNaik = row.status === 'Tidak Naik BB';
-                      return (
-                        <tr key={row.status} className={`hover:bg-muted/30 transition-colors ${isTidakNaik ? 'border-t-2 border-t-destructive/30' : ''}`}>
-                          <td className={`p-1.5 md:p-2 lg:p-3 border font-medium whitespace-nowrap text-[9px] sm:text-[10px] md:text-sm uppercase ${isTidakNaik ? 'text-destructive font-bold' : ''}`}>{row.status}</td>
-                          {posyandus.map((posyandu) => (
-                            <td 
-                              key={posyandu} 
-                              className={`p-1.5 md:p-2 lg:p-3 text-center border cursor-pointer hover:bg-muted/50 transition-colors text-[10px] sm:text-xs md:text-sm active:scale-95 ${isTidakNaik ? 'text-destructive font-semibold' : ''}`}
-                              onClick={() => handleCellClick(posyandu, row.status)}
+              {/* Modern Card-based Table */}
+              <div className="space-y-3">
+                {dataWithTidakNaik.map((row, rowIdx) => {
+                  const total = posyandus.reduce((sum, posyandu) => sum + (Number(row[posyandu]) || 0), 0);
+                  const isTidakNaik = row.status === 'Tidak Naik BB';
+                  const config = STATUS_CONFIG[row.status as string] || { bgClass: 'bg-muted/30', textClass: 'text-foreground', icon: '📊' };
+
+                  return (
+                    <div
+                      key={row.status}
+                      className={`rounded-xl border transition-all duration-300 animate-fade-in overflow-hidden ${
+                        isTidakNaik 
+                          ? 'border-destructive/30 shadow-[0_0_0_1px_hsl(var(--destructive)/0.1)]' 
+                          : 'border-border/60 hover:shadow-md'
+                      }`}
+                      style={{ animationDelay: `${rowIdx * 100}ms`, animationFillMode: 'both' }}
+                    >
+                      {/* Status Header */}
+                      <div className={`flex items-center justify-between px-3 md:px-4 py-2.5 md:py-3 ${config.bgClass}`}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-base md:text-lg">{config.icon}</span>
+                          <span className={`text-xs md:text-sm font-bold uppercase tracking-wide ${config.textClass}`}>
+                            {row.status}
+                          </span>
+                        </div>
+                        <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs md:text-sm font-bold ${config.bgClass} ${config.textClass} border ${
+                          isTidakNaik ? 'border-destructive/20' : 'border-current/10'
+                        }`}>
+                          <span>Total:</span>
+                          <span className="text-sm md:text-base">{total}</span>
+                        </div>
+                      </div>
+
+                      {/* Posyandu Grid */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-px bg-border/30">
+                        {posyandus.map((posyandu, idx) => {
+                          const value = Number(row[posyandu]) || 0;
+                          return (
+                            <button
+                              key={posyandu}
+                              onClick={() => handleCellClick(posyandu, row.status as string)}
+                              className={`group relative flex flex-col items-center justify-center p-2.5 md:p-3 bg-card hover:bg-muted/40 
+                                transition-all duration-200 active:scale-[0.97] cursor-pointer`}
+                              style={{ animationDelay: `${(rowIdx * 100) + (idx * 50)}ms` }}
                             >
-                              {row[posyandu] || 0}
-                            </td>
-                          ))}
-                          <td className={`p-1.5 md:p-2 lg:p-3 text-center border font-bold text-[10px] sm:text-xs md:text-sm ${isTidakNaik ? 'text-destructive' : 'text-primary'}`}>
-                            {total}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                              <span className="text-[10px] sm:text-xs text-muted-foreground font-medium truncate w-full text-center uppercase mb-1">
+                                {posyandu}
+                              </span>
+                              <span className={`text-lg md:text-xl font-bold tabular-nums ${
+                                value > 0 ? config.textClass : 'text-muted-foreground/50'
+                              }`}>
+                                {value}
+                              </span>
+                              <ChevronRight className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground/0 group-hover:text-muted-foreground/50 transition-all duration-200" />
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            </div>
             </>
           )}
         </CardContent>
