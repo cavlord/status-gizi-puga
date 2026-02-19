@@ -130,13 +130,13 @@ const AuthPage = () => {
         <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl shadow-2xl p-8 animate-fade-in">
           {/* Logo & Title */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-4 shadow-lg shadow-purple-500/30">
-              <img 
-                src="/icon/logo.svg" 
-                alt="Logo" 
-                className="w-8 h-8"
-              />
-            </div>
+            <div className="inline-flex items-center justify-center mb-4">
+  <img 
+    src="/icon/logo.svg" 
+    alt="Logo" 
+    className="w-16 h-16"
+  />
+</div>
             <h1 className="text-2xl font-bold text-white mb-2 font-heading">
               {mode === 'login' && 'Selamat Datang'}
               {mode === 'register' && 'Daftar Akun'}
