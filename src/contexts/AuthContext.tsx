@@ -1,7 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useIdleTimeout } from '@/hooks/useIdleTimeout';
-import { useToast } from '@/hooks/use-toast';
 
 export interface User {
   email: string;
@@ -23,20 +21,10 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const AUTH_STORAGE_KEY = 'posyandu_auth';
-const IDLE_TIMEOUT_MS = 15 * 1000; // 15 seconds for testing (change back to 5 * 60 * 1000)
-
-// Helper to check if we should redirect after logout
-const redirectToAuth = () => {
-  // Only redirect if not already on auth page
-  if (window.location.pathname !== '/auth') {
-    window.location.href = '/auth';
-  }
-};
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const logout = useCallback(() => {
@@ -45,26 +33,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Clear all cached data on logout
     queryClient.clear();
   }, [queryClient]);
-
-  const handleIdleTimeout = useCallback(() => {
-    if (user) {
-      logout();
-      toast({
-        title: "Sesi Berakhir",
-        description: "Anda telah logout otomatis karena tidak ada aktivitas selama 5 menit.",
-        variant: "destructive",
-      });
-      // Force redirect to login page
-      redirectToAuth();
-    }
-  }, [user, logout, toast]);
-
-  // Use idle timeout hook - only active when user is authenticated
-  useIdleTimeout({
-    timeout: IDLE_TIMEOUT_MS,
-    onIdle: handleIdleTimeout,
-    enabled: !!user,
-  });
 
   useEffect(() => {
     // Check for existing session
@@ -87,7 +55,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (!e.newValue) {
           // User logged out in another tab
           setUser(null);
-          redirectToAuth();
+          window.location.href = '/auth';
         } else {
           try {
             const parsed = JSON.parse(e.newValue);
