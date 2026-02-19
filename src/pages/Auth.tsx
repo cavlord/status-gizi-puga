@@ -135,12 +135,12 @@ const AuthPage = () => {
     <img src="/icon/logo.svg" className="w-24 h-24" alt="Logo" />
 </div>
             <h1 className="text-2xl font-bold text-white mb-2 font-heading">
-              {mode === 'login' && 'Selamat Datang'}
+              {mode === 'login' && 'SIGIZI X KAMPAR'}
               {mode === 'register' && 'Daftar Akun'}
               {mode === 'registered' && 'Pendaftaran Berhasil'}
             </h1>
             <p className="text-white/60 text-sm">
-              {mode === 'login' && 'Login ke Dashboard Posyandu'}
+              {mode === 'login' && 'Login Dashboard'}
               {mode === 'register' && 'Buat akun baru untuk akses dashboard'}
               {mode === 'registered' && 'Akun Anda telah terdaftar'}
             </p>
