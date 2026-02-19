@@ -131,7 +131,8 @@ const AuthPage = () => {
           {/* Logo & Title */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-4 shadow-lg shadow-purple-500/30">
-              <img src="src/images/Kabupaten Kampar-logobase.net.svg"  alt="Shield Check Icon" className="w-8 h-8 text-white"  />
+             <img src="public/icon/shield-check.svg" alt="Shield Check Icon" className="w-8 h-8 text-white"  // atau brightness-0 invert kalau perlu
+              />
             </div>
             <h1 className="text-2xl font-bold text-white mb-2 font-heading">
               {mode === 'login' && 'Selamat Datang'}
