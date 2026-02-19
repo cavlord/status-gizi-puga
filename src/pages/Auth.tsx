@@ -134,7 +134,7 @@ const AuthPage = () => {
   <img 
     src="/icon/logo.svg" 
     alt="Logo" 
-    className="w-16 h-16"
+    className="w-24 h-24"
   />
 </div>
             <h1 className="text-2xl font-bold text-white mb-2 font-heading">
