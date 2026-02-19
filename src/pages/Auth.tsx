@@ -131,7 +131,7 @@ const AuthPage = () => {
           {/* Logo & Title */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center mb-4">
-     <img src="/icon/logo2.svg" className="w-16 h-24" alt="Logo 2" />
+     <img src="/icon/logo2.svg" className="w-20 h-24" alt="Logo 2" />
     <img src="/icon/logo.svg" className="w-24 h-24" alt="Logo" />
 </div>
             <h1 className="text-2xl font-bold text-white mb-2 font-heading">
