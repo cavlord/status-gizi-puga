@@ -12,6 +12,8 @@ import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Loader2, ShieldCheck, CheckC
 
 type AuthMode = 'login' | 'register' | 'registered';
 
+
+
 const AuthPage = () => {
   const navigate = useNavigate();
   const { login, isAuthenticated } = useAuth();
@@ -33,6 +35,13 @@ const AuthPage = () => {
   });
 
   useEffect(() => {
+     const preloadImage = (src: string) => {
+    const img = new Image();
+    img.src = src;
+  };
+  preloadImage('/icon/logo.svg');
+  preloadImage('/icon/logo2.svg');
+    
     if (isAuthenticated) {
       navigate('/');
     }
@@ -130,9 +139,21 @@ const AuthPage = () => {
         <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl shadow-2xl p-8 animate-fade-in">
           {/* Logo & Title */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center mb-4">
-     <img src="/icon/logo2.svg" className="w-20 h-24" alt="Logo 2" />
-    <img src="/icon/logo.svg" className="w-24 h-24" alt="Logo" />
+           <div className="inline-flex items-center justify-center gap-4 mb-4">
+  <img 
+    src="/icon/logo2.svg" 
+    alt="Logo 2" 
+    className="w-24 h-24"
+    loading="eager"
+    decoding="async"
+  />
+  <img 
+    src="/icon/logo.svg" 
+    alt="Logo" 
+    className="w-24 h-24"
+    loading="eager"
+    decoding="async"
+  />
 </div>
             <h1 className="text-2xl font-bold text-white mb-2 font-heading">
               {mode === 'login' && 'DASHBOARD'}
