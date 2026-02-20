@@ -142,14 +142,14 @@ const AuthPage = () => {
            <div className="inline-flex items-center justify-center gap-4 mb-4">
   <img 
     src="/icon/logo2.svg" 
-    alt="Logo 2" 
-    className="w-24 h-24"
+    alt="" 
+    className="w-18 h-24"
     loading="eager"
     decoding="async"
   />
   <img 
     src="/icon/logo.svg" 
-    alt="Logo" 
+    alt="" 
     className="w-24 h-24"
     loading="eager"
     decoding="async"
