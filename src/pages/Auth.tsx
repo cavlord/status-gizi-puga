@@ -110,33 +110,17 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
-      {/* Animated background elements */}
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-50 via-white to-gray-100 relative overflow-hidden">
+      {/* Subtle background elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/30 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
-      </div>
-
-      {/* Floating particles */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(20)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 bg-white/20 rounded-full animate-float"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 5}s`,
-              animationDuration: `${5 + Math.random() * 10}s`,
-            }}
-          />
-        ))}
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-secondary/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-accent/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
 
       <div className="w-full max-w-md relative z-10">
         {/* Glass card */}
-        <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl shadow-2xl p-8 animate-fade-in">
+        <div className="backdrop-blur-xl bg-white border border-gray-200 rounded-3xl shadow-xl shadow-gray-200/50 p-8 animate-fade-in">
           {/* Logo & Title */}
           <div className="text-center mb-8">
            <div className="inline-flex items-center justify-center gap-4 mb-4">
@@ -155,12 +139,12 @@ const AuthPage = () => {
     decoding="async"
   />
 </div>
-            <h1 className="text-2xl font-bold text-white mb-2 font-heading">
+            <h1 className="text-2xl font-bold text-foreground mb-2 font-heading">
               {mode === 'login' && 'DASHBOARD'}
               {mode === 'register' && 'Daftar Akun'}
               {mode === 'registered' && 'Pendaftaran Berhasil'}
             </h1>
-            <p className="text-white/60 text-sm">
+            <p className="text-muted-foreground text-sm">
               {mode === 'login' && 'SIGIZI-X KAMPAR'}
               {mode === 'register' && 'Buat akun baru untuk akses dashboard'}
               {mode === 'registered' && 'Akun Anda telah terdaftar'}
@@ -171,14 +155,14 @@ const AuthPage = () => {
           {mode === 'login' && (
             <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-white/80 text-sm">Email</Label>
+                <Label htmlFor="email" className="text-foreground text-sm">Email</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
                     id="email"
                     type="email"
                     placeholder="nama@email.com"
-                    className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-purple-400 focus:ring-purple-400/20 h-12 rounded-xl transition-all duration-300"
+                    className="pl-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300"
                     {...loginForm.register('email')}
                   />
                 </div>
@@ -188,20 +172,20 @@ const AuthPage = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-white/80 text-sm">Password</Label>
+                <Label htmlFor="password" className="text-foreground text-sm">Password</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••"
-                    className="pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-purple-400 focus:ring-purple-400/20 h-12 rounded-xl transition-all duration-300"
+                    className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300"
                     {...loginForm.register('password')}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
@@ -214,7 +198,7 @@ const AuthPage = () => {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/30 transition-all duration-300"
+                className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300"
               >
                 {isLoading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
@@ -225,12 +209,12 @@ const AuthPage = () => {
                 )}
               </Button>
 
-              <p className="text-center text-white/60 text-sm">
+              <p className="text-center text-muted-foreground text-sm">
                 Belum punya akun?{' '}
                 <button
                   type="button"
                   onClick={() => switchMode('register')}
-                  className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
+                  className="text-primary hover:text-primary/80 font-medium transition-colors"
                 >
                   Daftar sekarang
                 </button>
@@ -242,14 +226,14 @@ const AuthPage = () => {
           {mode === 'register' && (
             <form onSubmit={registerForm.handleSubmit(handleRegister)} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="reg-email" className="text-white/80 text-sm">Email</Label>
+                <Label htmlFor="reg-email" className="text-foreground text-sm">Email</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
                     id="reg-email"
                     type="email"
                     placeholder="nama@email.com"
-                    className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-purple-400 focus:ring-purple-400/20 h-12 rounded-xl transition-all duration-300"
+                    className="pl-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300"
                     {...registerForm.register('email')}
                   />
                 </div>
@@ -259,20 +243,20 @@ const AuthPage = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="reg-password" className="text-white/80 text-sm">Password</Label>
+                <Label htmlFor="reg-password" className="text-foreground text-sm">Password</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
                     id="reg-password"
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Minimal 8 karakter"
-                    className="pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-purple-400 focus:ring-purple-400/20 h-12 rounded-xl transition-all duration-300"
+                    className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300"
                     {...registerForm.register('password')}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
@@ -283,20 +267,20 @@ const AuthPage = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirm-password" className="text-white/80 text-sm">Konfirmasi Password</Label>
+                <Label htmlFor="confirm-password" className="text-foreground text-sm">Konfirmasi Password</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
                     id="confirm-password"
                     type={showConfirmPassword ? 'text' : 'password'}
                     placeholder="Ulangi password"
-                    className="pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-purple-400 focus:ring-purple-400/20 h-12 rounded-xl transition-all duration-300"
+                    className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300"
                     {...registerForm.register('confirmPassword')}
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
@@ -309,7 +293,7 @@ const AuthPage = () => {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/30 transition-all duration-300"
+                className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300"
               >
                 {isLoading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
@@ -320,12 +304,12 @@ const AuthPage = () => {
                 )}
               </Button>
 
-              <p className="text-center text-white/60 text-sm">
+              <p className="text-center text-muted-foreground text-sm">
                 Sudah punya akun?{' '}
                 <button
                   type="button"
                   onClick={() => switchMode('login')}
-                  className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
+                  className="text-primary hover:text-primary/80 font-medium transition-colors"
                 >
                   Login
                 </button>
@@ -339,18 +323,18 @@ const AuthPage = () => {
               <div className="flex justify-center">
                 <CheckCircle className="w-16 h-16 text-green-400" />
               </div>
-              <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-                <p className="text-white/80 text-sm leading-relaxed">
-                  Akun Anda telah berhasil didaftarkan. Anda dapat login setelah mendapat <strong className="text-white">izin akses dari Admin</strong>.
+              <div className="p-4 bg-muted/50 rounded-xl border border-border">
+                <p className="text-foreground/80 text-sm leading-relaxed">
+                  Akun Anda telah berhasil didaftarkan. Anda dapat login setelah mendapat <strong className="text-foreground">izin akses dari Admin</strong>.
                 </p>
-                <p className="text-white/50 text-xs mt-3">
+                <p className="text-muted-foreground text-xs mt-3">
                   Hubungi admin untuk mendapatkan akses ke dashboard.
                 </p>
               </div>
               <Button
                 type="button"
                 onClick={() => switchMode('login')}
-                className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/30 transition-all duration-300"
+                className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300"
               >
                 Kembali ke Login
               </Button>
@@ -359,7 +343,7 @@ const AuthPage = () => {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-white/40 text-xs mt-6">
+        <p className="text-center text-muted-foreground/60 text-xs mt-6">
           © 2024 Posyandu Dashboard. All rights reserved.
         </p>
       </div>
