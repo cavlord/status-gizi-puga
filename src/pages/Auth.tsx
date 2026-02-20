@@ -145,7 +145,7 @@ const AuthPage = () => {
               {mode === 'registered' && 'Pendaftaran Berhasil'}
             </h1>
             <p className="text-muted-foreground text-sm">
-              {mode === 'login' && 'GIZI-X KAMPAR'}
+              {mode === 'login' && 'GIZI X DIHATI KAMPAR'}
               {mode === 'register' && 'Buat akun baru untuk akses dashboard'}
               {mode === 'registered' && 'Akun Anda telah terdaftar'}
             </p>
