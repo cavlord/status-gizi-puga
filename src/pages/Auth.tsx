@@ -125,19 +125,13 @@ const AuthPage = () => {
           <div className="text-center mb-8">
            <div className="inline-flex items-center justify-center gap-4 mb-4">
   <img 
-    src="/icon/logo2.svg" 
-    alt="" 
-    className="w-18 h-24"
-    loading="eager"
-    decoding="async"
-  />
-  <img 
-    src="/icon/logo.svg" 
+    src="/icon/logo3.svg" 
     alt="" 
     className="w-24 h-24"
     loading="eager"
     decoding="async"
   />
+  
 </div>
             <h1 className="text-2xl font-bold text-foreground mb-2 font-heading">
               {mode === 'login' && 'DASHBOARD'}
