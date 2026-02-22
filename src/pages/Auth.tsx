@@ -127,7 +127,7 @@ const AuthPage = () => {
   <img 
     src="/icon/logo.webp" 
     alt="" 
-    className="w-26 h-26"
+    className="w-23 h-23"
     loading="eager"
     decoding="async"
   />
