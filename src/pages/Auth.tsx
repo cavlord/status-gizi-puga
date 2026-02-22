@@ -125,7 +125,7 @@ const AuthPage = () => {
           <div className="text-center mb-8">
            <div className="inline-flex items-center justify-center gap-4 mb-4">
   <img 
-    src="/icon/logo5.svg" 
+    src="/icon/logo.PNG" 
     alt="" 
     className="w-40 h-40"
     loading="eager"
