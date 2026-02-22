@@ -127,7 +127,7 @@ const AuthPage = () => {
   <img 
     src="/icon/logo.PNG" 
     alt="" 
-    className="w-35 h-25"
+    className="w-25 h-20"
     loading="eager"
     decoding="async"
   />
