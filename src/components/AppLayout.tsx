@@ -4,6 +4,7 @@ import { LayoutDashboard, Database, BarChart3, Settings, Menu, LogOut, Users } f
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -40,6 +41,7 @@ function AppSidebar() {
     }
   };
 
+  
   return (
     <Sidebar 
       className="border-r border-sidebar-border" 
@@ -51,7 +53,7 @@ function AppSidebar() {
             {!isCollapsed && (
               <div>
                 <h2 className="text-base md:text-lg font-heading font-bold text-white">
-                  Dashboard Gizi
+                  GIZI X
                 </h2>
                 <p className="text-xs text-sidebar-foreground/70 mt-1">
                   UPT Puskesmas Pulau Gadang
@@ -155,7 +157,24 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
+  const [now, setNow] = useState(new Date());
+useEffect(() => {
+  const timer = setInterval(() => {
+    setNow(new Date());
+  }, 1000);
+
+  return () => clearInterval(timer);
+}, []);
+
+const formattedDate = now.toLocaleDateString("id-ID", {
+  weekday: "long",
+  day: "2-digit",
+  month: "long",
+  year: "numeric",
+});
+
   return (
+    
     <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen flex w-full bg-muted/30">
         <AppSidebar />
@@ -165,9 +184,9 @@ export function AppLayout({ children }: AppLayoutProps) {
               <Menu className="h-5 w-5" />
             </SidebarTrigger>
             <div className="flex-1 min-w-0">
-              <h1 className="text-sm md:text-base lg:text-xl font-heading font-semibold text-foreground truncate">
-                Dashboard Status Gizi Balita
-              </h1>
+            <h1 className="text-sm md:text-base lg:text-xl font-heading font-semibold text-foreground truncate">
+  {formattedDate} 
+</h1>
             </div>
           </header>
           <main className="flex-1 p-3 md:p-4 lg:p-6 overflow-x-hidden">
