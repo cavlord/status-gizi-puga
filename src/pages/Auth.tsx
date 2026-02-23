@@ -121,29 +121,32 @@ const AuthPage = () => {
       <div className="w-full max-w-md relative z-10">
         {/* Glass card */}
         <div className="backdrop-blur-xl bg-white border border-gray-200 rounded-3xl shadow-xl shadow-gray-200/50 p-8 animate-fade-in">
-          {/* Logo & Title */}
-          <div className="text-center mb-8">
-           <div className="inline-flex items-center justify-center gap-4 mb-4">
-  <img 
-    src="/icon/logo.webp" 
-    alt="" 
-    className="w-17 h-17"
-    loading="eager"
-    decoding="async"
-  />
-  
+       {/* Logo & Title */}
+<div className="text-center mb-8 flex flex-col items-center">
+
+{/* Logo */}
+<img
+  src="/icon/logo.webp"
+  alt="Logo Gizi X Dihati Kampar"
+  className="w-[200px] h-[200px] object-contain mx-auto -mb-4 translate-x-[-6px]"
+  loading="eager"
+  decoding="async"
+/>
+
+{/* Title */}
+<h1 className="text-2xl font-bold text-foreground font-heading leading-none mb-1">
+  {mode === 'login' && 'DASHBOARD'}
+  {mode === 'register' && 'Daftar Akun'}
+  {mode === 'registered' && 'Pendaftaran Berhasil'}
+</h1>
+
+{/* Subtitle */}
+<p className="text-muted-foreground text-sm leading-none">
+  {mode === 'login' && 'GIZI X DIHATI KAMPAR'}
+  {mode === 'register' && 'Buat akun baru untuk akses dashboard'}
+  {mode === 'registered' && 'Akun Anda telah terdaftar'}
+</p>
 </div>
-            <h1 className="text-2xl font-bold text-foreground mb-2 font-heading">
-              {mode === 'login' && 'DASHBOARD'}
-              {mode === 'register' && 'Daftar Akun'}
-              {mode === 'registered' && 'Pendaftaran Berhasil'}
-            </h1>
-            <p className="text-muted-foreground text-sm">
-              {mode === 'login' && 'GIZI X DIHATI KAMPAR'}
-              {mode === 'register' && 'Buat akun baru untuk akses dashboard'}
-              {mode === 'registered' && 'Akun Anda telah terdaftar'}
-            </p>
-          </div>
 
           {/* Login Form */}
           {mode === 'login' && (
