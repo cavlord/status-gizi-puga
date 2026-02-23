@@ -128,20 +128,18 @@ const AuthPage = () => {
 <img
   src="/icon/logo.webp"
   alt="Logo Gizi X Dihati Kampar"
-  className="w-[200px] h-[200px] object-contain mx-auto -mb-4 translate-x-[-6px]"
+  className="w-[220px] h-[220px] object-contain mx-auto -mb-4 translate-x-[-7px] drop-shadow-[0_10px_25px_rgba(0,0,0,0.15)]"
   loading="eager"
   decoding="async"
 />
 
-{/* Title */}
-<h1 className="text-2xl font-bold text-foreground font-heading leading-none mb-1">
+<h1 className="text-3xl font-bold font-heading leading-none mb-1 tracking-wide text-slate-800 drop-shadow-[0_1px_2px_rgba(0,0,0,0.08)]">
   {mode === 'login' && 'DASHBOARD'}
   {mode === 'register' && 'Daftar Akun'}
   {mode === 'registered' && 'Pendaftaran Berhasil'}
 </h1>
 
-{/* Subtitle */}
-<p className="text-muted-foreground text-sm leading-none">
+<p className="text-sm leading-none font-medium tracking-wide text-slate-500">
   {mode === 'login' && 'GIZI X DIHATI KAMPAR'}
   {mode === 'register' && 'Buat akun baru untuk akses dashboard'}
   {mode === 'registered' && 'Akun Anda telah terdaftar'}
