@@ -24,7 +24,6 @@ const MONTH_NAMES = [
 
 function formatDateDDMMYYYY(dateStr: string | null): string {
   if (!dateStr) return "";
-  // dateStr is YYYY-MM-DD from postgres date type
   const parts = dateStr.split("-");
   if (parts.length === 3) {
     return `${parts[2]}/${parts[1]}/${parts[0]}`;
@@ -90,60 +89,48 @@ serve(async (req) => {
       );
     }
 
-    // Fetch child_records joined with anak via nik
-    const selectQuery = `
-      id, nik, usia_saat_ukur, tgl_pengukuran, bulan_pengukuran,
-      berat_badan, tinggi_badan, cara_ukur, lila,
-      status_bbu, zscore_bbu, status_tbu, zscore_tbu,
-      status_bbtb, zscore_bbtb, naik_bb, pmt_diterima_kg,
-      jml_vit_a, kpsp, kia, detail, status_desa,
-      anak!pengukuran_gizi_nik_fkey (
-        nama, jenis_kelamin, tgl_lahir, bb_lahir, tb_lahir,
-        nama_ortu, provinsi, kab_kota, kecamatan, puskesmas,
-        desa_kelurahan, posyandu, rt, rw, alamat, status
-      )
-    `;
+    // Query langsung dari 1 tabel child_records — tanpa join
+    const selectQuery = `*`;
 
-    // Transform a joined record into a flat object with proper date formats
+    // Transform flat record dengan format tanggal yang benar
     const transformRecord = (r: any) => {
-      const anak = r.anak || {};
       return {
         nik: r.nik || "",
-        nama: anak.nama || "",
-        jenis_kelamin: anak.jenis_kelamin || "",
-        tgl_lahir: formatDateDDMMYYYY(anak.tgl_lahir),
-        bb_lahir: anak.bb_lahir != null ? String(anak.bb_lahir) : "",
-        tb_lahir: anak.tb_lahir != null ? String(anak.tb_lahir) : "",
-        nama_ortu: anak.nama_ortu || "",
-        provinsi: anak.provinsi || "",
-        kab_kota: anak.kab_kota || "",
-        kecamatan: anak.kecamatan || "",
-        puskesmas: anak.puskesmas || "",
-        desa_kelurahan: anak.desa_kelurahan || "",
-        posyandu: anak.posyandu || "",
-        rt: anak.rt || "",
-        rw: anak.rw || "",
-        alamat: anak.alamat || "",
-        status_anak: anak.status || "",
+        nama: r.nama || "",
+        jenis_kelamin: r.jk || "",
+        tgl_lahir: formatDateDDMMYYYY(r.tgl_lahir),
+        bb_lahir: r.bb_lahir != null ? String(r.bb_lahir) : "",
+        tb_lahir: r.tb_lahir != null ? String(r.tb_lahir) : "",
+        nama_ortu: r.nama_ortu || "",
+        provinsi: r.prov || "",
+        kab_kota: r.kab_kota || "",
+        kecamatan: r.kec || "",
+        puskesmas: r.puskesmas || "",
+        desa_kelurahan: r.desa_kel || "",
+        posyandu: r.posyandu || "",
+        rt: r.rt || "",
+        rw: r.rw || "",
+        alamat: r.alamat || "",
+        status_anak: r.status || "",
         usia_saat_ukur: r.usia_saat_ukur || "",
-        tgl_pengukuran: formatDateDDMMYYYY(r.tgl_pengukuran),
-        bulan_pengukuran: getMonthName(r.bulan_pengukuran),
-        berat_badan: r.berat_badan != null ? String(r.berat_badan) : "",
-        tinggi_badan: r.tinggi_badan != null ? String(r.tinggi_badan) : "",
+        tgl_pengukuran: r.tanggal_pengukuran || "",
+        bulan_pengukuran: r.bulan_pengukuran || "",
+        berat_badan: r.berat != null ? String(r.berat) : "",
+        tinggi_badan: r.tinggi != null ? String(r.tinggi) : "",
         cara_ukur: r.cara_ukur || "",
         lila: r.lila != null ? String(r.lila) : "",
-        status_bbu: r.status_bbu || "",
-        zscore_bbu: r.zscore_bbu != null ? String(r.zscore_bbu) : "",
-        status_tbu: r.status_tbu || "",
-        zscore_tbu: r.zscore_tbu != null ? String(r.zscore_tbu) : "",
-        status_bbtb: r.status_bbtb || "",
-        zscore_bbtb: r.zscore_bbtb != null ? String(r.zscore_bbtb) : "",
-        naik_bb: r.naik_bb || "",
-        pmt_diterima_kg: r.pmt_diterima_kg != null ? String(r.pmt_diterima_kg) : "",
+        status_bbu: r.bb_u || "",
+        zscore_bbu: r.zs_bb_u != null ? String(r.zs_bb_u) : "",
+        status_tbu: r.tb_u || "",
+        zscore_tbu: r.zs_tb_u != null ? String(r.zs_tb_u) : "",
+        status_bbtb: r.bb_tb || "",
+        zscore_bbtb: r.zs_bb_tb != null ? String(r.zs_bb_tb) : "",
+        naik_bb: r.naik_berat_badan || "",
+        pmt_diterima_kg: r.pmt_diterima != null ? String(r.pmt_diterima) : "",
         jml_vit_a: r.jml_vit_a != null ? String(r.jml_vit_a) : "",
         kpsp: r.kpsp || "",
         kia: r.kia || "",
-        detail: r.detail || "",
+        detail: r.detail_status || "",
         status_desa: r.status_desa || "",
       };
     };
