@@ -14,137 +14,154 @@ export type Database = {
   }
   public: {
     Tables: {
-      child_records: {
+      anak: {
         Row: {
           alamat: string | null
-          bb_lahir: string | null
-          bb_tb: string | null
-          bb_u: string | null
-          berat: string | null
-          bulan_pengukuran: string | null
-          cara_ukur: string | null
-          created_at: string
-          desa_kel: string | null
-          detail_status: string | null
-          id: string
-          jk: string | null
-          jml_vit_a: string | null
+          bb_lahir: number | null
+          created_at: string | null
+          desa_kelurahan: string | null
+          jenis_kelamin: string | null
           kab_kota: string | null
-          kec: string | null
-          kia: string | null
-          kpsp: string | null
-          lila: string | null
-          naik_berat_badan: string | null
+          kecamatan: string | null
           nama: string
           nama_ortu: string | null
           nik: string
-          pmt_diterima: string | null
           posyandu: string | null
-          prov: string | null
+          provinsi: string | null
           puskesmas: string | null
           rt: string | null
           rw: string | null
-          status_bulan: string | null
-          status_desa: string | null
-          status_tahun: string | null
-          tanggal_pengukuran: string | null
-          tb_lahir: string | null
-          tb_u: string | null
+          status: string | null
+          tb_lahir: number | null
           tgl_lahir: string | null
-          tinggi: string | null
-          updated_at: string
-          usia_saat_ukur: string | null
-          zs_bb_tb: string | null
-          zs_bb_u: string | null
-          zs_tb_u: string | null
         }
         Insert: {
           alamat?: string | null
-          bb_lahir?: string | null
-          bb_tb?: string | null
-          bb_u?: string | null
-          berat?: string | null
-          bulan_pengukuran?: string | null
-          cara_ukur?: string | null
-          created_at?: string
-          desa_kel?: string | null
-          detail_status?: string | null
-          id?: string
-          jk?: string | null
-          jml_vit_a?: string | null
+          bb_lahir?: number | null
+          created_at?: string | null
+          desa_kelurahan?: string | null
+          jenis_kelamin?: string | null
           kab_kota?: string | null
-          kec?: string | null
-          kia?: string | null
-          kpsp?: string | null
-          lila?: string | null
-          naik_berat_badan?: string | null
+          kecamatan?: string | null
           nama: string
           nama_ortu?: string | null
           nik: string
-          pmt_diterima?: string | null
           posyandu?: string | null
-          prov?: string | null
+          provinsi?: string | null
           puskesmas?: string | null
           rt?: string | null
           rw?: string | null
-          status_bulan?: string | null
-          status_desa?: string | null
-          status_tahun?: string | null
-          tanggal_pengukuran?: string | null
-          tb_lahir?: string | null
-          tb_u?: string | null
+          status?: string | null
+          tb_lahir?: number | null
           tgl_lahir?: string | null
-          tinggi?: string | null
-          updated_at?: string
-          usia_saat_ukur?: string | null
-          zs_bb_tb?: string | null
-          zs_bb_u?: string | null
-          zs_tb_u?: string | null
         }
         Update: {
           alamat?: string | null
-          bb_lahir?: string | null
-          bb_tb?: string | null
-          bb_u?: string | null
-          berat?: string | null
-          bulan_pengukuran?: string | null
-          cara_ukur?: string | null
-          created_at?: string
-          desa_kel?: string | null
-          detail_status?: string | null
-          id?: string
-          jk?: string | null
-          jml_vit_a?: string | null
+          bb_lahir?: number | null
+          created_at?: string | null
+          desa_kelurahan?: string | null
+          jenis_kelamin?: string | null
           kab_kota?: string | null
-          kec?: string | null
-          kia?: string | null
-          kpsp?: string | null
-          lila?: string | null
-          naik_berat_badan?: string | null
+          kecamatan?: string | null
           nama?: string
           nama_ortu?: string | null
           nik?: string
-          pmt_diterima?: string | null
           posyandu?: string | null
-          prov?: string | null
+          provinsi?: string | null
           puskesmas?: string | null
           rt?: string | null
           rw?: string | null
-          status_bulan?: string | null
-          status_desa?: string | null
-          status_tahun?: string | null
-          tanggal_pengukuran?: string | null
-          tb_lahir?: string | null
-          tb_u?: string | null
+          status?: string | null
+          tb_lahir?: number | null
           tgl_lahir?: string | null
-          tinggi?: string | null
-          updated_at?: string
-          usia_saat_ukur?: string | null
-          zs_bb_tb?: string | null
-          zs_bb_u?: string | null
-          zs_tb_u?: string | null
         }
         Relationships: []
+      }
+      child_records: {
+        Row: {
+          berat_badan: number | null
+          bulan_pengukuran: string | null
+          cara_ukur: string | null
+          created_at: string | null
+          detail: string | null
+          id: number
+          jml_vit_a: number | null
+          kia: string | null
+          kpsp: string | null
+          lila: number | null
+          naik_bb: string | null
+          nik: string | null
+          pmt_diterima_kg: number | null
+          status_bbtb: string | null
+          status_bbu: string | null
+          status_desa: string | null
+          status_tbu: string | null
+          tgl_pengukuran: string | null
+          tinggi_badan: number | null
+          usia_saat_ukur: string | null
+          zscore_bbtb: number | null
+          zscore_bbu: number | null
+          zscore_tbu: number | null
+        }
+        Insert: {
+          berat_badan?: number | null
+          bulan_pengukuran?: string | null
+          cara_ukur?: string | null
+          created_at?: string | null
+          detail?: string | null
+          id?: number
+          jml_vit_a?: number | null
+          kia?: string | null
+          kpsp?: string | null
+          lila?: number | null
+          naik_bb?: string | null
+          nik?: string | null
+          pmt_diterima_kg?: number | null
+          status_bbtb?: string | null
+          status_bbu?: string | null
+          status_desa?: string | null
+          status_tbu?: string | null
+          tgl_pengukuran?: string | null
+          tinggi_badan?: number | null
+          usia_saat_ukur?: string | null
+          zscore_bbtb?: number | null
+          zscore_bbu?: number | null
+          zscore_tbu?: number | null
+        }
+        Update: {
+          berat_badan?: number | null
+          bulan_pengukuran?: string | null
+          cara_ukur?: string | null
+          created_at?: string | null
+          detail?: string | null
+          id?: number
+          jml_vit_a?: number | null
+          kia?: string | null
+          kpsp?: string | null
+          lila?: number | null
+          naik_bb?: string | null
+          nik?: string | null
+          pmt_diterima_kg?: number | null
+          status_bbtb?: string | null
+          status_bbu?: string | null
+          status_desa?: string | null
+          status_tbu?: string | null
+          tgl_pengukuran?: string | null
+          tinggi_badan?: number | null
+          usia_saat_ukur?: string | null
+          zscore_bbtb?: number | null
+          zscore_bbu?: number | null
+          zscore_tbu?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pengukuran_gizi_nik_fkey"
+            columns: ["nik"]
+            isOneToOne: false
+            referencedRelation: "anak"
+            referencedColumns: ["nik"]
+          },
+        ]
       }
       user_roles: {
         Row: {
