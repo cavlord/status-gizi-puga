@@ -1,6 +1,6 @@
-# Welcome to your Vibe Coding Project
+# Dashboard UPT Puskesmas Pulau Gadang — Versi 2.0
 
-# Dashboard UPT Puskesmas Pulau Gadang
+> **📌 Versi 2.0** (3 Maret 2026) — Stable release dengan seluruh data 9.861 records (2024–2026) tertampil lengkap.
 
 ## 📌 Deskripsi
 
