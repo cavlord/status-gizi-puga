@@ -7,6 +7,8 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
@@ -14,127 +16,130 @@ export type Database = {
     Tables: {
       child_records: {
         Row: {
+          alamat: string | null
+          bb_lahir: string | null
+          bb_tb: string | null
+          bb_u: string | null
+          berat: string | null
+          bulan_pengukuran: string | null
+          cara_ukur: string | null
+          created_at: string | null
+          desa_kel: string | null
+          detail_status: string | null
           id: number
-          nik: string | null
-          nama: string | null
-          jenis_kelamin: string | null
-          tgl_lahir: string | null
-          bb_lahir: number | null
-          tb_lahir: number | null
-          nama_ortu: string | null
-          provinsi: string | null
+          jk: string | null
+          jml_vit_a: string | null
           kab_kota: string | null
-          kecamatan: string | null
-          puskesmas: string | null
-          desa_kelurahan: string | null
+          kec: string | null
+          kia: string | null
+          kpsp: string | null
+          lila: string | null
+          naik_berat_badan: string | null
+          nama: string | null
+          nama_ortu: string | null
+          nik: string | null
+          pmt_diterima: string | null
           posyandu: string | null
+          prov: string | null
+          puskesmas: string | null
           rt: string | null
           rw: string | null
-          alamat: string | null
-          status: string | null
-          usia_saat_ukur: string | null
-          tgl_pengukuran: string | null
-          bulan_pengukuran: string | null
-          berat_badan: number | null
-          tinggi_badan: number | null
-          cara_ukur: string | null
-          lila: number | null
-          status_bbu: string | null
-          zscore_bbu: number | null
-          status_tbu: string | null
-          zscore_tbu: number | null
-          status_bbtb: string | null
-          zscore_bbtb: number | null
-          naik_bb: string | null
-          pmt_diterima_kg: number | null
-          jml_vit_a: number | null
-          kpsp: string | null
-          kia: string | null
-          detail: string | null
+          status_bulan: string | null
           status_desa: string | null
-          created_at: string | null
+          status_tahun: string | null
+          tanggal_pengukuran: string | null
+          tb_lahir: string | null
+          tb_u: string | null
+          tgl_lahir: string | null
+          tinggi: string | null
+          usia_saat_ukur: string | null
+          zs_bb_tb: string | null
+          zs_bb_u: string | null
+          zs_tb_u: string | null
         }
         Insert: {
+          alamat?: string | null
+          bb_lahir?: string | null
+          bb_tb?: string | null
+          bb_u?: string | null
+          berat?: string | null
+          bulan_pengukuran?: string | null
+          cara_ukur?: string | null
+          created_at?: string | null
+          desa_kel?: string | null
+          detail_status?: string | null
           id?: number
-          nik?: string | null
-          nama?: string | null
-          jenis_kelamin?: string | null
-          tgl_lahir?: string | null
-          bb_lahir?: number | null
-          tb_lahir?: number | null
-          nama_ortu?: string | null
-          provinsi?: string | null
+          jk?: string | null
+          jml_vit_a?: string | null
           kab_kota?: string | null
-          kecamatan?: string | null
-          puskesmas?: string | null
-          desa_kelurahan?: string | null
+          kec?: string | null
+          kia?: string | null
+          kpsp?: string | null
+          lila?: string | null
+          naik_berat_badan?: string | null
+          nama?: string | null
+          nama_ortu?: string | null
+          nik?: string | null
+          pmt_diterima?: string | null
           posyandu?: string | null
+          prov?: string | null
+          puskesmas?: string | null
           rt?: string | null
           rw?: string | null
-          alamat?: string | null
-          status?: string | null
-          usia_saat_ukur?: string | null
-          tgl_pengukuran?: string | null
-          bulan_pengukuran?: string | null
-          berat_badan?: number | null
-          tinggi_badan?: number | null
-          cara_ukur?: string | null
-          lila?: number | null
-          status_bbu?: string | null
-          zscore_bbu?: number | null
-          status_tbu?: string | null
-          zscore_tbu?: number | null
-          status_bbtb?: string | null
-          zscore_bbtb?: number | null
-          naik_bb?: string | null
-          pmt_diterima_kg?: number | null
-          jml_vit_a?: number | null
-          kpsp?: string | null
-          kia?: string | null
-          detail?: string | null
+          status_bulan?: string | null
           status_desa?: string | null
-          created_at?: string | null
+          status_tahun?: string | null
+          tanggal_pengukuran?: string | null
+          tb_lahir?: string | null
+          tb_u?: string | null
+          tgl_lahir?: string | null
+          tinggi?: string | null
+          usia_saat_ukur?: string | null
+          zs_bb_tb?: string | null
+          zs_bb_u?: string | null
+          zs_tb_u?: string | null
         }
         Update: {
+          alamat?: string | null
+          bb_lahir?: string | null
+          bb_tb?: string | null
+          bb_u?: string | null
+          berat?: string | null
+          bulan_pengukuran?: string | null
+          cara_ukur?: string | null
+          created_at?: string | null
+          desa_kel?: string | null
+          detail_status?: string | null
           id?: number
-          nik?: string | null
-          nama?: string | null
-          jenis_kelamin?: string | null
-          tgl_lahir?: string | null
-          bb_lahir?: number | null
-          tb_lahir?: number | null
-          nama_ortu?: string | null
-          provinsi?: string | null
+          jk?: string | null
+          jml_vit_a?: string | null
           kab_kota?: string | null
-          kecamatan?: string | null
-          puskesmas?: string | null
-          desa_kelurahan?: string | null
+          kec?: string | null
+          kia?: string | null
+          kpsp?: string | null
+          lila?: string | null
+          naik_berat_badan?: string | null
+          nama?: string | null
+          nama_ortu?: string | null
+          nik?: string | null
+          pmt_diterima?: string | null
           posyandu?: string | null
+          prov?: string | null
+          puskesmas?: string | null
           rt?: string | null
           rw?: string | null
-          alamat?: string | null
-          status?: string | null
-          usia_saat_ukur?: string | null
-          tgl_pengukuran?: string | null
-          bulan_pengukuran?: string | null
-          berat_badan?: number | null
-          tinggi_badan?: number | null
-          cara_ukur?: string | null
-          lila?: number | null
-          status_bbu?: string | null
-          zscore_bbu?: number | null
-          status_tbu?: string | null
-          zscore_tbu?: number | null
-          status_bbtb?: string | null
-          zscore_bbtb?: number | null
-          naik_bb?: string | null
-          pmt_diterima_kg?: number | null
-          jml_vit_a?: number | null
-          kpsp?: string | null
-          kia?: string | null
-          detail?: string | null
+          status_bulan?: string | null
           status_desa?: string | null
-          created_at?: string | null
+          status_tahun?: string | null
+          tanggal_pengukuran?: string | null
+          tb_lahir?: string | null
+          tb_u?: string | null
+          tgl_lahir?: string | null
+          tinggi?: string | null
+          usia_saat_ukur?: string | null
+          zs_bb_tb?: string | null
+          zs_bb_u?: string | null
+          zs_tb_u?: string | null
         }
         Relationships: []
       }
