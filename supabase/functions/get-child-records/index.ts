@@ -157,7 +157,7 @@ serve(async (req) => {
       }
 
       const totalCount = count || 0;
-      const batchSize = 5000;
+      const batchSize = 1000;
       const batches = Math.ceil(totalCount / batchSize);
 
       const batchPromises = [];
@@ -168,6 +168,7 @@ serve(async (req) => {
             .from("child_records")
             .select(selectQuery)
             .range(batchOffset, batchOffset + batchSize - 1)
+            .limit(batchSize)
         );
       }
 
