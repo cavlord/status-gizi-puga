@@ -24,9 +24,18 @@ const MONTH_NAMES = [
 
 function formatDateDDMMYYYY(dateStr: string | null): string {
   if (!dateStr) return "";
-  const parts = dateStr.split("-");
-  if (parts.length === 3) {
-    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  // Handle M/D/YYYY format (from Excel/DB)
+  const slashParts = dateStr.split("/");
+  if (slashParts.length === 3) {
+    const month = slashParts[0].padStart(2, "0");
+    const day = slashParts[1].padStart(2, "0");
+    const year = slashParts[2];
+    return `${day}/${month}/${year}`;
+  }
+  // Handle YYYY-MM-DD format
+  const dashParts = dateStr.split("-");
+  if (dashParts.length === 3) {
+    return `${dashParts[2]}/${dashParts[1]}/${dashParts[0]}`;
   }
   return dateStr;
 }
