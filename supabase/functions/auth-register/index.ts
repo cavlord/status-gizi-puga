@@ -14,6 +14,61 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Rate limiting config: max 3 registration attempts per 15-minute window
+const RATE_LIMIT_MAX = 3;
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+
+async function checkRateLimit(supabase: any, key: string): Promise<{ allowed: boolean; retryAfterSeconds?: number }> {
+  const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
+
+  const { data, error } = await supabase
+    .from("rate_limits")
+    .select("attempts, first_attempt_at")
+    .eq("key", key)
+    .gte("first_attempt_at", windowStart)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Rate limit check error:", error);
+    return { allowed: true };
+  }
+
+  if (!data) return { allowed: true };
+
+  if (data.attempts >= RATE_LIMIT_MAX) {
+    const firstAttempt = new Date(data.first_attempt_at).getTime();
+    const windowEnd = firstAttempt + RATE_LIMIT_WINDOW_MS;
+    const retryAfterSeconds = Math.ceil((windowEnd - Date.now()) / 1000);
+    return { allowed: false, retryAfterSeconds: Math.max(retryAfterSeconds, 1) };
+  }
+
+  return { allowed: true };
+}
+
+async function recordAttempt(supabase: any, key: string): Promise<void> {
+  const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
+
+  await supabase.from("rate_limits").delete().eq("key", key).lt("first_attempt_at", windowStart);
+
+  const { data: existing } = await supabase
+    .from("rate_limits")
+    .select("id, attempts")
+    .eq("key", key)
+    .gte("first_attempt_at", windowStart)
+    .maybeSingle();
+
+  if (existing) {
+    await supabase
+      .from("rate_limits")
+      .update({ attempts: existing.attempts + 1, last_attempt_at: new Date().toISOString() })
+      .eq("id", existing.id);
+  } else {
+    await supabase
+      .from("rate_limits")
+      .insert({ key, attempts: 1, first_attempt_at: new Date().toISOString(), last_attempt_at: new Date().toISOString() });
+  }
+}
+
 // Input validation schema
 const registerSchema = z.object({
   email: z.string()
@@ -29,7 +84,6 @@ const registerSchema = z.object({
 function generateOTP(): string {
   const array = new Uint32Array(1);
   crypto.getRandomValues(array);
-  // Generate 6-digit OTP (100000-999999)
   const otp = (array[0] % 900000) + 100000;
   return otp.toString();
 }
@@ -122,6 +176,19 @@ serve(async (req) => {
 
     const { email, password } = validationResult.data;
 
+    // Rate limit check by email
+    const rateLimitKey = `register:${email}`;
+    const rateCheck = await checkRateLimit(supabase, rateLimitKey);
+    if (!rateCheck.allowed) {
+      return new Response(
+        JSON.stringify({ error: `Terlalu banyak percobaan registrasi. Coba lagi dalam ${rateCheck.retryAfterSeconds} detik.` }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Record the attempt
+    await recordAttempt(supabase, rateLimitKey);
+
     // Check if email already exists and is verified
     const { data: existingUser, error: checkError } = await supabase
       .from('users')
@@ -153,7 +220,6 @@ serve(async (req) => {
 
     // Insert or update user in database
     if (existingUser) {
-      // Update existing unverified user
       const { error: updateError } = await supabase
         .from('users')
         .update({
@@ -172,7 +238,6 @@ serve(async (req) => {
         );
       }
     } else {
-      // Insert new user
       const { error: insertError } = await supabase
         .from('users')
         .insert({
@@ -192,7 +257,7 @@ serve(async (req) => {
       }
     }
 
-    // Encode registration data for verification step (backward compatible)
+    // Encode registration data for verification step
     const pendingData = base64Encode(JSON.stringify({
       email,
       expiry: otpExpiry,
@@ -205,7 +270,6 @@ serve(async (req) => {
       console.log("OTP email sent successfully to:", email);
     } catch (emailError) {
       console.log("Email sending failed:", emailError);
-      // Don't expose OTP - email must work for production
     }
 
     console.log("Registration initiated for:", email);
