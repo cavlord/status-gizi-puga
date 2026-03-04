@@ -44,7 +44,6 @@ export interface ChildRecord {
   'status desa': string;
 }
 
-// Map database column names to ChildRecord field names
 function mapDbToRecord(dbRecord: any): ChildRecord {
   return {
     NIK: dbRecord.nik || '',
@@ -88,43 +87,38 @@ function mapDbToRecord(dbRecord: any): ChildRecord {
   };
 }
 
+function getAuthToken(): string | null {
+  return localStorage.getItem('posyandu_token');
+}
+
 export async function fetchSheetData(): Promise<ChildRecord[]> {
   try {
-    // Get user email from localStorage
-    const authData = localStorage.getItem('posyandu_auth');
-    if (!authData) {
-      console.log('No auth data found');
-      return [];
-    }
-    
-    let email: string;
-    try {
-      const parsed = JSON.parse(authData);
-      email = parsed.email;
-      if (!email) {
-        console.log('No email in auth data');
-        return [];
-      }
-    } catch {
-      console.log('Failed to parse auth data');
+    const token = getAuthToken();
+    if (!token) {
+      console.log('No auth token found');
       return [];
     }
 
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
     
-    // Fetch all records in one request with parallel batching on server
     const response = await fetch(`${supabaseUrl}/functions/v1/get-child-records`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseKey}`,
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({
-        email,
         fetchAll: true,
       }),
     });
+
+    if (response.status === 401) {
+      // Token expired or invalid, clear auth
+      localStorage.removeItem('posyandu_auth');
+      localStorage.removeItem('posyandu_token');
+      window.location.href = '/auth';
+      return [];
+    }
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -138,7 +132,6 @@ export async function fetchSheetData(): Promise<ChildRecord[]> {
       return [];
     }
 
-    // Map database records to ChildRecord format
     return result.data.map(mapDbToRecord);
   } catch (error) {
     console.error('Error fetching data:', error);
@@ -146,10 +139,13 @@ export async function fetchSheetData(): Promise<ChildRecord[]> {
   }
 }
 
-// Import data from Google Sheets (admin only)
 export async function importFromGoogleSheets(userEmail: string): Promise<{ success: boolean; message: string; count?: number }> {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const token = getAuthToken();
+  
+  if (!token) {
+    return { success: false, message: 'Not authenticated' };
+  }
   
   const url = `${supabaseUrl}/functions/v1/import-from-sheets`;
   
@@ -158,12 +154,11 @@ export async function importFromGoogleSheets(userEmail: string): Promise<{ succe
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseKey}`,
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({
         spreadsheetId: SPREADSHEET_ID,
         sheetName: SHEET_NAME,
-        email: userEmail,
       }),
     });
     
@@ -184,10 +179,9 @@ export function getUniqueYears(records: ChildRecord[]): string[] {
   const years = new Set<string>();
   records.forEach(record => {
     if (record['Tanggal Pengukuran']) {
-      // Parse date in DD/MM/YYYY format
       const dateParts = record['Tanggal Pengukuran'].split('/');
       if (dateParts.length === 3) {
-        const year = dateParts[2]; // Year is the third part (DD/MM/YYYY)
+        const year = dateParts[2];
         if (!isNaN(parseInt(year)) && year.length === 4) {
           years.add(year);
         }
@@ -211,11 +205,8 @@ export function filterUnderFiveYears(records: ChildRecord[]): ChildRecord[] {
   return records.filter(record => {
     const ageStr = record['Usia Saat Ukur'];
     if (!ageStr || ageStr.trim() === '') return false;
-    
-    // Extract years from format like "4 Tahun - 3 Bulan - 0 Hari" or "4 Tahun 3 Bulan"
     const yearMatch = ageStr.match(/(\d+)\s*[Tt]ahun/);
     if (!yearMatch) return false;
-    
     const years = parseInt(yearMatch[1]);
     return years < 5;
   });
@@ -224,9 +215,7 @@ export function filterUnderFiveYears(records: ChildRecord[]): ChildRecord[] {
 export function deduplicateByName(records: ChildRecord[]): ChildRecord[] {
   const seen = new Set<string>();
   return records.filter(record => {
-    if (seen.has(record.Nama)) {
-      return false;
-    }
+    if (seen.has(record.Nama)) return false;
     seen.add(record.Nama);
     return true;
   });
@@ -235,11 +224,9 @@ export function deduplicateByName(records: ChildRecord[]): ChildRecord[] {
 export function filterByYear(records: ChildRecord[], year: string): ChildRecord[] {
   return records.filter(record => {
     if (!record['Tanggal Pengukuran']) return false;
-    // Parse date in DD/MM/YYYY format
     const dateParts = record['Tanggal Pengukuran'].split('/');
     if (dateParts.length === 3) {
-      const recordYear = dateParts[2]; // Year is the third part (DD/MM/YYYY)
-      return recordYear === year;
+      return dateParts[2] === year;
     }
     return false;
   });
@@ -254,24 +241,14 @@ export function filterByVillage(records: ChildRecord[], village: string): ChildR
 }
 
 export function countByVillage(records: ChildRecord[]): { village: string; count: number }[] {
-  // Pivot: Rows = Desa/Kel, Values = COUNTUNIQUE Nama
-  // Filter: Already filtered by year before calling this function
   const villageMap = new Map<string, Set<string>>();
-  
   records.forEach(record => {
     const village = record['Desa/Kel'];
     const name = record.Nama;
-    
-    // Only skip if village or name is missing
     if (!village || !name || village.trim() === '' || name.trim() === '') return;
-    
-    if (!villageMap.has(village)) {
-      villageMap.set(village, new Set());
-    }
-    
+    if (!villageMap.has(village)) villageMap.set(village, new Set());
     villageMap.get(village)!.add(name);
   });
-  
   return Array.from(villageMap.entries())
     .map(([village, names]) => ({ village, count: names.size }))
     .sort((a, b) => a.village.localeCompare(b.village));
@@ -281,45 +258,27 @@ export function getNutritionalStatusByMonth(records: ChildRecord[]): {
   month: string;
   [key: string]: number | string;
 }[] {
-  // Group by month first, then count unique names per status in each month - include even with empty columns
   const monthMap = new Map<string, Map<string, Set<string>>>();
-  
   records.forEach(record => {
     const month = record['Bulan Pengukuran'];
     const status = record['BB/TB'];
     const name = record.Nama;
-    
-    // Only skip if essential fields are missing
     if (!month || !status || !name || month.trim() === '' || status.trim() === '' || name.trim() === '') return;
-    
-    if (!monthMap.has(month)) {
-      monthMap.set(month, new Map());
-    }
-    
+    if (!monthMap.has(month)) monthMap.set(month, new Map());
     const statusMap = monthMap.get(month)!;
-    if (!statusMap.has(status)) {
-      statusMap.set(status, new Set());
-    }
-    
+    if (!statusMap.has(status)) statusMap.set(status, new Set());
     statusMap.get(status)!.add(name);
   });
-  
   const result: { month: string; [key: string]: number | string }[] = [];
   const monthOrder = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-  
   monthOrder.forEach(month => {
     if (monthMap.has(month)) {
       const statusMap = monthMap.get(month)!;
       const monthData: { month: string; [key: string]: number | string } = { month };
-      
-      statusMap.forEach((names, status) => {
-        monthData[status] = names.size;
-      });
-      
+      statusMap.forEach((names, status) => { monthData[status] = names.size; });
       result.push(monthData);
     }
   });
-  
   return result;
 }
 
@@ -327,49 +286,26 @@ export function getPosyanduData(records: ChildRecord[]): {
   status: string;
   [key: string]: number | string;
 }[] {
-  // Pivot: Rows = BB/TB, Columns = Posyandu, Values = COUNTUNIQUE Nama
-  // Filters: Desa/Kel, Bulan Pengukuran (month), Tanggal Pengukuran (year)
-  // Note: Filters are applied before calling this function
-  
-  // First, collect all unique posyandus
   const allPosyandus = new Set<string>();
   const statusMap = new Map<string, Map<string, Set<string>>>();
-  
   records.forEach(record => {
     const status = record['BB/TB'];
     const posyandu = record.Posyandu;
     const name = record.Nama;
-    
-    // Only skip if essential fields are missing
     if (!status || !posyandu || !name || status.trim() === '' || posyandu.trim() === '' || name.trim() === '') return;
-    
     allPosyandus.add(posyandu);
-    
-    if (!statusMap.has(status)) {
-      statusMap.set(status, new Map());
-    }
-    
+    if (!statusMap.has(status)) statusMap.set(status, new Map());
     const posyanduMap = statusMap.get(status)!;
-    if (!posyanduMap.has(posyandu)) {
-      posyanduMap.set(posyandu, new Set());
-    }
-    
+    if (!posyanduMap.has(posyandu)) posyanduMap.set(posyandu, new Set());
     posyanduMap.get(posyandu)!.add(name);
   });
-  
   const result: { status: string; [key: string]: number | string }[] = [];
-  
-  // For each status, create a row with all posyandus (even if count is 0)
   statusMap.forEach((posyanduMap, status) => {
     const statusData: { status: string; [key: string]: number | string } = { status };
-    
-    // Add all posyandus to ensure all columns are present
     allPosyandus.forEach(posyandu => {
       statusData[posyandu] = posyanduMap.has(posyandu) ? posyanduMap.get(posyandu)!.size : 0;
     });
-    
     result.push(statusData);
   });
-  
   return result.sort((a, b) => a.status.localeCompare(b.status));
 }
