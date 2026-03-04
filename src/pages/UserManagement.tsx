@@ -51,9 +51,11 @@ interface UserData {
   email: string;
   verified: boolean;
   created_at: string;
-  otp: string | null;
-  otp_expiry: string | null;
   role?: string;
+}
+
+function getAuthToken(): string | null {
+  return localStorage.getItem('posyandu_token');
 }
 
 export default function UserManagement() {
@@ -80,15 +82,17 @@ export default function UserManagement() {
       }
 
       try {
+        const token = getAuthToken();
+        if (!token) { setIsCheckingAdmin(false); return; }
         const response = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-admin`,
           {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+              'Authorization': `Bearer ${token}`,
             },
-            body: JSON.stringify({ email: user.email }),
+            body: JSON.stringify({}),
           }
         );
 
@@ -117,16 +121,17 @@ export default function UserManagement() {
     
     setIsLoading(true);
     try {
-      // Use edge function to fetch users (bypasses RLS)
+      const token = getAuthToken();
+      if (!token) return;
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-get-users`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            'Authorization': `Bearer ${token}`,
           },
-          body: JSON.stringify({ adminEmail: user.email }),
+          body: JSON.stringify({}),
         }
       );
 
@@ -160,16 +165,17 @@ export default function UserManagement() {
       // OTP berlaku selama 1 jam
       const otpExpiry = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 
+      const token = getAuthToken();
+      if (!token) return;
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-update-user`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            'Authorization': `Bearer ${token}`,
           },
           body: JSON.stringify({ 
-            adminEmail: user.email,
             userId: targetUser.id,
             action: 'generate_otp',
             otp,
@@ -200,7 +206,7 @@ export default function UserManagement() {
 
   const handleShowExistingOTP = (targetUser: UserData) => {
     setSelectedUser(targetUser);
-    setGeneratedOTP(targetUser.otp);
+    setGeneratedOTP(null);
     setShowOTPDialog(true);
   };
 
@@ -214,16 +220,17 @@ export default function UserManagement() {
     
     setIsProcessing(true);
     try {
+      const token = getAuthToken();
+      if (!token) return;
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-update-user`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            'Authorization': `Bearer ${token}`,
           },
           body: JSON.stringify({ 
-            adminEmail: user.email,
             userId: selectedUser.id,
             action: 'deactivate'
           }),
@@ -252,16 +259,17 @@ export default function UserManagement() {
     
     setIsProcessing(true);
     try {
+      const token = getAuthToken();
+      if (!token) return;
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-update-user`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            'Authorization': `Bearer ${token}`,
           },
           body: JSON.stringify({ 
-            adminEmail: user.email,
             userId: targetUser.id,
             action: 'activate'
           }),
@@ -293,16 +301,17 @@ export default function UserManagement() {
     
     setIsProcessing(true);
     try {
+      const token = getAuthToken();
+      if (!token) return;
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-update-user`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            'Authorization': `Bearer ${token}`,
           },
           body: JSON.stringify({ 
-            adminEmail: user.email,
             userId: selectedUser.id,
             action: 'delete'
           }),
@@ -474,14 +483,7 @@ export default function UserManagement() {
                         {formatDate(u.created_at)}
                       </TableCell>
                       <TableCell>
-                        {u.otp && isOTPValid(u.otp_expiry) ? (
-                          <Badge variant="outline" className="text-blue-600 border-blue-600 cursor-pointer" onClick={() => handleShowExistingOTP(u)}>
-                            <Key className="h-3 w-3 mr-1" />
-                            Lihat OTP
-                          </Badge>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">-</span>
-                        )}
+                        <span className="text-muted-foreground text-sm">-</span>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">

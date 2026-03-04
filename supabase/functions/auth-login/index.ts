@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { compareSync } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+import { signJwt } from "../_shared/jwt.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -17,7 +18,6 @@ const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 async function checkRateLimit(supabase: any, key: string): Promise<{ allowed: boolean; retryAfterSeconds?: number }> {
   const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
 
-  // Clean old entries and get current attempts
   const { data, error } = await supabase
     .from("rate_limits")
     .select("attempts, first_attempt_at")
@@ -27,12 +27,10 @@ async function checkRateLimit(supabase: any, key: string): Promise<{ allowed: bo
 
   if (error) {
     console.error("Rate limit check error:", error);
-    return { allowed: true }; // Fail open to not block legitimate users
-  }
-
-  if (!data) {
     return { allowed: true };
   }
+
+  if (!data) return { allowed: true };
 
   if (data.attempts >= RATE_LIMIT_MAX) {
     const firstAttempt = new Date(data.first_attempt_at).getTime();
@@ -47,14 +45,8 @@ async function checkRateLimit(supabase: any, key: string): Promise<{ allowed: bo
 async function recordAttempt(supabase: any, key: string): Promise<void> {
   const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
 
-  // Delete expired entries for this key
-  await supabase
-    .from("rate_limits")
-    .delete()
-    .eq("key", key)
-    .lt("first_attempt_at", windowStart);
+  await supabase.from("rate_limits").delete().eq("key", key).lt("first_attempt_at", windowStart);
 
-  // Try to update existing entry
   const { data: existing } = await supabase
     .from("rate_limits")
     .select("id, attempts")
@@ -87,7 +79,6 @@ serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const { email, password } = await req.json();
 
-    // Validate input
     if (!email || !password) {
       return new Response(JSON.stringify({ error: "Email dan password wajib diisi" }), {
         status: 400,
@@ -95,7 +86,6 @@ serve(async (req) => {
       });
     }
 
-    // Rate limit check by email
     const rateLimitKey = `login:${email.toLowerCase()}`;
     const rateCheck = await checkRateLimit(supabase, rateLimitKey);
     if (!rateCheck.allowed) {
@@ -105,7 +95,6 @@ serve(async (req) => {
       );
     }
 
-    // Fetch user from database
     const { data: user, error: fetchError } = await supabase
       .from('users')
       .select('id, email, password_hash, verified')
@@ -128,20 +117,15 @@ serve(async (req) => {
       });
     }
 
-    // Check if verified
     if (!user.verified) {
       return new Response(
         JSON.stringify({ error: "Email belum diverifikasi. Silakan verifikasi email Anda terlebih dahulu." }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Verify password using bcrypt (sync version for Edge Functions)
     const isValidPassword = compareSync(password, user.password_hash);
-    
+
     if (!isValidPassword) {
       await recordAttempt(supabase, rateLimitKey);
       return new Response(JSON.stringify({ error: "Email atau password salah" }), {
@@ -150,11 +134,9 @@ serve(async (req) => {
       });
     }
 
-    // Clear rate limit on successful login
     await clearAttempts(supabase, rateLimitKey);
 
-    // Fetch user role
-    const { data: userRole, error: roleError } = await supabase
+    const { data: userRole } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
@@ -162,22 +144,27 @@ serve(async (req) => {
 
     const role = userRole?.role || 'user';
 
+    // Generate JWT token
+    const token = await signJwt(
+      { sub: user.id, email: user.email, role },
+      SUPABASE_SERVICE_ROLE_KEY,
+      24 * 60 * 60 // 24 hours
+    );
+
     console.log("User logged in successfully:", email);
 
     return new Response(
       JSON.stringify({
         success: true,
+        token,
         user: {
           id: user.id,
           email: user.email,
-          role: role,
+          role,
           verified: user.verified,
         },
       }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
     console.error("Login error:", error);

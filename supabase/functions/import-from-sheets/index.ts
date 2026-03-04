@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { extractAuthPayload } from "../_shared/jwt.ts";
 
 const GOOGLE_SHEETS_API_KEY = Deno.env.get("GOOGLE_SHEETS_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -11,21 +12,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Google Sheets ID format validation (alphanumeric, hyphens, underscores)
 const spreadsheetIdRegex = /^[a-zA-Z0-9_-]{20,60}$/;
 
-// Input validation schema
 const importSchema = z.object({
-  spreadsheetId: z.string()
-    .regex(spreadsheetIdRegex, { message: "Format spreadsheetId tidak valid" })
-    .max(60, { message: "SpreadsheetId terlalu panjang" }),
-  sheetName: z.string()
-    .min(1, { message: "sheetName wajib diisi" })
-    .max(100, { message: "sheetName terlalu panjang" })
-    .regex(/^[a-zA-Z0-9\s_-]+$/, { message: "sheetName mengandung karakter tidak valid" }),
-  email: z.string()
-    .email({ message: "Format email tidak valid" })
-    .max(255, { message: "Email terlalu panjang" }),
+  spreadsheetId: z.string().regex(spreadsheetIdRegex).max(60),
+  sheetName: z.string().min(1).max(100).regex(/^[a-zA-Z0-9\s_-]+$/),
 });
 
 serve(async (req) => {
@@ -34,7 +25,15 @@ serve(async (req) => {
   }
 
   try {
-    // Parse and validate input
+    // Verify JWT token
+    const payload = await extractAuthPayload(req);
+    if (!payload) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     let body;
     try {
       body = await req.json();
@@ -47,36 +46,20 @@ serve(async (req) => {
 
     const validationResult = importSchema.safeParse(body);
     if (!validationResult.success) {
-      const firstError = validationResult.error.errors[0]?.message || "Input tidak valid";
       return new Response(
-        JSON.stringify({ error: firstError }),
+        JSON.stringify({ error: validationResult.error.errors[0]?.message || "Input tidak valid" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const { spreadsheetId, sheetName, email } = validationResult.data;
-
+    const { spreadsheetId, sheetName } = validationResult.data;
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Check if user exists, is verified, and is admin
-    const { data: user, error: userError } = await supabase
-      .from('users')
-      .select('id, verified')
-      .eq('email', email.toLowerCase())
-      .maybeSingle();
-
-    if (userError || !user || !user.verified) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Check if user has admin role
+    // Check if user has admin role using verified user ID from JWT
     const { data: roleData } = await supabase
       .from('user_roles')
       .select('role')
-      .eq('user_id', user.id)
+      .eq('user_id', payload.sub)
       .eq('role', 'admin')
       .maybeSingle();
 
@@ -94,13 +77,10 @@ serve(async (req) => {
       );
     }
 
-    // Fetch data from Google Sheets
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values/${encodeURIComponent(sheetName)}?key=${GOOGLE_SHEETS_API_KEY}`;
-    
-    console.log("Fetching data from Google Sheets...");
-    
+
     const response = await fetch(url);
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Google Sheets API error:", errorText);
@@ -121,112 +101,65 @@ serve(async (req) => {
     }
 
     const headers = rows[0];
-    console.log("Headers:", headers);
 
-    // Map Google Sheets headers to database columns
     const headerMap: Record<string, string> = {
-      'NIK': 'nik',
-      'Nama': 'nama',
-      'JK': 'jk',
-      'Tgl Lahir': 'tgl_lahir',
-      'BB Lahir': 'bb_lahir',
-      'TB Lahir': 'tb_lahir',
-      'Nama Ortu': 'nama_ortu',
-      'Prov': 'prov',
-      'Kab/Kota': 'kab_kota',
-      'Kec': 'kec',
-      'Pukesmas': 'puskesmas',
-      'Desa/Kel': 'desa_kel',
-      'Posyandu': 'posyandu',
-      'RT': 'rt',
-      'RW': 'rw',
-      'Alamat': 'alamat',
-      'Usia Saat Ukur': 'usia_saat_ukur',
-      'Tanggal Pengukuran': 'tanggal_pengukuran',
-      'Bulan Pengukuran': 'bulan_pengukuran',
-      'Status Bulan': 'status_bulan',
-      'status tahun': 'status_tahun',
-      'Berat': 'berat',
-      'Tinggi': 'tinggi',
-      'Cara Ukur': 'cara_ukur',
-      'LiLA': 'lila',
-      'BB/U': 'bb_u',
-      'ZS BB/U': 'zs_bb_u',
-      'TB/U': 'tb_u',
-      'ZS TB/U': 'zs_tb_u',
-      'BB/TB': 'bb_tb',
-      'ZS BB/TB': 'zs_bb_tb',
-      'Naik Berat Badan': 'naik_berat_badan',
-      'PMT Diterima (kg)': 'pmt_diterima',
-      'Jml Vit A': 'jml_vit_a',
-      'KPSP': 'kpsp',
-      'KIA': 'kia',
-      'Detail Status': 'detail_status',
-      'status desa': 'status_desa',
+      'NIK': 'nik', 'Nama': 'nama', 'JK': 'jk', 'Tgl Lahir': 'tgl_lahir',
+      'BB Lahir': 'bb_lahir', 'TB Lahir': 'tb_lahir', 'Nama Ortu': 'nama_ortu',
+      'Prov': 'prov', 'Kab/Kota': 'kab_kota', 'Kec': 'kec', 'Pukesmas': 'puskesmas',
+      'Desa/Kel': 'desa_kel', 'Posyandu': 'posyandu', 'RT': 'rt', 'RW': 'rw',
+      'Alamat': 'alamat', 'Usia Saat Ukur': 'usia_saat_ukur',
+      'Tanggal Pengukuran': 'tanggal_pengukuran', 'Bulan Pengukuran': 'bulan_pengukuran',
+      'Status Bulan': 'status_bulan', 'status tahun': 'status_tahun',
+      'Berat': 'berat', 'Tinggi': 'tinggi', 'Cara Ukur': 'cara_ukur', 'LiLA': 'lila',
+      'BB/U': 'bb_u', 'ZS BB/U': 'zs_bb_u', 'TB/U': 'tb_u', 'ZS TB/U': 'zs_tb_u',
+      'BB/TB': 'bb_tb', 'ZS BB/TB': 'zs_bb_tb', 'Naik Berat Badan': 'naik_berat_badan',
+      'PMT Diterima (kg)': 'pmt_diterima', 'Jml Vit A': 'jml_vit_a',
+      'KPSP': 'kpsp', 'KIA': 'kia', 'Detail Status': 'detail_status', 'status desa': 'status_desa',
     };
 
-    // Build records array
     const records: Record<string, string>[] = [];
-    
+
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
       const record: Record<string, string> = {};
-      
+
       headers.forEach((header: string, index: number) => {
         const dbColumn = headerMap[header];
-        if (dbColumn) {
-          record[dbColumn] = row[index] || '';
-        }
+        if (dbColumn) record[dbColumn] = row[index] || '';
       });
-      
-      // Only add if required fields are present
-      if (record.nik && record.nama) {
-        records.push(record);
-      }
+
+      if (record.nik && record.nama) records.push(record);
     }
 
     console.log(`Prepared ${records.length} records for import`);
 
-    // Clear existing data and insert new
     const { error: deleteError } = await supabase
       .from('child_records')
       .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+      .neq('id', '00000000-0000-0000-0000-000000000000');
 
-    if (deleteError) {
-      console.error("Error clearing existing data:", deleteError);
-    }
+    if (deleteError) console.error("Error clearing existing data:", deleteError);
 
-    // Insert in batches of 100
     const batchSize = 100;
     let imported = 0;
-    
+
     for (let i = 0; i < records.length; i += batchSize) {
       const batch = records.slice(i, i + batchSize);
-      const { error: insertError } = await supabase
-        .from('child_records')
-        .insert(batch);
-      
+      const { error: insertError } = await supabase.from('child_records').insert(batch);
+
       if (insertError) {
-        console.error(`Error inserting batch ${i / batchSize + 1}:`, insertError);
+        console.error(`Error inserting batch:`, insertError);
         return new Response(
           JSON.stringify({ error: `Failed to import batch: ${insertError.message}` }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      
+
       imported += batch.length;
-      console.log(`Imported ${imported}/${records.length} records`);
     }
 
-    console.log("Import completed successfully");
-
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: `Successfully imported ${imported} records`,
-        count: imported
-      }),
+      JSON.stringify({ success: true, message: `Successfully imported ${imported} records`, count: imported }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
