@@ -29,3 +29,12 @@ verify_jwt = false
 
 [functions.get-child-records]
 verify_jwt = false
+
+[functions.send-otp]
+verify_jwt = false
+
+[functions.forgot-password]
+verify_jwt = false
+
+[functions.reset-password]
+verify_jwt = false
