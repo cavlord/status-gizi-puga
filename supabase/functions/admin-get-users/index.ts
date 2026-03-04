@@ -64,7 +64,7 @@ serve(async (req) => {
     // Fetch all users
     const { data: users, error: usersError } = await supabase
       .from("users")
-      .select("id, email, verified, created_at, otp, otp_expiry")
+      .select("id, email, verified, created_at")
       .order("created_at", { ascending: false });
 
     if (usersError) {
