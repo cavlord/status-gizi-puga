@@ -10,6 +10,74 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Rate limiting config: max 5 attempts per 15-minute window
+const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+
+async function checkRateLimit(supabase: any, key: string): Promise<{ allowed: boolean; retryAfterSeconds?: number }> {
+  const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
+
+  // Clean old entries and get current attempts
+  const { data, error } = await supabase
+    .from("rate_limits")
+    .select("attempts, first_attempt_at")
+    .eq("key", key)
+    .gte("first_attempt_at", windowStart)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Rate limit check error:", error);
+    return { allowed: true }; // Fail open to not block legitimate users
+  }
+
+  if (!data) {
+    return { allowed: true };
+  }
+
+  if (data.attempts >= RATE_LIMIT_MAX) {
+    const firstAttempt = new Date(data.first_attempt_at).getTime();
+    const windowEnd = firstAttempt + RATE_LIMIT_WINDOW_MS;
+    const retryAfterSeconds = Math.ceil((windowEnd - Date.now()) / 1000);
+    return { allowed: false, retryAfterSeconds: Math.max(retryAfterSeconds, 1) };
+  }
+
+  return { allowed: true };
+}
+
+async function recordAttempt(supabase: any, key: string): Promise<void> {
+  const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
+
+  // Delete expired entries for this key
+  await supabase
+    .from("rate_limits")
+    .delete()
+    .eq("key", key)
+    .lt("first_attempt_at", windowStart);
+
+  // Try to update existing entry
+  const { data: existing } = await supabase
+    .from("rate_limits")
+    .select("id, attempts")
+    .eq("key", key)
+    .gte("first_attempt_at", windowStart)
+    .maybeSingle();
+
+  if (existing) {
+    await supabase
+      .from("rate_limits")
+      .update({ attempts: existing.attempts + 1, last_attempt_at: new Date().toISOString() })
+      .eq("id", existing.id);
+  } else {
+    await supabase
+      .from("rate_limits")
+      .insert({ key, attempts: 1, first_attempt_at: new Date().toISOString(), last_attempt_at: new Date().toISOString() });
+  }
+}
+
+async function clearAttempts(supabase: any, key: string): Promise<void> {
+  await supabase.from("rate_limits").delete().eq("key", key);
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -25,6 +93,16 @@ serve(async (req) => {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Rate limit check by email
+    const rateLimitKey = `login:${email.toLowerCase()}`;
+    const rateCheck = await checkRateLimit(supabase, rateLimitKey);
+    if (!rateCheck.allowed) {
+      return new Response(
+        JSON.stringify({ error: `Terlalu banyak percobaan login. Coba lagi dalam ${rateCheck.retryAfterSeconds} detik.` }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Fetch user from database
@@ -43,6 +121,7 @@ serve(async (req) => {
     }
 
     if (!user) {
+      await recordAttempt(supabase, rateLimitKey);
       return new Response(JSON.stringify({ error: "Email atau password salah" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -64,11 +143,15 @@ serve(async (req) => {
     const isValidPassword = compareSync(password, user.password_hash);
     
     if (!isValidPassword) {
+      await recordAttempt(supabase, rateLimitKey);
       return new Response(JSON.stringify({ error: "Email atau password salah" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Clear rate limit on successful login
+    await clearAttempts(supabase, rateLimitKey);
 
     // Fetch user role
     const { data: userRole, error: roleError } = await supabase
@@ -98,7 +181,7 @@ serve(async (req) => {
     );
   } catch (error: any) {
     console.error("Login error:", error);
-    return new Response(JSON.stringify({ error: error.message || "Terjadi kesalahan saat login" }), {
+    return new Response(JSON.stringify({ error: "Terjadi kesalahan saat login" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
