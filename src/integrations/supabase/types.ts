@@ -143,6 +143,30 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limits: {
+        Row: {
+          attempts: number
+          first_attempt_at: string
+          id: string
+          key: string
+          last_attempt_at: string
+        }
+        Insert: {
+          attempts?: number
+          first_attempt_at?: string
+          id?: string
+          key: string
+          last_attempt_at?: string
+        }
+        Update: {
+          attempts?: number
+          first_attempt_at?: string
+          id?: string
+          key?: string
+          last_attempt_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
