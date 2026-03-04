@@ -1,13 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { extractAuthPayload } from "../_shared/jwt.ts";
 
 const GOOGLE_SHEETS_API_KEY = Deno.env.get("GOOGLE_SHEETS_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-// Whitelist of allowed spreadsheet IDs
 const ALLOWED_SPREADSHEET_IDS = [
-  "1o-Lok3oWtmGXaN5Q9CeFj4ji9WFOINYW3M_RBNBUw60", // Production spreadsheet
+  "1o-Lok3oWtmGXaN5Q9CeFj4ji9WFOINYW3M_RBNBUw60",
 ];
 
 const corsHeaders = {
@@ -21,7 +21,16 @@ serve(async (req) => {
   }
 
   try {
-    const { spreadsheetId, sheetName, email } = await req.json();
+    // Verify JWT token
+    const payload = await extractAuthPayload(req);
+    if (!payload) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { spreadsheetId, sheetName } = await req.json();
 
     if (!spreadsheetId || !sheetName) {
       return new Response(
@@ -30,49 +39,14 @@ serve(async (req) => {
       );
     }
 
-    // Validate spreadsheet ID is in whitelist
     if (!ALLOWED_SPREADSHEET_IDS.includes(spreadsheetId)) {
-      console.error("Unauthorized spreadsheet access attempt:", spreadsheetId);
       return new Response(
         JSON.stringify({ error: "Unauthorized spreadsheet access" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Verify user is authenticated
-    if (!email) {
-      return new Response(
-        JSON.stringify({ error: "Authentication required" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    
-    // Check if user exists and is verified
-    const { data: user, error: userError } = await supabase
-      .from('users')
-      .select('id, verified')
-      .eq('email', email)
-      .maybeSingle();
-
-    if (userError || !user) {
-      console.error("User lookup failed:", userError);
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (!user.verified) {
-      return new Response(
-        JSON.stringify({ error: "Account not verified" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     if (!GOOGLE_SHEETS_API_KEY) {
-      console.error("GOOGLE_SHEETS_API_KEY not configured");
       return new Response(
         JSON.stringify({ error: "Server configuration error" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -80,11 +54,9 @@ serve(async (req) => {
     }
 
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values/${encodeURIComponent(sheetName)}?key=${GOOGLE_SHEETS_API_KEY}`;
-    
-    console.log("Fetching Google Sheets data for sheet:", sheetName);
-    
+
     const response = await fetch(url);
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Google Sheets API error:", errorText);
@@ -95,8 +67,6 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    
-    console.log("Successfully fetched", data.values?.length || 0, "rows");
 
     return new Response(
       JSON.stringify(data),
@@ -106,7 +76,7 @@ serve(async (req) => {
   } catch (error: any) {
     console.error("Google Sheets proxy error:", error);
     return new Response(
-      JSON.stringify({ error: error.message || "Failed to fetch sheet data" }),
+      JSON.stringify({ error: "Failed to fetch sheet data" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

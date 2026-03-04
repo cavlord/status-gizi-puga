@@ -9,6 +9,7 @@ export interface User {
 
 interface AuthContextType {
   user: User | null;
+  token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -21,28 +22,44 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const AUTH_STORAGE_KEY = 'posyandu_auth';
+const TOKEN_STORAGE_KEY = 'posyandu_token';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const queryClient = useQueryClient();
 
   const logout = useCallback(() => {
     setUser(null);
+    setToken(null);
     localStorage.removeItem(AUTH_STORAGE_KEY);
-    // Clear all cached data on logout
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
     queryClient.clear();
   }, [queryClient]);
 
   useEffect(() => {
-    // Check for existing session
     const storedAuth = localStorage.getItem(AUTH_STORAGE_KEY);
-    if (storedAuth) {
+    const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+    if (storedAuth && storedToken) {
       try {
         const parsed = JSON.parse(storedAuth);
-        setUser(parsed);
+        // Verify token is not expired by checking the payload
+        const payloadPart = storedToken.split('.')[1];
+        if (payloadPart) {
+          const payload = JSON.parse(atob(payloadPart.replace(/-/g, '+').replace(/_/g, '/')));
+          if (payload.exp && payload.exp > Math.floor(Date.now() / 1000)) {
+            setUser(parsed);
+            setToken(storedToken);
+          } else {
+            // Token expired, clear storage
+            localStorage.removeItem(AUTH_STORAGE_KEY);
+            localStorage.removeItem(TOKEN_STORAGE_KEY);
+          }
+        }
       } catch (e) {
         localStorage.removeItem(AUTH_STORAGE_KEY);
+        localStorage.removeItem(TOKEN_STORAGE_KEY);
       }
     }
     setIsLoading(false);
@@ -51,18 +68,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Listen for storage changes (for multi-tab logout sync)
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === AUTH_STORAGE_KEY) {
+      if (e.key === AUTH_STORAGE_KEY || e.key === TOKEN_STORAGE_KEY) {
         if (!e.newValue) {
-          // User logged out in another tab
           setUser(null);
+          setToken(null);
           window.location.href = '/auth';
-        } else {
+        } else if (e.key === AUTH_STORAGE_KEY) {
           try {
             const parsed = JSON.parse(e.newValue);
             setUser(parsed);
           } catch {
             // Invalid data
           }
+        } else if (e.key === TOKEN_STORAGE_KEY) {
+          setToken(e.newValue);
         }
       }
     };
@@ -73,7 +92,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      // Clear all cached data BEFORE login to ensure fresh data
       queryClient.clear();
       
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth-login`, {
@@ -98,7 +116,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       };
 
       setUser(userData);
+      setToken(data.token);
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
+      localStorage.setItem(TOKEN_STORAGE_KEY, data.token);
 
       return { success: true };
     } catch (error) {
@@ -183,7 +203,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     <AuthContext.Provider
       value={{
         user,
-        isAuthenticated: !!user,
+        token,
+        isAuthenticated: !!user && !!token,
         isLoading,
         login,
         register,

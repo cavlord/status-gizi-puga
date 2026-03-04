@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { extractAuthPayload } from "../_shared/jwt.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -15,43 +16,22 @@ serve(async (req) => {
   }
 
   try {
+    // Verify JWT token
+    const payload = await extractAuthPayload(req);
+    if (!payload) {
+      return new Response(
+        JSON.stringify({ isAdmin: false, error: "Unauthorized" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    const { email } = await req.json();
 
-    if (!email) {
-      return new Response(
-        JSON.stringify({ error: "Email wajib diisi", isAdmin: false }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Fetch user from database
-    const { data: user, error: userError } = await supabase
-      .from('users')
-      .select('id, verified')
-      .eq('email', email)
-      .maybeSingle();
-
-    if (userError || !user) {
-      console.log("User not found:", email);
-      return new Response(
-        JSON.stringify({ isAdmin: false, error: "User tidak ditemukan" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (!user.verified) {
-      return new Response(
-        JSON.stringify({ isAdmin: false, error: "User belum terverifikasi" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Check if user has admin role
+    // Check if user has admin role using the verified user ID from JWT
     const { data: roleData, error: roleError } = await supabase
       .from('user_roles')
       .select('role')
-      .eq('user_id', user.id)
+      .eq('user_id', payload.sub)
       .eq('role', 'admin')
       .maybeSingle();
 
@@ -64,17 +44,17 @@ serve(async (req) => {
     }
 
     const isAdmin = !!roleData;
-    console.log(`Admin check for ${email}: ${isAdmin}`);
+    console.log(`Admin check for ${payload.email}: ${isAdmin}`);
 
     return new Response(
-      JSON.stringify({ isAdmin, userId: user.id }),
+      JSON.stringify({ isAdmin, userId: payload.sub }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error: any) {
     console.error("Verify admin error:", error);
     return new Response(
-      JSON.stringify({ isAdmin: false, error: error.message || "Terjadi kesalahan" }),
+      JSON.stringify({ isAdmin: false, error: "Terjadi kesalahan" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

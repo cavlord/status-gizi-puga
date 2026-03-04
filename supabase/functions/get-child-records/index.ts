@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { extractAuthPayload } from "../_shared/jwt.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -11,7 +12,6 @@ const corsHeaders = {
 };
 
 const requestSchema = z.object({
-  email: z.string().email().max(255),
   offset: z.number().int().min(0).optional().default(0),
   limit: z.number().int().min(1).max(10000).optional().default(5000),
   fetchAll: z.boolean().optional().default(false),
@@ -24,7 +24,6 @@ const MONTH_NAMES = [
 
 function formatDateDDMMYYYY(dateStr: string | null): string {
   if (!dateStr) return "";
-  // Handle M/D/YYYY format (from Excel/DB)
   const slashParts = dateStr.split("/");
   if (slashParts.length === 3) {
     const month = slashParts[0].padStart(2, "0");
@@ -32,22 +31,11 @@ function formatDateDDMMYYYY(dateStr: string | null): string {
     const year = slashParts[2];
     return `${day}/${month}/${year}`;
   }
-  // Handle YYYY-MM-DD format
   const dashParts = dateStr.split("-");
   if (dashParts.length === 3) {
     return `${dashParts[2]}/${dashParts[1]}/${dashParts[0]}`;
   }
   return dateStr;
-}
-
-function getMonthName(dateStr: string | null): string {
-  if (!dateStr) return "";
-  const parts = dateStr.split("-");
-  if (parts.length === 3) {
-    const monthIndex = parseInt(parts[1], 10) - 1;
-    return MONTH_NAMES[monthIndex] || "";
-  }
-  return "";
 }
 
 serve(async (req) => {
@@ -56,93 +44,74 @@ serve(async (req) => {
   }
 
   try {
+    // Verify JWT token
+    const payload = await extractAuthPayload(req);
+    if (!payload) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized", data: [] }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     let body;
     try {
       body = await req.json();
     } catch {
-      return new Response(
-        JSON.stringify({ error: "Request body tidak valid" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      body = {};
     }
 
     const validationResult = requestSchema.safeParse(body);
     if (!validationResult.success) {
       return new Response(
-        JSON.stringify({ error: validationResult.error.errors[0]?.message || "Input tidak valid" }),
+        JSON.stringify({ error: validationResult.error.errors[0]?.message || "Input tidak valid", data: [] }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const { email, offset, limit, fetchAll } = validationResult.data;
+    const { offset, limit, fetchAll } = validationResult.data;
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Verify user
-    const { data: user, error: userError } = await supabase
-      .from("users")
-      .select("id, verified")
-      .eq("email", email.toLowerCase())
-      .maybeSingle();
-
-    if (userError || !user) {
-      return new Response(
-        JSON.stringify({ error: "User tidak ditemukan", data: [] }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (!user.verified) {
-      return new Response(
-        JSON.stringify({ error: "User belum terverifikasi", data: [] }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Query langsung dari 1 tabel child_records — tanpa join
     const selectQuery = `*`;
 
-    // Transform flat record dengan format tanggal yang benar
-    const transformRecord = (r: any) => {
-      return {
-        nik: r.nik || "",
-        nama: r.nama || "",
-        jenis_kelamin: r.jk || "",
-        tgl_lahir: formatDateDDMMYYYY(r.tgl_lahir),
-        bb_lahir: r.bb_lahir != null ? String(r.bb_lahir) : "",
-        tb_lahir: r.tb_lahir != null ? String(r.tb_lahir) : "",
-        nama_ortu: r.nama_ortu || "",
-        provinsi: r.prov || "",
-        kab_kota: r.kab_kota || "",
-        kecamatan: r.kec || "",
-        puskesmas: r.puskesmas || "",
-        desa_kelurahan: r.desa_kel || "",
-        posyandu: r.posyandu || "",
-        rt: r.rt || "",
-        rw: r.rw || "",
-        alamat: r.alamat || "",
-        status_anak: r.status || "",
-        usia_saat_ukur: r.usia_saat_ukur || "",
-        tgl_pengukuran: r.tanggal_pengukuran || "",
-        bulan_pengukuran: r.bulan_pengukuran || "",
-        berat_badan: r.berat != null ? String(r.berat) : "",
-        tinggi_badan: r.tinggi != null ? String(r.tinggi) : "",
-        cara_ukur: r.cara_ukur || "",
-        lila: r.lila != null ? String(r.lila) : "",
-        status_bbu: r.bb_u || "",
-        zscore_bbu: r.zs_bb_u != null ? String(r.zs_bb_u) : "",
-        status_tbu: r.tb_u || "",
-        zscore_tbu: r.zs_tb_u != null ? String(r.zs_tb_u) : "",
-        status_bbtb: r.bb_tb || "",
-        zscore_bbtb: r.zs_bb_tb != null ? String(r.zs_bb_tb) : "",
-        naik_bb: r.naik_berat_badan || "",
-        pmt_diterima_kg: r.pmt_diterima != null ? String(r.pmt_diterima) : "",
-        jml_vit_a: r.jml_vit_a != null ? String(r.jml_vit_a) : "",
-        kpsp: r.kpsp || "",
-        kia: r.kia || "",
-        detail: r.detail_status || "",
-        status_desa: r.status_desa || "",
-      };
-    };
+    const transformRecord = (r: any) => ({
+      nik: r.nik || "",
+      nama: r.nama || "",
+      jenis_kelamin: r.jk || "",
+      tgl_lahir: formatDateDDMMYYYY(r.tgl_lahir),
+      bb_lahir: r.bb_lahir != null ? String(r.bb_lahir) : "",
+      tb_lahir: r.tb_lahir != null ? String(r.tb_lahir) : "",
+      nama_ortu: r.nama_ortu || "",
+      provinsi: r.prov || "",
+      kab_kota: r.kab_kota || "",
+      kecamatan: r.kec || "",
+      puskesmas: r.puskesmas || "",
+      desa_kelurahan: r.desa_kel || "",
+      posyandu: r.posyandu || "",
+      rt: r.rt || "",
+      rw: r.rw || "",
+      alamat: r.alamat || "",
+      status_anak: r.status || "",
+      usia_saat_ukur: r.usia_saat_ukur || "",
+      tgl_pengukuran: r.tanggal_pengukuran || "",
+      bulan_pengukuran: r.bulan_pengukuran || "",
+      berat_badan: r.berat != null ? String(r.berat) : "",
+      tinggi_badan: r.tinggi != null ? String(r.tinggi) : "",
+      cara_ukur: r.cara_ukur || "",
+      lila: r.lila != null ? String(r.lila) : "",
+      status_bbu: r.bb_u || "",
+      zscore_bbu: r.zs_bb_u != null ? String(r.zs_bb_u) : "",
+      status_tbu: r.tb_u || "",
+      zscore_tbu: r.zs_tb_u != null ? String(r.zs_tb_u) : "",
+      status_bbtb: r.bb_tb || "",
+      zscore_bbtb: r.zs_bb_tb != null ? String(r.zs_bb_tb) : "",
+      naik_bb: r.naik_berat_badan || "",
+      pmt_diterima_kg: r.pmt_diterima != null ? String(r.pmt_diterima) : "",
+      jml_vit_a: r.jml_vit_a != null ? String(r.jml_vit_a) : "",
+      kpsp: r.kpsp || "",
+      kia: r.kia || "",
+      detail: r.detail_status || "",
+      status_desa: r.status_desa || "",
+    });
 
     if (fetchAll) {
       const { count, error: countError } = await supabase
@@ -191,7 +160,6 @@ serve(async (req) => {
       );
     }
 
-    // Standard paginated fetch
     const { data: records, error: recordsError } = await supabase
       .from("child_records")
       .select(selectQuery)
