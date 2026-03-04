@@ -4,15 +4,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, registerSchema, LoginFormData, RegisterFormData } from '@/lib/validation';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Loader2, ShieldCheck, CheckCircle } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2, CheckCircle, ArrowLeft, KeyRound } from 'lucide-react';
 
-type AuthMode = 'login' | 'register' | 'registered';
-
-
+type AuthMode = 'login' | 'register' | 'registered' | 'forgot' | 'forgot-otp' | 'reset-password';
 
 const AuthPage = () => {
   const navigate = useNavigate();
@@ -22,7 +22,12 @@ const AuthPage = () => {
   const [mode, setMode] = useState<AuthMode>('login');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [otpValue, setOtpValue] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -35,18 +40,17 @@ const AuthPage = () => {
   });
 
   useEffect(() => {
-     const preloadImage = (src: string) => {
-    const img = new Image();
-    img.src = src;
-  };
-  preloadImage('/icon/logo.svg');
-  preloadImage('/icon/logo2.svg');
+    const preloadImage = (src: string) => {
+      const img = new Image();
+      img.src = src;
+    };
+    preloadImage('/icon/logo.svg');
+    preloadImage('/icon/logo2.svg');
     
     if (isAuthenticated) {
       navigate('/');
     }
   }, [isAuthenticated, navigate]);
-
 
   const handleLogin = async (data: LoginFormData) => {
     setIsLoading(true);
@@ -54,64 +58,127 @@ const AuthPage = () => {
     setIsLoading(false);
 
     if (result.success) {
-      toast({
-        title: 'Login Berhasil',
-        description: 'Selamat datang kembali!',
-      });
+      toast({ title: 'Login Berhasil', description: 'Selamat datang kembali!' });
       navigate('/');
     } else {
-      toast({
-        title: 'Login Gagal',
-        description: result.error || 'Terjadi kesalahan',
-        variant: 'destructive',
-      });
+      toast({ title: 'Login Gagal', description: result.error || 'Terjadi kesalahan', variant: 'destructive' });
     }
   };
 
   const handleRegister = async (data: RegisterFormData) => {
     setIsLoading(true);
-    
     try {
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth-register`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
         body: JSON.stringify({ email: data.email, password: data.password }),
       });
-
       const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Registrasi gagal');
-      }
-
+      if (!response.ok) throw new Error(result.error || 'Registrasi gagal');
       setMode('registered');
-      
-      toast({
-        title: 'Pendaftaran Berhasil',
-        description: 'Akun Anda sedang menunggu persetujuan admin',
-      });
+      toast({ title: 'Pendaftaran Berhasil', description: 'Akun Anda sedang menunggu persetujuan admin' });
     } catch (error: any) {
-      toast({
-        title: 'Registrasi Gagal',
-        description: error.message || 'Terjadi kesalahan',
-        variant: 'destructive',
-      });
+      toast({ title: 'Registrasi Gagal', description: error.message || 'Terjadi kesalahan', variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
   };
+
+  const handleForgotPassword = async () => {
+    if (!forgotEmail) {
+      toast({ title: 'Error', description: 'Email wajib diisi', variant: 'destructive' });
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Gagal mengirim OTP');
+      toast({ title: 'OTP Dikirim', description: 'Cek email Anda untuk kode OTP' });
+      setMode('forgot-otp');
+    } catch (error: any) {
+      toast({ title: 'Gagal', description: error.message, variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOtpAndReset = async () => {
+    if (otpValue.length !== 6) {
+      toast({ title: 'Error', description: 'Kode OTP harus 6 digit', variant: 'destructive' });
+      return;
+    }
+    setMode('reset-password');
+  };
+
+  const handleResetPassword = async () => {
+    if (newPassword.length < 8) {
+      toast({ title: 'Error', description: 'Password minimal 8 karakter', variant: 'destructive' });
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      toast({ title: 'Error', description: 'Password tidak cocok', variant: 'destructive' });
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        body: JSON.stringify({ email: forgotEmail, otp: otpValue, newPassword }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Gagal reset password');
+      toast({ title: 'Berhasil', description: 'Password berhasil direset. Silakan login.' });
+      switchMode('login');
+    } catch (error: any) {
+      toast({ title: 'Gagal', description: error.message, variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const switchMode = (newMode: AuthMode) => {
     setMode(newMode);
     loginForm.reset();
     registerForm.reset();
+    setForgotEmail('');
+    setOtpValue('');
+    setNewPassword('');
+    setConfirmNewPassword('');
+    setShowPassword(false);
+    setShowNewPassword(false);
+    setShowConfirmPassword(false);
+  };
+
+  const getTitle = () => {
+    switch (mode) {
+      case 'login': return 'DASHBOARD';
+      case 'register': return 'Daftar Akun';
+      case 'registered': return 'Pendaftaran Berhasil';
+      case 'forgot': return 'Lupa Password';
+      case 'forgot-otp': return 'Verifikasi OTP';
+      case 'reset-password': return 'Reset Password';
+    }
+  };
+
+  const getSubtitle = () => {
+    switch (mode) {
+      case 'login': return 'GIZI X DIHATI KAMPAR';
+      case 'register': return 'Buat akun baru untuk akses dashboard';
+      case 'registered': return 'Akun Anda telah terdaftar';
+      case 'forgot': return 'Masukkan email untuk menerima kode OTP';
+      case 'forgot-otp': return `Masukkan kode OTP yang dikirim ke ${forgotEmail}`;
+      case 'reset-password': return 'Masukkan password baru Anda';
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-100 via-gray-50 to-slate-100 relative overflow-hidden">
-      {/* Subtle background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/8 rounded-full blur-3xl animate-pulse" />
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-secondary/8 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
@@ -119,32 +186,22 @@ const AuthPage = () => {
       </div>
 
       <div className="w-full max-w-md relative z-10">
-        {/* Glass card */}
         <div className="backdrop-blur-xl bg-white/90 border border-slate-200/80 rounded-3xl shadow-[0_8px_40px_-12px_rgba(0,0,0,0.12)] p-8 animate-fade-in">
-       {/* Logo & Title */}
-<div className="text-center mb-8 flex flex-col items-center">
-
-{/* Logo */}
-<img
-  src="/icon/logo.webp"
-  alt="Logo Gizi X Dihati Kampar"
-  className="w-[220px] h-[220px] object-contain mx-auto -mb-4 translate-x-[-7px] drop-shadow-[0_10px_25px_rgba(0,0,0,0.15)]"
-  loading="eager"
-  decoding="async"
-/>
-
-<h1 className="text-3xl font-bold font-heading leading-none mb-1 tracking-wide text-slate-800 drop-shadow-[0_1px_2px_rgba(0,0,0,0.08)]">
-  {mode === 'login' && 'DASHBOARD'}
-  {mode === 'register' && 'Daftar Akun'}
-  {mode === 'registered' && 'Pendaftaran Berhasil'}
-</h1>
-
-<p className="text-sm leading-none font-medium tracking-wide text-slate-500">
-  {mode === 'login' && 'GIZI X DIHATI KAMPAR'}
-  {mode === 'register' && 'Buat akun baru untuk akses dashboard'}
-  {mode === 'registered' && 'Akun Anda telah terdaftar'}
-</p>
-</div>
+          <div className="text-center mb-8 flex flex-col items-center">
+            <img
+              src="/icon/logo.webp"
+              alt="Logo Gizi X Dihati Kampar"
+              className="w-[220px] h-[220px] object-contain mx-auto -mb-4 translate-x-[-7px] drop-shadow-[0_10px_25px_rgba(0,0,0,0.15)]"
+              loading="eager"
+              decoding="async"
+            />
+            <h1 className="text-3xl font-bold font-heading leading-none mb-1 tracking-wide text-slate-800 drop-shadow-[0_1px_2px_rgba(0,0,0,0.08)]">
+              {getTitle()}
+            </h1>
+            <p className="text-sm leading-none font-medium tracking-wide text-slate-500">
+              {getSubtitle()}
+            </p>
+          </div>
 
           {/* Login Form */}
           {mode === 'login' && (
@@ -153,66 +210,36 @@ const AuthPage = () => {
                 <Label htmlFor="email" className="text-foreground text-sm">Email</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="nama@email.com"
-                    className="pl-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300"
-                    {...loginForm.register('email')}
-                  />
+                  <Input id="email" type="email" placeholder="nama@email.com" className="pl-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300" {...loginForm.register('email')} />
                 </div>
-                {loginForm.formState.errors.email && (
-                  <p className="text-red-400 text-xs mt-1">{loginForm.formState.errors.email.message}</p>
-                )}
+                {loginForm.formState.errors.email && <p className="text-red-400 text-xs mt-1">{loginForm.formState.errors.email.message}</p>}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-foreground text-sm">Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300"
-                    {...loginForm.register('password')}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  >
+                  <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="••••••••" className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300" {...loginForm.register('password')} />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
-                {loginForm.formState.errors.password && (
-                  <p className="text-red-400 text-xs mt-1">{loginForm.formState.errors.password.message}</p>
-                )}
+                {loginForm.formState.errors.password && <p className="text-red-400 text-xs mt-1">{loginForm.formState.errors.password.message}</p>}
               </div>
 
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300"
-              >
-                {isLoading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <>
-                    Login <ArrowRight className="w-5 h-5 ml-2" />
-                  </>
-                )}
+              <div className="text-right">
+                <button type="button" onClick={() => switchMode('forgot')} className="text-primary hover:text-primary/80 text-sm font-medium transition-colors">
+                  Lupa password?
+                </button>
+              </div>
+
+              <Button type="submit" disabled={isLoading} className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
+                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Login <ArrowRight className="w-5 h-5 ml-2" /></>}
               </Button>
 
               <p className="text-center text-muted-foreground text-sm">
                 Belum punya akun?{' '}
-                <button
-                  type="button"
-                  onClick={() => switchMode('register')}
-                  className="text-primary hover:text-primary/80 font-medium transition-colors"
-                >
-                  Daftar sekarang
-                </button>
+                <button type="button" onClick={() => switchMode('register')} className="text-primary hover:text-primary/80 font-medium transition-colors">Daftar sekarang</button>
               </p>
             </form>
           )}
@@ -224,90 +251,42 @@ const AuthPage = () => {
                 <Label htmlFor="reg-email" className="text-foreground text-sm">Email</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    id="reg-email"
-                    type="email"
-                    placeholder="nama@email.com"
-                    className="pl-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300"
-                    {...registerForm.register('email')}
-                  />
+                  <Input id="reg-email" type="email" placeholder="nama@email.com" className="pl-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300" {...registerForm.register('email')} />
                 </div>
-                {registerForm.formState.errors.email && (
-                  <p className="text-red-400 text-xs mt-1">{registerForm.formState.errors.email.message}</p>
-                )}
+                {registerForm.formState.errors.email && <p className="text-red-400 text-xs mt-1">{registerForm.formState.errors.email.message}</p>}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="reg-password" className="text-foreground text-sm">Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    id="reg-password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Minimal 8 karakter"
-                    className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300"
-                    {...registerForm.register('password')}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  >
+                  <Input id="reg-password" type={showPassword ? 'text' : 'password'} placeholder="Minimal 8 karakter" className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300" {...registerForm.register('password')} />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
-                {registerForm.formState.errors.password && (
-                  <p className="text-red-400 text-xs mt-1">{registerForm.formState.errors.password.message}</p>
-                )}
+                {registerForm.formState.errors.password && <p className="text-red-400 text-xs mt-1">{registerForm.formState.errors.password.message}</p>}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="confirm-password" className="text-foreground text-sm">Konfirmasi Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    id="confirm-password"
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    placeholder="Ulangi password"
-                    className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300"
-                    {...registerForm.register('confirmPassword')}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  >
+                  <Input id="confirm-password" type={showConfirmPassword ? 'text' : 'password'} placeholder="Ulangi password" className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300" {...registerForm.register('confirmPassword')} />
+                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                     {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
-                {registerForm.formState.errors.confirmPassword && (
-                  <p className="text-red-400 text-xs mt-1">{registerForm.formState.errors.confirmPassword.message}</p>
-                )}
+                {registerForm.formState.errors.confirmPassword && <p className="text-red-400 text-xs mt-1">{registerForm.formState.errors.confirmPassword.message}</p>}
               </div>
 
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300"
-              >
-                {isLoading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <>
-                    Daftar <ArrowRight className="w-5 h-5 ml-2" />
-                  </>
-                )}
+              <Button type="submit" disabled={isLoading} className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
+                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Daftar <ArrowRight className="w-5 h-5 ml-2" /></>}
               </Button>
 
               <p className="text-center text-muted-foreground text-sm">
                 Sudah punya akun?{' '}
-                <button
-                  type="button"
-                  onClick={() => switchMode('login')}
-                  className="text-primary hover:text-primary/80 font-medium transition-colors"
-                >
-                  Login
-                </button>
+                <button type="button" onClick={() => switchMode('login')} className="text-primary hover:text-primary/80 font-medium transition-colors">Login</button>
               </p>
             </form>
           )}
@@ -315,49 +294,131 @@ const AuthPage = () => {
           {/* Registration Success */}
           {mode === 'registered' && (
             <div className="space-y-5 text-center">
-              <div className="flex justify-center">
-                <CheckCircle className="w-16 h-16 text-green-400" />
-              </div>
+              <div className="flex justify-center"><CheckCircle className="w-16 h-16 text-green-400" /></div>
               <div className="p-4 bg-muted/50 rounded-xl border border-border">
-                <p className="text-foreground/80 text-sm leading-relaxed">
-                  Akun Anda telah berhasil didaftarkan. Anda dapat login setelah mendapat <strong className="text-foreground">izin akses dari Admin</strong>.
-                </p>
-                <p className="text-muted-foreground text-xs mt-3">
-                  Hubungi admin untuk mendapatkan akses ke dashboard.
-                </p>
+                <p className="text-foreground/80 text-sm leading-relaxed">Akun Anda telah berhasil didaftarkan. Anda dapat login setelah mendapat <strong className="text-foreground">izin akses dari Admin</strong>.</p>
+                <p className="text-muted-foreground text-xs mt-3">Hubungi admin untuk mendapatkan akses ke dashboard.</p>
               </div>
-              <Button
-                type="button"
-                onClick={() => switchMode('login')}
-                className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300"
-              >
+              <Button type="button" onClick={() => switchMode('login')} className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
                 Kembali ke Login
               </Button>
             </div>
           )}
+
+          {/* Forgot Password - Email Input */}
+          {mode === 'forgot' && (
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="forgot-email" className="text-foreground text-sm">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    id="forgot-email"
+                    type="email"
+                    placeholder="nama@email.com"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    className="pl-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300"
+                  />
+                </div>
+              </div>
+
+              <Button type="button" onClick={handleForgotPassword} disabled={isLoading} className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
+                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Kirim Kode OTP <ArrowRight className="w-5 h-5 ml-2" /></>}
+              </Button>
+
+              <button type="button" onClick={() => switchMode('login')} className="flex items-center justify-center gap-2 w-full text-muted-foreground hover:text-foreground text-sm transition-colors">
+                <ArrowLeft className="w-4 h-4" /> Kembali ke Login
+              </button>
+            </div>
+          )}
+
+          {/* Forgot Password - OTP Verification */}
+          {mode === 'forgot-otp' && (
+            <div className="space-y-5">
+              <div className="flex flex-col items-center gap-4">
+                <div className="p-3 bg-primary/10 rounded-full">
+                  <KeyRound className="w-8 h-8 text-primary" />
+                </div>
+                <div className="flex justify-center">
+                  <InputOTP maxLength={6} value={otpValue} onChange={(value) => setOtpValue(value)}>
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+                <p className="text-muted-foreground text-xs">Kode berlaku selama 5 menit</p>
+              </div>
+
+              <Button type="button" onClick={handleVerifyOtpAndReset} disabled={isLoading || otpValue.length !== 6} className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
+                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Verifikasi <ArrowRight className="w-5 h-5 ml-2" /></>}
+              </Button>
+
+              <button type="button" onClick={() => switchMode('forgot')} className="flex items-center justify-center gap-2 w-full text-muted-foreground hover:text-foreground text-sm transition-colors">
+                <ArrowLeft className="w-4 h-4" /> Kirim ulang kode
+              </button>
+            </div>
+          )}
+
+          {/* Reset Password - New Password */}
+          {mode === 'reset-password' && (
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="new-password" className="text-foreground text-sm">Password Baru</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    id="new-password"
+                    type={showNewPassword ? 'text' : 'password'}
+                    placeholder="Minimal 8 karakter"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300"
+                  />
+                  <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                    {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirm-new-password" className="text-foreground text-sm">Konfirmasi Password Baru</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    id="confirm-new-password"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder="Ulangi password baru"
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300"
+                  />
+                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <Button type="button" onClick={handleResetPassword} disabled={isLoading} className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
+                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Reset Password <ArrowRight className="w-5 h-5 ml-2" /></>}
+              </Button>
+
+              <button type="button" onClick={() => switchMode('login')} className="flex items-center justify-center gap-2 w-full text-muted-foreground hover:text-foreground text-sm transition-colors">
+                <ArrowLeft className="w-4 h-4" /> Kembali ke Login
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Footer */}
         <p className="text-center text-muted-foreground/60 text-xs mt-6">
           © 2024 Posyandu Dashboard. All rights reserved.
         </p>
       </div>
-
-      <style>{`
-        @keyframes float {
-          0%, 100% {
-            transform: translateY(0) translateX(0);
-            opacity: 0.2;
-          }
-          50% {
-            transform: translateY(-20px) translateX(10px);
-            opacity: 0.5;
-          }
-        }
-        .animate-float {
-          animation: float ease-in-out infinite;
-        }
-      `}</style>
     </div>
   );
 };
