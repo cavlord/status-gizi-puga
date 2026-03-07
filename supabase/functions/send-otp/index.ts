@@ -20,8 +20,8 @@ serve(async (req) => {
       );
     }
 
-    const BREVO_SMTP_USER = Deno.env.get("BREVO_SMTP_USER")!;
-    const BREVO_SMTP_PASS = Deno.env.get("BREVO_SMTP_PASS")!;
+    const BREVO_API_KEY = Deno.env.get("BREVO_SMTP_PASS")!;
+    const BREVO_SENDER_EMAIL = Deno.env.get("BREVO_SMTP_USER")!;
 
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0;">
@@ -38,18 +38,17 @@ serve(async (req) => {
       </div>
     `;
 
-    // Try Brevo HTTP API first (xsmtpsib key works as API key)
     const apiResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
         "accept": "application/json",
-        "api-key": BREVO_SMTP_PASS,
+        "api-key": BREVO_API_KEY,
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        sender: { name: "GiziXDihatiKampar", email: BREVO_SMTP_USER },
+        sender: { name: "GiziXDihatiKampar", email: BREVO_SENDER_EMAIL },
         to: [{ email }],
-        subject: "Kode OTP Reset Password",
+        subject: "Kode OTP Reset Password - GiziXDihatiKampar",
         htmlContent,
       }),
     });
@@ -58,70 +57,8 @@ serve(async (req) => {
     console.log("Brevo API response status:", apiResponse.status, "body:", responseText);
 
     if (!apiResponse.ok) {
-      // Fallback: try raw SMTP
-      console.log("API failed, trying raw SMTP...");
-      
-      const conn = await Deno.connect({ hostname: "smtp-relay.brevo.com", port: 587 });
-      const encoder = new TextEncoder();
-      const decoder = new TextDecoder();
-
-      async function readResp(c: Deno.Conn): Promise<string> {
-        const buf = new Uint8Array(4096);
-        const n = await c.read(buf);
-        return decoder.decode(buf.subarray(0, n || 0)).trim();
-      }
-
-      async function sendCmd(c: Deno.Conn, cmd: string): Promise<string> {
-        await c.write(encoder.encode(cmd + "\r\n"));
-        return readResp(c);
-      }
-
-      // Greeting
-      await readResp(conn);
-      const ehlo = await sendCmd(conn, "EHLO client");
-
-      if (ehlo.includes("STARTTLS")) {
-        await sendCmd(conn, "STARTTLS");
-        const tls = await Deno.startTls(conn, { hostname: "smtp-relay.brevo.com" });
-
-        await sendCmd(tls, "EHLO client");
-        await sendCmd(tls, "AUTH LOGIN");
-        await sendCmd(tls, btoa(BREVO_SMTP_USER));
-        const authResp = await sendCmd(tls, btoa(BREVO_SMTP_PASS));
-
-        if (!authResp.startsWith("235")) {
-          tls.close();
-          throw new Error(`SMTP AUTH failed: ${authResp}`);
-        }
-
-        await sendCmd(tls, `MAIL FROM:<${BREVO_SMTP_USER}>`);
-        await sendCmd(tls, `RCPT TO:<${email}>`);
-        await sendCmd(tls, "DATA");
-
-        const msg = [
-          `From: GiziXDihatiKampar <${BREVO_SMTP_USER}>`,
-          `To: ${email}`,
-          `Subject: Kode OTP Reset Password`,
-          `MIME-Version: 1.0`,
-          `Content-Type: text/html; charset=UTF-8`,
-          ``,
-          htmlContent,
-          ``,
-          `.`,
-        ].join("\r\n");
-
-        const dataResp = await sendCmd(tls, msg);
-        console.log("SMTP DATA response:", dataResp);
-        await sendCmd(tls, "QUIT");
-        tls.close();
-
-        if (!dataResp.startsWith("250")) {
-          throw new Error(`SMTP send failed: ${dataResp}`);
-        }
-      } else {
-        conn.close();
-        throw new Error("STARTTLS not supported");
-      }
+      console.error("Brevo API error:", responseText);
+      throw new Error(`Brevo API error: ${apiResponse.status} - ${responseText}`);
     }
 
     return new Response(

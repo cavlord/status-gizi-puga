@@ -92,51 +92,69 @@ function getAuthToken(): string | null {
 }
 
 export async function fetchSheetData(): Promise<ChildRecord[]> {
-  try {
-    const token = getAuthToken();
-    if (!token) {
-      console.log('No auth token found');
-      return [];
-    }
-
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    
-    const response = await fetch(`${supabaseUrl}/functions/v1/get-child-records`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        fetchAll: true,
-      }),
-    });
-
-    if (response.status === 401) {
-      // Token expired or invalid, clear auth
-      localStorage.removeItem('posyandu_auth');
-      localStorage.removeItem('posyandu_token');
-      window.location.href = '/auth';
-      return [];
-    }
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Error fetching from edge function:', errorData.error);
-      throw new Error(errorData.error || 'Failed to fetch data');
-    }
-
-    const result = await response.json();
-    
-    if (!result.data || result.data.length === 0) {
-      return [];
-    }
-
-    return result.data.map(mapDbToRecord);
-  } catch (error) {
-    console.error('Error fetching data:', error);
-    throw error;
+  const token = getAuthToken();
+  if (!token) {
+    console.log('No auth token found');
+    throw new Error('Sesi telah berakhir. Silakan login kembali.');
   }
+
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  
+  // Retry logic for mobile network issues
+  const maxRetries = 2;
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/get-child-records`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ fetchAll: true }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.status === 401) {
+        localStorage.removeItem('posyandu_auth');
+        localStorage.removeItem('posyandu_token');
+        window.location.href = '/auth';
+        return [];
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Server error' }));
+        throw new Error(errorData.error || `Server error: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (!result.data || result.data.length === 0) {
+        return [];
+      }
+
+      return result.data.map(mapDbToRecord);
+    } catch (error: any) {
+      lastError = error;
+      console.error(`Fetch attempt ${attempt + 1} failed:`, error.message);
+      
+      // Don't retry on auth errors
+      if (error.message?.includes('login')) throw error;
+      
+      // Wait before retry
+      if (attempt < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+      }
+    }
+  }
+
+  throw lastError || new Error('Gagal mengambil data. Silakan coba lagi.');
 }
 
 export async function importFromGoogleSheets(userEmail: string): Promise<{ success: boolean; message: string; count?: number }> {
