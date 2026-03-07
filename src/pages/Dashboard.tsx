@@ -32,7 +32,7 @@ const Dashboard = () => {
     if (error) {
       toast({
         title: "Error",
-        description: "Gagal mengambil data dari Google Sheets. Silakan coba lagi.",
+        description: "Gagal mengambil data. Silakan coba lagi.",
         variant: "destructive",
       });
     }
