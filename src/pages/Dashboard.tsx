@@ -81,8 +81,9 @@ const Dashboard = () => {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
-          <p className="text-xl font-semibold mb-2">Tidak ada data</p>
-          <p className="text-muted-foreground">Data belum tersedia di Google Sheets</p>
+          <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+          <p className="text-xl font-semibold mb-2">Data Tidak Tersedia</p>
+          <p className="text-muted-foreground">Belum ada data yang tersedia saat ini. Silakan coba lagi nanti.</p>
         </div>
       </div>
     );
