@@ -49,18 +49,18 @@ function AppSidebar() {
     >
       <SidebarContent className="bg-sidebar text-sidebar-foreground">
         <div className="p-4 md:p-6">
-          <div className="flex items-center gap-3">
-            {!isCollapsed && (
-              <div>
-                <h2 className="text-base md:text-lg font-heading font-bold text-white">
-                  GIZI X
-                </h2>
-                <p className="text-xs text-sidebar-foreground/70 mt-1">
-                  UPT Puskesmas Pulau Gadang
-                </p>
-              </div>
-            )}
-          </div>
+          {!isCollapsed && (
+            <div className="flex flex-col items-center text-center">
+              <img
+                src="/icon/logos.svg"
+                alt="Logo GiziX"
+                className="w-24 h-24 md:w-28 md:h-28 object-contain drop-shadow-[0_4px_12px_rgba(255,255,255,0.1)]"
+              />
+              <p className="text-xs text-sidebar-foreground/70 mt-1">
+                UPT Puskesmas Pulau Gadang
+              </p>
+            </div>
+          )}
         </div>
 
         <SidebarGroup>
