@@ -180,6 +180,7 @@ serve(async (req) => {
 
     const hashedPassword = hashSync(password);
     const otp = generateOTP();
+    const otpHash = hashSync(otp);
     const otpExpiry = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
     if (existingUser) {
