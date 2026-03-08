@@ -183,10 +183,17 @@ const formattedDate = now.toLocaleDateString("id-ID", {
             <SidebarTrigger className="mr-2 md:mr-4 lg:hidden">
               <Menu className="h-5 w-5" />
             </SidebarTrigger>
-            <div className="flex-1 min-w-0">
-            <h1 className="text-sm md:text-base lg:text-xl font-heading font-semibold text-foreground truncate">
-  {formattedDate} 
-</h1>
+            <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
+              <h1 className="text-sm md:text-base lg:text-xl font-heading font-semibold text-foreground truncate">
+                {formattedDate}
+              </h1>
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 shrink-0">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                </span>
+                <span className="text-[10px] md:text-xs font-semibold text-emerald-600 dark:text-emerald-400">Online</span>
+              </div>
             </div>
           </header>
           <main className="flex-1 p-3 md:p-4 lg:p-6 overflow-x-hidden">
