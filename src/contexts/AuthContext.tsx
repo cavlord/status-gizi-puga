@@ -34,8 +34,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = useCallback(() => {
     setUser(null);
     setToken(null);
-    localStorage.removeItem(AUTH_STORAGE_KEY);
-    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    safeStorage.removeItem(AUTH_STORAGE_KEY);
+    safeStorage.removeItem(TOKEN_STORAGE_KEY);
     queryClient.clear();
   }, [queryClient]);
 
