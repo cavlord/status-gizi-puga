@@ -188,7 +188,7 @@ serve(async (req) => {
         .from('users')
         .update({
           password_hash: hashedPassword,
-          otp,
+          otp: otpHash,
           otp_expiry: otpExpiry,
           updated_at: new Date().toISOString()
         })
