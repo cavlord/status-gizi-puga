@@ -135,10 +135,13 @@ serve(async (req) => {
     const otpCode = String((array[0] % 900000) + 100000);
     const otpExpiry = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes
 
-    // Store OTP in users table
+    // Hash OTP before storing
+    const otpHash = hashSync(otpCode);
+
+    // Store hashed OTP in users table
     await supabase
       .from("users")
-      .update({ otp: otpCode, otp_expiry: otpExpiry })
+      .update({ otp: otpHash, otp_expiry: otpExpiry })
       .eq("id", user.id);
 
     // Send OTP via send-otp function
