@@ -263,7 +263,7 @@ const AuthPage = () => {
 
           {/* Login Form */}
           {mode === 'login' && (
-            <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-5">
+            <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-5 animate-fade-in" style={{ animationDuration: '0.8s', animationDelay: '1.3s', animationFillMode: 'both' }}>
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-foreground text-sm">Email</Label>
                 <div className="relative">
