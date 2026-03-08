@@ -52,7 +52,8 @@ serve(async (req) => {
   }
 
   try {
-    const { email } = await req.json();
+    const body = await req.json();
+    const { email, otp, action } = body;
 
     if (!email) {
       return new Response(JSON.stringify({ error: "Email wajib diisi" }), {
@@ -62,6 +63,46 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+    // Action: verify OTP only (without resetting password)
+    if (action === "verify") {
+      if (!otp) {
+        return new Response(JSON.stringify({ error: "Kode OTP wajib diisi" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: user } = await supabase
+        .from("users")
+        .select("id, otp, otp_expiry")
+        .eq("email", email.toLowerCase())
+        .maybeSingle();
+
+      if (!user || !user.otp || !user.otp_expiry) {
+        return new Response(JSON.stringify({ error: "Tidak ada permintaan reset password aktif" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (new Date(user.otp_expiry) < new Date()) {
+        await supabase.from("users").update({ otp: null, otp_expiry: null }).eq("id", user.id);
+        return new Response(JSON.stringify({ error: "Kode OTP sudah kedaluwarsa. Silakan minta kode baru." }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (user.otp !== otp) {
+        return new Response(JSON.stringify({ error: "Kode OTP salah" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, message: "OTP valid" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Default action: send OTP
     // Rate limit
     const rateLimitKey = `forgot:${email.toLowerCase()}`;
     const rateCheck = await checkRateLimit(supabase, rateLimitKey);
@@ -90,13 +131,13 @@ serve(async (req) => {
     // Generate 6-digit OTP using cryptographically secure random
     const array = new Uint32Array(1);
     crypto.getRandomValues(array);
-    const otp = String((array[0] % 900000) + 100000);
+    const otpCode = String((array[0] % 900000) + 100000);
     const otpExpiry = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes
 
     // Store OTP in users table
     await supabase
       .from("users")
-      .update({ otp, otp_expiry: otpExpiry })
+      .update({ otp: otpCode, otp_expiry: otpExpiry })
       .eq("id", user.id);
 
     // Send OTP via send-otp function
@@ -106,7 +147,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
       },
-      body: JSON.stringify({ email: user.email, otp }),
+      body: JSON.stringify({ email: user.email, otp: otpCode }),
     });
 
     if (!sendOtpResponse.ok) {
