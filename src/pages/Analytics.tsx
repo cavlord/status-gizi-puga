@@ -35,7 +35,6 @@ const Analytics = () => {
       return;
     }
 
-    const underFiveRecords = filterUnderFiveYears(allRecords);
     const query = searchQuery.toLowerCase().trim();
     
     // Search logic: full name or NIK (case-insensitive)
