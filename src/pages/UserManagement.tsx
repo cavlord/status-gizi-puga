@@ -151,7 +151,10 @@ export default function UserManagement() {
   };
 
   const generateOTP = (): string => {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+    const array = new Uint32Array(1);
+    crypto.getRandomValues(array);
+    const otp = (array[0] % 900000) + 100000;
+    return otp.toString();
   };
 
   const handleGenerateOTP = async (targetUser: UserData) => {
