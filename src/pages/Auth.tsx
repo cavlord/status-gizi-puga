@@ -237,15 +237,14 @@ const AuthPage = () => {
             />
             {mode === 'login' ? (
               <>
-                <h1 className="text-3xl font-bold font-heading leading-none mb-1.5 tracking-widest drop-shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
+                <p className="text-sm leading-none font-bold tracking-[0.2em] mb-1.5"
+                  style={{ color: '#0f172a' }}>
+                  DIHATI KAMPAR
+                </p>
+                <h1 className="text-3xl font-bold font-heading leading-none tracking-widest drop-shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
                   style={{ background: 'linear-gradient(135deg, #10b981, #0ea5e9, #0284c7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                   DASHBOARD
                 </h1>
-                <p className="text-sm leading-none font-bold tracking-[0.2em]">
-                  <span style={{ color: '#0f172a' }}>GIZI </span>
-                  <span style={{ color: '#0ea5e9' }}>X</span>
-                  <span style={{ color: '#0f172a' }}> DIHATI KAMPAR</span>
-                </p>
               </>
             ) : (
               <>
