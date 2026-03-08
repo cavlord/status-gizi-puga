@@ -223,25 +223,25 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
           </ResponsiveContainer>
           
           {/* Village Summary Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mt-4">
+          <div className="grid grid-cols-2 gap-2 mt-4">
             {villageChartData.map((village, index) => (
-              <Card key={index} className="shadow-sm">
-                <CardContent className="p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div 
-                      className="w-3 h-3 rounded-full flex-shrink-0" 
-                      style={{ backgroundColor: village.fill }}
-                    />
-                    <p className="text-[10px] sm:text-xs font-medium line-clamp-1">{village.name}</p>
+              <div key={index} className="flex items-center gap-2.5 p-2.5 rounded-lg border bg-card">
+                <div 
+                  className="w-3 h-3 rounded-full flex-shrink-0" 
+                  style={{ backgroundColor: village.fill }}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium leading-tight">{village.name}</p>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-lg font-bold" style={{ color: village.fill }}>
+                      {village.value}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">
+                      ({totalChildren > 0 ? ((village.value / totalChildren) * 100).toFixed(1) : 0}%)
+                    </span>
                   </div>
-                  <p className="text-lg sm:text-xl md:text-2xl font-bold" style={{ color: village.fill }}>
-                    {village.value}
-                  </p>
-                  <p className="text-[10px] sm:text-xs text-muted-foreground">
-                    {totalChildren > 0 ? ((village.value / totalChildren) * 100).toFixed(1) : 0}%
-                  </p>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ))}
           </div>
         </CardContent>
