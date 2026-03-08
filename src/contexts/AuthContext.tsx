@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { safeStorage } from '@/lib/storage';
 import { useQueryClient } from '@tanstack/react-query';
 
 export interface User {
