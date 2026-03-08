@@ -394,38 +394,46 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Overview - Compact */}
-      <div className="grid grid-cols-3 gap-2 md:gap-3">
-        <Card className="border-0 shadow-md bg-gradient-to-br from-primary to-accent text-primary-foreground">
-          <CardContent className="p-3 md:p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Users className="h-4 w-4 opacity-80 shrink-0" />
-              <span className="text-[10px] md:text-xs opacity-80">Total Balita</span>
+      <div className="grid grid-cols-3 gap-3 md:gap-4">
+        <Card className="border-0 shadow-lg overflow-hidden relative bg-gradient-to-br from-primary to-accent text-primary-foreground">
+          <CardContent className="p-4 md:p-5">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="p-1.5 rounded-lg bg-white/15">
+                <Users className="h-4 w-4" />
+              </div>
+              <span className="text-xs font-medium opacity-90">Total Balita</span>
             </div>
-            <div className="text-xl md:text-2xl font-bold">{totalCount}</div>
+            <div className="text-2xl md:text-3xl font-bold tracking-tight">{totalCount}</div>
+            <p className="text-[10px] md:text-xs opacity-70 mt-1">Balita aktif terdaftar</p>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md bg-gradient-to-br from-blue-500 to-blue-700 text-white">
-          <CardContent className="p-3 md:p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <TrendingUp className="h-4 w-4 opacity-80 shrink-0" />
-              <span className="text-[10px] md:text-xs opacity-80">Desa/Kel</span>
+        <Card className="border-0 shadow-lg overflow-hidden relative bg-gradient-to-br from-secondary to-primary text-primary-foreground">
+          <CardContent className="p-4 md:p-5">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="p-1.5 rounded-lg bg-white/15">
+                <TrendingUp className="h-4 w-4" />
+              </div>
+              <span className="text-xs font-medium opacity-90">Desa/Kel</span>
             </div>
-            <div className="text-xl md:text-2xl font-bold">{villageData.length}</div>
+            <div className="text-2xl md:text-3xl font-bold tracking-tight">{villageData.length}</div>
+            <p className="text-[10px] md:text-xs opacity-70 mt-1">Wilayah cakupan</p>
           </CardContent>
         </Card>
 
         <Card 
-          className="border-0 shadow-md bg-gradient-to-br from-destructive/80 to-destructive text-white cursor-pointer hover:shadow-lg transition-all active:scale-[0.98]"
+          className="border-0 shadow-lg overflow-hidden relative bg-gradient-to-br from-destructive to-destructive/80 text-destructive-foreground cursor-pointer hover:shadow-xl transition-all active:scale-[0.98]"
           onClick={() => setShowCumulativeModal(true)}
         >
-          <CardContent className="p-3 md:p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <AlertTriangle className="h-4 w-4 opacity-80 shrink-0" />
-              <span className="text-[10px] md:text-xs opacity-80">Tidak Naik BB</span>
+          <CardContent className="p-4 md:p-5">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="p-1.5 rounded-lg bg-white/15">
+                <AlertTriangle className="h-4 w-4" />
+              </div>
+              <span className="text-xs font-medium opacity-90">Tidak Naik BB</span>
             </div>
-            <div className="text-xl md:text-2xl font-bold">{cumulativeNotGainingData.count}</div>
-            <p className="text-[10px] opacity-70">Akumulatif {selectedYear}</p>
+            <div className="text-2xl md:text-3xl font-bold tracking-tight">{cumulativeNotGainingData.count}</div>
+            <p className="text-[10px] md:text-xs opacity-70 mt-1">Akumulatif {selectedYear}</p>
           </CardContent>
         </Card>
       </div>
