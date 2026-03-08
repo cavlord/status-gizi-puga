@@ -175,12 +175,12 @@ const formattedDate = now.toLocaleDateString("id-ID", {
 
   return (
     
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={false}>
       <div className="min-h-screen flex w-full bg-muted/30">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-14 md:h-16 border-b bg-card flex items-center px-3 md:px-6 sticky top-0 z-10 shadow-sm">
-            <SidebarTrigger className="mr-2 md:mr-4 lg:hidden">
+            <SidebarTrigger className="mr-2 md:mr-4">
               <Menu className="h-5 w-5" />
             </SidebarTrigger>
             <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
