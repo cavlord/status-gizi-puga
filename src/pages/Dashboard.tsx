@@ -462,21 +462,19 @@ const Dashboard = () => {
       />
 
       {/* Chart Section */}
-      <div className="transition-all duration-300">
-        <Card className="border-0 shadow-lg">
-          <CardHeader className="p-4 md:p-6">
-            <CardTitle className="text-base sm:text-lg md:text-xl font-heading">
-              Tren Status Gizi Balita
-            </CardTitle>
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              Grafik perkembangan status gizi per bulan
-            </p>
-          </CardHeader>
-          <CardContent className="p-4 md:p-6">
-            <NutritionalStatusChart data={chartData} />
-          </CardContent>
-        </Card>
-      </div>
+      <Card className="border-0 shadow-lg">
+        <CardHeader className="p-3 md:p-4 pb-1">
+          <CardTitle className="text-sm md:text-base font-heading">
+            Tren Status Gizi Balita
+          </CardTitle>
+          <p className="text-[10px] md:text-xs text-muted-foreground">
+            Grafik perkembangan status gizi per bulan
+          </p>
+        </CardHeader>
+        <CardContent className="p-3 md:p-4 pt-1">
+          <NutritionalStatusChart data={chartData} />
+        </CardContent>
+      </Card>
 
       {/* Data Balita Section */}
       <div className="transition-all duration-300">
