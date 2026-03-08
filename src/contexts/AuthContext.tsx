@@ -59,8 +59,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
         }
       } catch (e) {
-        localStorage.removeItem(AUTH_STORAGE_KEY);
-        localStorage.removeItem(TOKEN_STORAGE_KEY);
+        safeStorage.removeItem(AUTH_STORAGE_KEY);
+        safeStorage.removeItem(TOKEN_STORAGE_KEY);
       }
     }
     setIsLoading(false);
