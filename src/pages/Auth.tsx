@@ -231,27 +231,30 @@ const AuthPage = () => {
             <img
               src="/icon/logos.svg"
               alt="Logo Gizi X Dihati Kampar"
-              className="w-[220px] h-[220px] object-contain mx-auto -mb-4 translate-x-[-7px] drop-shadow-[0_10px_25px_rgba(0,0,0,0.15)]"
+              className="w-[220px] h-[220px] object-contain mx-auto -mb-4 translate-x-[-7px] drop-shadow-[0_10px_25px_rgba(0,0,0,0.15)] animate-fade-in"
+              style={{ animationDuration: '0.6s' }}
               loading="eager"
               decoding="async"
             />
             {mode === 'login' ? (
               <>
-                <p className="text-sm leading-none font-bold tracking-[0.2em] mb-1.5"
-                  style={{ color: '#0f172a' }}>
+                <p className="text-sm leading-none font-bold tracking-[0.2em] mb-1.5 animate-fade-in"
+                  style={{ color: '#0f172a', animationDuration: '0.6s', animationDelay: '0.15s', animationFillMode: 'both' }}>
                   DIHATI KAMPAR
                 </p>
-                <h1 className="text-3xl font-bold font-heading leading-none tracking-widest drop-shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
-                  style={{ background: 'linear-gradient(135deg, #10b981, #0ea5e9, #0284c7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                <h1 className="text-3xl font-bold font-heading leading-none tracking-widest drop-shadow-[0_1px_2px_rgba(0,0,0,0.08)] animate-fade-in"
+                  style={{ background: 'linear-gradient(135deg, #10b981, #0ea5e9, #0284c7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', animationDuration: '0.6s', animationDelay: '0.3s', animationFillMode: 'both' }}>
                   DASHBOARD
                 </h1>
               </>
             ) : (
               <>
-                <h1 className="text-3xl font-bold font-heading leading-none mb-1 tracking-wide text-slate-800 drop-shadow-[0_1px_2px_rgba(0,0,0,0.08)]">
+                <h1 className="text-3xl font-bold font-heading leading-none mb-1 tracking-wide text-slate-800 drop-shadow-[0_1px_2px_rgba(0,0,0,0.08)] animate-fade-in"
+                  style={{ animationDuration: '0.6s', animationDelay: '0.15s', animationFillMode: 'both' }}>
                   {getTitle()}
                 </h1>
-                <p className="text-sm leading-none font-medium tracking-wide text-muted-foreground">
+                <p className="text-sm leading-none font-medium tracking-wide text-muted-foreground animate-fade-in"
+                  style={{ animationDuration: '0.6s', animationDelay: '0.3s', animationFillMode: 'both' }}>
                   {getSubtitle()}
                 </p>
               </>
