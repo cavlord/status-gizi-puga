@@ -175,7 +175,7 @@ const formattedDate = now.toLocaleDateString("id-ID", {
 
   return (
     
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen flex w-full bg-muted/30">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
