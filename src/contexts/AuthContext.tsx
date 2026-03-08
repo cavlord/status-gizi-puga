@@ -118,8 +118,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       setUser(userData);
       setToken(data.token);
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
-      localStorage.setItem(TOKEN_STORAGE_KEY, data.token);
+      safeStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
+      safeStorage.setItem(TOKEN_STORAGE_KEY, data.token);
 
       return { success: true };
     } catch (error) {
