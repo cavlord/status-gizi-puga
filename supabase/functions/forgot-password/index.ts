@@ -79,12 +79,11 @@ serve(async (req) => {
       .eq("email", email.toLowerCase())
       .maybeSingle();
 
-    // Always return success to prevent email enumeration
     if (!user) {
       await recordAttempt(supabase, rateLimitKey);
       return new Response(
-        JSON.stringify({ success: true, message: "Jika email terdaftar, kode OTP akan dikirim." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Akun dengan email tersebut tidak ditemukan." }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
