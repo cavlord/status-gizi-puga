@@ -40,8 +40,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [queryClient]);
 
   useEffect(() => {
-    const storedAuth = localStorage.getItem(AUTH_STORAGE_KEY);
-    const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+    const storedAuth = safeStorage.getItem(AUTH_STORAGE_KEY);
+    const storedToken = safeStorage.getItem(TOKEN_STORAGE_KEY);
     if (storedAuth && storedToken) {
       try {
         const parsed = JSON.parse(storedAuth);
