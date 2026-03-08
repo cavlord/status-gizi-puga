@@ -231,7 +231,7 @@ const AuthPage = () => {
             <img
               src="/icon/logos.svg"
               alt="Logo Gizi X Dihati Kampar"
-              className="w-[220px] h-[220px] object-contain mx-auto -mb-4 translate-x-[-7px] drop-shadow-[0_10px_25px_rgba(0,0,0,0.15)] animate-fade-in"
+              className="w-[220px] h-[220px] object-contain mx-auto -mb-4 drop-shadow-[0_10px_25px_rgba(0,0,0,0.15)] animate-fade-in"
               style={{ animationDuration: '0.6s' }}
               loading="eager"
               decoding="async"
