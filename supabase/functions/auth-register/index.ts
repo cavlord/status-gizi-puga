@@ -1,11 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 import { hashSync } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-const RESEND_FROM_EMAIL = Deno.env.get("RESEND_FROM_EMAIL") || "Posyandu Dashboard <onboarding@resend.dev>";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -14,13 +11,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Rate limiting config: max 3 registration attempts per 15-minute window
 const RATE_LIMIT_MAX = 3;
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 
 async function checkRateLimit(supabase: any, key: string): Promise<{ allowed: boolean; retryAfterSeconds?: number }> {
   const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
-
   const { data, error } = await supabase
     .from("rate_limits")
     .select("attempts, first_attempt_at")
@@ -28,11 +23,7 @@ async function checkRateLimit(supabase: any, key: string): Promise<{ allowed: bo
     .gte("first_attempt_at", windowStart)
     .maybeSingle();
 
-  if (error) {
-    console.error("Rate limit check error:", error);
-    return { allowed: true };
-  }
-
+  if (error) return { allowed: true };
   if (!data) return { allowed: true };
 
   if (data.attempts >= RATE_LIMIT_MAX) {
@@ -41,13 +32,11 @@ async function checkRateLimit(supabase: any, key: string): Promise<{ allowed: bo
     const retryAfterSeconds = Math.ceil((windowEnd - Date.now()) / 1000);
     return { allowed: false, retryAfterSeconds: Math.max(retryAfterSeconds, 1) };
   }
-
   return { allowed: true };
 }
 
 async function recordAttempt(supabase: any, key: string): Promise<void> {
   const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
-
   await supabase.from("rate_limits").delete().eq("key", key).lt("first_attempt_at", windowStart);
 
   const { data: existing } = await supabase
@@ -69,7 +58,6 @@ async function recordAttempt(supabase: any, key: string): Promise<void> {
   }
 }
 
-// Input validation schema
 const registerSchema = z.object({
   email: z.string()
     .email({ message: "Format email tidak valid" })
@@ -80,7 +68,6 @@ const registerSchema = z.object({
     .max(128, { message: "Password terlalu panjang (maksimal 128 karakter)" })
 });
 
-// Generate 6-digit OTP using cryptographically secure random numbers
 function generateOTP(): string {
   const array = new Uint32Array(1);
   crypto.getRandomValues(array);
@@ -88,61 +75,47 @@ function generateOTP(): string {
   return otp.toString();
 }
 
-async function sendOTPEmail(email: string, otp: string): Promise<void> {
-  const response = await fetch("https://api.resend.com/emails", {
+async function sendOTPEmailBrevo(email: string, otp: string): Promise<void> {
+  const BREVO_API_KEY = Deno.env.get("BREVO_SMTP_PASS")!;
+  const BREVO_SENDER_EMAIL = Deno.env.get("BREVO_SMTP_USER")!;
+
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0;">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <h2 style="color: #1e293b; margin: 0;">Verifikasi Email</h2>
+        <p style="color: #64748b; font-size: 14px;">GiziXDihatiKampar</p>
+      </div>
+      <p style="color: #334155; font-size: 14px;">Berikut adalah kode OTP untuk memverifikasi email Anda:</p>
+      <div style="text-align: center; margin: 24px 0;">
+        <span style="display: inline-block; font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #0f172a; background: #f1f5f9; padding: 16px 32px; border-radius: 8px; border: 2px dashed #cbd5e1;">${otp}</span>
+      </div>
+      <p style="color: #ef4444; font-size: 13px; text-align: center; font-weight: 600;">Kode ini berlaku selama 5 menit.</p>
+      <p style="color: #94a3b8; font-size: 12px; text-align: center; margin-top: 24px;">Jika Anda tidak melakukan registrasi, abaikan email ini.</p>
+    </div>
+  `;
+
+  const apiResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${RESEND_API_KEY}`,
-      "Content-Type": "application/json",
+      "accept": "application/json",
+      "api-key": BREVO_API_KEY,
+      "content-type": "application/json",
     },
     body: JSON.stringify({
-      from: RESEND_FROM_EMAIL,
-      to: [email],
-      subject: "Kode Verifikasi Registrasi - Posyandu Dashboard",
-      html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        </head>
-        <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7fa; margin: 0; padding: 20px;">
-          <div style="max-width: 500px; margin: 0 auto; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);">
-            <div style="padding: 40px 30px; text-align: center;">
-              <h1 style="color: white; margin: 0 0 10px 0; font-size: 28px; font-weight: 600;">Posyandu Dashboard</h1>
-              <p style="color: rgba(255,255,255,0.9); margin: 0; font-size: 16px;">Kode Verifikasi Email</p>
-            </div>
-            <div style="background: white; padding: 40px 30px; text-align: center;">
-              <p style="color: #4a5568; font-size: 16px; margin: 0 0 30px 0; line-height: 1.6;">
-                Terima kasih telah mendaftar! Gunakan kode berikut untuk memverifikasi email Anda:
-              </p>
-              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; padding: 25px; display: inline-block;">
-                <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: white;">${otp}</span>
-              </div>
-              <p style="color: #718096; font-size: 14px; margin: 30px 0 0 0; line-height: 1.6;">
-                Kode ini akan kadaluarsa dalam <strong>10 menit</strong>.<br>
-                Jika Anda tidak melakukan registrasi, abaikan email ini.
-              </p>
-            </div>
-            <div style="padding: 20px 30px; text-align: center; background: #f8fafc;">
-              <p style="color: #a0aec0; font-size: 12px; margin: 0;">
-                © 2024 Posyandu Dashboard. All rights reserved.
-              </p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `,
+      sender: { name: "GiziXDihatiKampar", email: BREVO_SENDER_EMAIL },
+      to: [{ email }],
+      subject: "Kode Verifikasi Registrasi - GiziXDihatiKampar",
+      htmlContent,
     }),
   });
 
-  if (!response.ok) {
-    const error = await response.text();
-    console.error("Resend API error:", error);
-    throw new Error("Gagal mengirim email verifikasi");
+  if (!apiResponse.ok) {
+    const responseText = await apiResponse.text();
+    console.error("Brevo API error:", responseText);
+    throw new Error(`Gagal mengirim email verifikasi`);
   }
 
-  console.log("OTP Email sent successfully");
+  console.log("OTP Email sent successfully via Brevo");
 }
 
 serve(async (req) => {
@@ -152,8 +125,7 @@ serve(async (req) => {
 
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    
-    // Parse and validate input
+
     let body;
     try {
       body = await req.json();
@@ -164,7 +136,6 @@ serve(async (req) => {
       );
     }
 
-    // Validate input with zod schema
     const validationResult = registerSchema.safeParse(body);
     if (!validationResult.success) {
       const firstError = validationResult.error.errors[0]?.message || "Input tidak valid";
@@ -176,7 +147,6 @@ serve(async (req) => {
 
     const { email, password } = validationResult.data;
 
-    // Rate limit check by email
     const rateLimitKey = `register:${email}`;
     const rateCheck = await checkRateLimit(supabase, rateLimitKey);
     if (!rateCheck.allowed) {
@@ -186,10 +156,8 @@ serve(async (req) => {
       );
     }
 
-    // Record the attempt
     await recordAttempt(supabase, rateLimitKey);
 
-    // Check if email already exists and is verified
     const { data: existingUser, error: checkError } = await supabase
       .from('users')
       .select('id, verified')
@@ -197,7 +165,6 @@ serve(async (req) => {
       .maybeSingle();
 
     if (checkError) {
-      console.error("Database check error:", checkError);
       return new Response(
         JSON.stringify({ error: "Gagal memeriksa email" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -211,14 +178,10 @@ serve(async (req) => {
       );
     }
 
-    // Hash password using bcrypt (sync version for Edge Functions)
     const hashedPassword = hashSync(password);
-
-    // Generate OTP
     const otp = generateOTP();
-    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    const otpExpiry = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
-    // Insert or update user in database
     if (existingUser) {
       const { error: updateError } = await supabase
         .from('users')
@@ -231,7 +194,6 @@ serve(async (req) => {
         .eq('id', existingUser.id);
 
       if (updateError) {
-        console.error("Update error:", updateError);
         return new Response(
           JSON.stringify({ error: "Gagal memperbarui data registrasi" }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -249,7 +211,6 @@ serve(async (req) => {
         });
 
       if (insertError) {
-        console.error("Insert error:", insertError);
         return new Response(
           JSON.stringify({ error: "Gagal menyimpan data registrasi" }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -257,20 +218,8 @@ serve(async (req) => {
       }
     }
 
-    // Encode registration data for verification step
-    const pendingData = base64Encode(JSON.stringify({
-      email,
-      expiry: otpExpiry,
-      role: 'user'
-    }));
-
-    // Try to send OTP email
-    try {
-      await sendOTPEmail(email, otp);
-      console.log("OTP email sent successfully to:", email);
-    } catch (emailError) {
-      console.log("Email sending failed:", emailError);
-    }
+    // Send OTP via Brevo
+    await sendOTPEmailBrevo(email, otp);
 
     console.log("Registration initiated for:", email);
 
@@ -278,7 +227,7 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         message: "Kode verifikasi telah dikirim ke email Anda",
-        token: pendingData
+        email
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
@@ -286,7 +235,7 @@ serve(async (req) => {
   } catch (error: any) {
     console.error("Registration error:", error);
     return new Response(
-      JSON.stringify({ error: "Terjadi kesalahan saat registrasi" }),
+      JSON.stringify({ error: error.message || "Terjadi kesalahan saat registrasi" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
