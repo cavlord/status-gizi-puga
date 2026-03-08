@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+    <defs>
+        <!-- Main seamless gradient for the X intersection -->
+        <linearGradient id="mainGrad" x1="120" y1="120" x2="380" y2="300" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#10b981" />   <!-- Emerald Green -->
+            <stop offset="50%" stop-color="#0ea5e9" />  <!-- Sky Teal -->
+            <stop offset="100%" stop-color="#0284c7" /> <!-- Tech Blue -->
+        </linearGradient>
+    </defs>
+
+    <!-- TOP QUADRANT: Minimalist Bar Chart (Dashboard / Analytics) -->
+    <g transform="translate(250, 105)">
+        <line x1="-14" y1="10" x2="-14" y2="-4" stroke="#10b981" stroke-width="6" stroke-linecap="round" />
+        <line x1="0" y1="10" x2="0" y2="-12" stroke="#0ea5e9" stroke-width="6" stroke-linecap="round" />
+        <line x1="14" y1="10" x2="14" y2="2" stroke="#0284c7" stroke-width="6" stroke-linecap="round" />
+    </g>
+
+    <!-- BOTTOM QUADRANT: Data Nodes (Connectivity) -->
+    <g transform="translate(250, 315)">
+        <circle cx="-16" cy="0" r="3.5" fill="#0284c7" />
+        <circle cx="0" cy="0" r="3.5" fill="#0ea5e9" />
+        <circle cx="16" cy="0" r="3.5" fill="#10b981" />
+    </g>
+
+    <!-- LEFT QUADRANT: Nutrition Symbol (Minimalist Leaf) -->
+    <g transform="translate(145, 210) rotate(-20)">
+        <path d="M -16 16 Q -16 -16, 16 -16 Q 16 16, -16 16 Z" fill="#10b981" />
+    </g>
+
+    <!-- RIGHT QUADRANT: Toddler / Balita Symbol (Abstract Growth) -->
+    <g transform="translate(355, 210)">
+        <circle cx="0" cy="-12" r="10" fill="#0284c7" />
+        <path d="M -16 18 C -16 0, -8 -8, 0 -8 C 8 -8, 16 0, 16 18 Z" fill="#0284c7" />
+    </g>
+
+    <!-- CENTRAL SYMBOL: The Collaborative Tech "X" -->
+    <!-- Diagonal 1: Top-Left to Bottom-Right -->
+    <g transform="translate(250, 210) rotate(45)">
+        <!-- Main thick beam -->
+        <line x1="-110" y1="0" x2="110" y2="0" stroke="url(#mainGrad)" stroke-width="28" stroke-linecap="round" />
+        
+        <!-- Outer data line (Top) -->
+        <line x1="-80" y1="-26" x2="60" y2="-26" stroke="#10b981" stroke-width="4" stroke-linecap="round" />
+        <circle cx="60" cy="-26" r="5" fill="#10b981" />
+        <circle cx="-80" cy="-26" r="3" fill="#10b981" />
+        
+        <!-- Outer data line (Bottom) -->
+        <line x1="-50" y1="26" x2="90" y2="26" stroke="#0ea5e9" stroke-width="4" stroke-linecap="round" />
+        <circle cx="-50" cy="26" r="5" fill="#0ea5e9" />
+    </g>
+
+    <!-- Diagonal 2: Bottom-Left to Top-Right -->
+    <g transform="translate(250, 210) rotate(-45)">
+        <!-- Main thick beam (Shares same gradient space for seamless overlap) -->
+        <line x1="-110" y1="0" x2="110" y2="0" stroke="url(#mainGrad)" stroke-width="28" stroke-linecap="round" />
+        
+        <!-- Outer data line (Top) -->
+        <line x1="-70" y1="-26" x2="40" y2="-26" stroke="#0ea5e9" stroke-width="4" stroke-linecap="round" />
+        <circle cx="40" cy="-26" r="5" fill="#0ea5e9" />
+        
+        <!-- Outer data line (Bottom) -->
+        <line x1="-30" y1="26" x2="80" y2="26" stroke="#10b981" stroke-width="4" stroke-linecap="round" />
+        <circle cx="-30" cy="26" r="5" fill="#10b981" />
+        <circle cx="80" cy="26" r="3" fill="#10b981" />
+    </g>
+
+    <!-- TYPOGRAPHY -->
+    <text x="250" y="415" font-family="'Plus Jakarta Sans', 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="52" font-weight="800" text-anchor="middle" letter-spacing="-0.5">
+        <tspan fill="#0f172a">Gizi </tspan>
+        <tspan fill="#0ea5e9">X</tspan>
+    </text>
+</svg>
