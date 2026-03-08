@@ -149,7 +149,22 @@ const AuthPage = () => {
       toast({ title: 'Error', description: 'Kode OTP harus 6 digit', variant: 'destructive' });
       return;
     }
-    setMode('reset-password');
+    // Verify OTP server-side before showing reset form
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        body: JSON.stringify({ email: forgotEmail, otp: otpValue, action: 'verify' }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Kode OTP salah');
+      setMode('reset-password');
+    } catch (error: any) {
+      toast({ title: 'Verifikasi Gagal', description: error.message, variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleResetPassword = async () => {
