@@ -67,14 +67,27 @@ const AppContent = () => {
   const [showLoading, setShowLoading] = useState(true);
 
   useEffect(() => {
-    if (!dataLoading && isAuthenticated) {
+    if (!isAuthenticated) {
+      setShowLoading(false);
+      return;
+    }
+
+    // Maximum loading timeout of 15 seconds to prevent infinite loading on mobile
+    const maxTimeout = setTimeout(() => {
+      setShowLoading(false);
+    }, 15000);
+
+    if (!dataLoading) {
       const timer = setTimeout(() => {
         setShowLoading(false);
       }, 2500);
-      return () => clearTimeout(timer);
-    } else if (!isAuthenticated) {
-      setShowLoading(false);
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(maxTimeout);
+      };
     }
+
+    return () => clearTimeout(maxTimeout);
   }, [dataLoading, isAuthenticated]);
 
   // Show loading screen only for authenticated users while data loads
