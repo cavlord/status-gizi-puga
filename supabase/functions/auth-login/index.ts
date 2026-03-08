@@ -97,7 +97,7 @@ serve(async (req) => {
 
     const { data: user, error: fetchError } = await supabase
       .from('users')
-      .select('id, email, password_hash, verified')
+      .select('id, email, password_hash, verified, email_verified')
       .eq('email', email.toLowerCase().trim())
       .maybeSingle();
 
@@ -117,10 +117,17 @@ serve(async (req) => {
       });
     }
 
-    if (!user.verified) {
+    if (!user.email_verified) {
       return new Response(
         JSON.stringify({ error: "Email belum diverifikasi. Silakan verifikasi email Anda terlebih dahulu." }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!user.verified) {
+      return new Response(
+        JSON.stringify({ error: "Akun Anda belum disetujui oleh admin. Silakan hubungi admin untuk aktivasi." }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
