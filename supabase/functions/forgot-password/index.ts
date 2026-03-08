@@ -91,7 +91,7 @@ serve(async (req) => {
         });
       }
 
-      if (user.otp !== otp) {
+      if (!compareSync(otp, user.otp)) {
         return new Response(JSON.stringify({ error: "Kode OTP salah" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
