@@ -204,6 +204,7 @@ export type Database = {
         Row: {
           created_at: string | null
           email: string
+          email_verified: boolean | null
           id: string
           otp: string | null
           otp_expiry: string | null
@@ -214,6 +215,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           email: string
+          email_verified?: boolean | null
           id?: string
           otp?: string | null
           otp_expiry?: string | null
@@ -224,6 +226,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           email?: string
+          email_verified?: boolean | null
           id?: string
           otp?: string | null
           otp_expiry?: string | null
