@@ -229,7 +229,7 @@ const AuthPage = () => {
         <div className="backdrop-blur-xl bg-white/90 border border-slate-200/80 rounded-3xl shadow-[0_8px_40px_-12px_rgba(0,0,0,0.12)] p-8 animate-fade-in">
           <div className="text-center mb-8 flex flex-col items-center">
             <img
-              src="/icon/logo.webp"
+              src="/icon/logos.svg"
               alt="Logo Gizi X Dihati Kampar"
               className="w-[220px] h-[220px] object-contain mx-auto -mb-4 translate-x-[-7px] drop-shadow-[0_10px_25px_rgba(0,0,0,0.15)]"
               loading="eager"
