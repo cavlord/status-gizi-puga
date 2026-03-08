@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, Sector } from "recharts";
 import { ChildRecord } from "@/lib/googleSheets";
 import { ChildDetailsModal } from "./ChildDetailsModal";
 import { MapPin, Users, AlertTriangle } from "lucide-react";
@@ -42,6 +42,26 @@ interface VillageStats {
 export function VillageNutritionalStatus({ yearData, monthData, year, notGainingWeightData, onShowNotGainingModal }: VillageNutritionalStatusProps) {
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeVillageIndex, setActiveVillageIndex] = useState<number | undefined>(undefined);
+  const [activeStatusIndex, setActiveStatusIndex] = useState<number | undefined>(undefined);
+
+  const renderActiveShape = useCallback((props: any) => {
+    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
+    return (
+      <g>
+        <Sector
+          cx={cx}
+          cy={cy}
+          innerRadius={innerRadius - 4}
+          outerRadius={outerRadius + 8}
+          startAngle={startAngle}
+          endAngle={endAngle}
+          fill={fill}
+          style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))', transition: 'all 0.3s ease' }}
+        />
+      </g>
+    );
+  }, []);
 
   // Helper to format date to DD/MM/YYYY
   const formatDate = (dateStr: string): string => {
@@ -157,6 +177,11 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
                 paddingAngle={3}
                 animationBegin={0}
                 animationDuration={800}
+                activeIndex={activeVillageIndex}
+                activeShape={renderActiveShape}
+                onMouseEnter={(_, index) => setActiveVillageIndex(index)}
+                onMouseLeave={() => setActiveVillageIndex(undefined)}
+                onClick={(_, index) => setActiveVillageIndex(prev => prev === index ? undefined : index)}
                 label={({ percent, cx, cy, midAngle, outerRadius }) => {
                   const RADIAN = Math.PI / 180;
                   const radius = outerRadius + 18;
@@ -250,6 +275,11 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
                     paddingAngle={3}
                     animationBegin={0}
                     animationDuration={800}
+                    activeIndex={activeStatusIndex}
+                    activeShape={renderActiveShape}
+                    onMouseEnter={(_, index) => setActiveStatusIndex(index)}
+                    onMouseLeave={() => setActiveStatusIndex(undefined)}
+                    onClick={(_, index) => setActiveStatusIndex(prev => prev === index ? undefined : index)}
                     label={({ percent, cx, cy, midAngle, outerRadius }) => {
                       const RADIAN = Math.PI / 180;
                       const radius = outerRadius + 20;
