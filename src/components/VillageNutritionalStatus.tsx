@@ -42,6 +42,26 @@ interface VillageStats {
 export function VillageNutritionalStatus({ yearData, monthData, year, notGainingWeightData, onShowNotGainingModal }: VillageNutritionalStatusProps) {
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeVillageIndex, setActiveVillageIndex] = useState<number | undefined>(undefined);
+  const [activeStatusIndex, setActiveStatusIndex] = useState<number | undefined>(undefined);
+
+  const renderActiveShape = useCallback((props: any) => {
+    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
+    return (
+      <g>
+        <Sector
+          cx={cx}
+          cy={cy}
+          innerRadius={innerRadius - 4}
+          outerRadius={outerRadius + 8}
+          startAngle={startAngle}
+          endAngle={endAngle}
+          fill={fill}
+          style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))', transition: 'all 0.3s ease' }}
+        />
+      </g>
+    );
+  }, []);
 
   // Helper to format date to DD/MM/YYYY
   const formatDate = (dateStr: string): string => {
