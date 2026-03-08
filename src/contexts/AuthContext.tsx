@@ -54,8 +54,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setToken(storedToken);
           } else {
             // Token expired, clear storage
-            localStorage.removeItem(AUTH_STORAGE_KEY);
-            localStorage.removeItem(TOKEN_STORAGE_KEY);
+            safeStorage.removeItem(AUTH_STORAGE_KEY);
+            safeStorage.removeItem(TOKEN_STORAGE_KEY);
           }
         }
       } catch (e) {
