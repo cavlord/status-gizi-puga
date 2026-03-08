@@ -48,16 +48,17 @@ serve(async (req) => {
       );
     }
 
-    if (!compareSync(otp, user.otp)) {
+    // Check expiry FIRST to avoid unnecessary bcrypt compare
+    if (new Date() > new Date(user.otp_expiry)) {
       return new Response(
-        JSON.stringify({ error: "Kode OTP salah" }),
+        JSON.stringify({ error: "Kode OTP sudah kadaluarsa. Silakan kirim ulang." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    if (new Date() > new Date(user.otp_expiry)) {
+    if (!compareSync(otp, user.otp)) {
       return new Response(
-        JSON.stringify({ error: "Kode OTP sudah kadaluarsa. Silakan kirim ulang." }),
+        JSON.stringify({ error: "Kode OTP salah" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
