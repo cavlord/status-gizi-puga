@@ -223,25 +223,25 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
           </ResponsiveContainer>
           
           {/* Village Summary Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mt-4">
+          <div className="grid grid-cols-2 gap-2 mt-4">
             {villageChartData.map((village, index) => (
-              <Card key={index} className="shadow-sm">
-                <CardContent className="p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div 
-                      className="w-3 h-3 rounded-full flex-shrink-0" 
-                      style={{ backgroundColor: village.fill }}
-                    />
-                    <p className="text-[10px] sm:text-xs font-medium line-clamp-1">{village.name}</p>
+              <div key={index} className="flex items-center gap-2.5 p-2.5 rounded-lg border bg-card">
+                <div 
+                  className="w-3 h-3 rounded-full flex-shrink-0" 
+                  style={{ backgroundColor: village.fill }}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium leading-tight">{village.name}</p>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-lg font-bold" style={{ color: village.fill }}>
+                      {village.value}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">
+                      ({totalChildren > 0 ? ((village.value / totalChildren) * 100).toFixed(1) : 0}%)
+                    </span>
                   </div>
-                  <p className="text-lg sm:text-xl md:text-2xl font-bold" style={{ color: village.fill }}>
-                    {village.value}
-                  </p>
-                  <p className="text-[10px] sm:text-xs text-muted-foreground">
-                    {totalChildren > 0 ? ((village.value / totalChildren) * 100).toFixed(1) : 0}%
-                  </p>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ))}
           </div>
         </CardContent>
@@ -322,90 +322,70 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
             </div>
           )}
           
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4">
+          <div className="grid grid-cols-2 gap-2">
             {/* Gizi Baik */}
-            <Card 
-              className="shadow-sm cursor-pointer hover:shadow-md transition-all hover:scale-105"
-              style={{ borderTop: `4px solid ${STATUS_COLORS["Gizi Baik"]}` }}
+            <div 
+              className="p-3 rounded-lg border cursor-pointer hover:shadow-md transition-all hover:scale-[1.02] text-center"
+              style={{ borderTop: `3px solid ${STATUS_COLORS["Gizi Baik"]}` }}
               onClick={() => handleStatusClick("Gizi Baik")}
             >
-              <CardContent className="p-3 md:p-4 text-center">
-                <p className="text-[10px] sm:text-xs text-muted-foreground mb-2">Gizi Baik</p>
-                <p className="text-2xl sm:text-3xl md:text-4xl font-bold" style={{ color: STATUS_COLORS["Gizi Baik"] }}>
-                  {totalGiziBaik}
-                </p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground mt-2">
-                  {grandTotal > 0 ? ((totalGiziBaik / grandTotal) * 100).toFixed(1) : 0}%
-                </p>
-                <Badge variant="outline" className="mt-2 text-[10px]">
-                  Klik untuk detail
-                </Badge>
-              </CardContent>
-            </Card>
+              <p className="text-xs text-muted-foreground mb-1">Gizi Baik</p>
+              <p className="text-2xl font-bold" style={{ color: STATUS_COLORS["Gizi Baik"] }}>
+                {totalGiziBaik}
+              </p>
+              <p className="text-[10px] text-muted-foreground">
+                {grandTotal > 0 ? ((totalGiziBaik / grandTotal) * 100).toFixed(1) : 0}%
+              </p>
+            </div>
 
             {/* Gizi Kurang */}
-            <Card 
-              className="shadow-sm cursor-pointer hover:shadow-md transition-all hover:scale-105"
-              style={{ borderTop: `4px solid ${STATUS_COLORS["Gizi Kurang"]}` }}
+            <div 
+              className="p-3 rounded-lg border cursor-pointer hover:shadow-md transition-all hover:scale-[1.02] text-center"
+              style={{ borderTop: `3px solid ${STATUS_COLORS["Gizi Kurang"]}` }}
               onClick={() => handleStatusClick("Gizi Kurang")}
             >
-              <CardContent className="p-3 md:p-4 text-center">
-                <p className="text-[10px] sm:text-xs text-muted-foreground mb-2">Gizi Kurang</p>
-                <p className="text-2xl sm:text-3xl md:text-4xl font-bold" style={{ color: STATUS_COLORS["Gizi Kurang"] }}>
-                  {totalGiziKurang}
-                </p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground mt-2">
-                  {grandTotal > 0 ? ((totalGiziKurang / grandTotal) * 100).toFixed(1) : 0}%
-                </p>
-                <Badge variant="outline" className="mt-2 text-[10px]">
-                  Klik untuk detail
-                </Badge>
-              </CardContent>
-            </Card>
+              <p className="text-xs text-muted-foreground mb-1">Gizi Kurang</p>
+              <p className="text-2xl font-bold" style={{ color: STATUS_COLORS["Gizi Kurang"] }}>
+                {totalGiziKurang}
+              </p>
+              <p className="text-[10px] text-muted-foreground">
+                {grandTotal > 0 ? ((totalGiziKurang / grandTotal) * 100).toFixed(1) : 0}%
+              </p>
+            </div>
 
             {/* Gizi Buruk */}
-            <Card 
-              className="shadow-sm cursor-pointer hover:shadow-md transition-all hover:scale-105"
-              style={{ borderTop: `4px solid ${STATUS_COLORS["Gizi Buruk"]}` }}
+            <div 
+              className="p-3 rounded-lg border cursor-pointer hover:shadow-md transition-all hover:scale-[1.02] text-center"
+              style={{ borderTop: `3px solid ${STATUS_COLORS["Gizi Buruk"]}` }}
               onClick={() => handleStatusClick("Gizi Buruk")}
             >
-              <CardContent className="p-3 md:p-4 text-center">
-                <p className="text-[10px] sm:text-xs text-muted-foreground mb-2">Gizi Buruk</p>
-                <p className="text-2xl sm:text-3xl md:text-4xl font-bold" style={{ color: STATUS_COLORS["Gizi Buruk"] }}>
-                  {totalGiziBuruk}
-                </p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground mt-2">
-                  {grandTotal > 0 ? ((totalGiziBuruk / grandTotal) * 100).toFixed(1) : 0}%
-                </p>
-                <Badge variant="outline" className="mt-2 text-[10px]">
-                  Klik untuk detail
-                </Badge>
-              </CardContent>
-            </Card>
+              <p className="text-xs text-muted-foreground mb-1">Gizi Buruk</p>
+              <p className="text-2xl font-bold" style={{ color: STATUS_COLORS["Gizi Buruk"] }}>
+                {totalGiziBuruk}
+              </p>
+              <p className="text-[10px] text-muted-foreground">
+                {grandTotal > 0 ? ((totalGiziBuruk / grandTotal) * 100).toFixed(1) : 0}%
+              </p>
+            </div>
 
             {/* Tidak Naik BB */}
             {notGainingWeightData && (
-              <Card 
-                className="shadow-sm cursor-pointer hover:shadow-md transition-all hover:scale-105"
-                style={{ borderTop: `4px solid hsl(0 84% 60%)` }}
+              <div 
+                className="p-3 rounded-lg border cursor-pointer hover:shadow-md transition-all hover:scale-[1.02] text-center"
+                style={{ borderTop: '3px solid hsl(0 84% 60%)' }}
                 onClick={() => onShowNotGainingModal?.()}
               >
-                <CardContent className="p-3 md:p-4 text-center">
-                  <p className="text-[10px] sm:text-xs text-muted-foreground mb-2 flex items-center justify-center gap-1">
-                    <AlertTriangle className="h-3 w-3" />
-                    Tidak Naik BB
-                  </p>
-                  <p className="text-2xl sm:text-3xl md:text-4xl font-bold" style={{ color: "hsl(0 84% 60%)" }}>
-                    {notGainingWeightData.count}
-                  </p>
-                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-2">
-                    2 Bulan Berturut
-                  </p>
-                  <Badge variant="outline" className="mt-2 text-[10px]">
-                    Klik untuk detail
-                  </Badge>
-                </CardContent>
-              </Card>
+                <p className="text-xs text-muted-foreground mb-1 flex items-center justify-center gap-1">
+                  <AlertTriangle className="h-3 w-3" />
+                  Tidak Naik BB
+                </p>
+                <p className="text-2xl font-bold" style={{ color: "hsl(0 84% 60%)" }}>
+                  {notGainingWeightData.count}
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  2 Bulan Berturut
+                </p>
+              </div>
             )}
           </div>
         </CardContent>
