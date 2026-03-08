@@ -4,7 +4,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, registerSchema, LoginFormData, RegisterFormData } from '@/lib/validation';
-import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,7 +11,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2, CheckCircle, ArrowLeft, KeyRound } from 'lucide-react';
 
-type AuthMode = 'login' | 'register' | 'registered' | 'forgot' | 'forgot-otp' | 'reset-password';
+type AuthMode = 'login' | 'register' | 'register-otp' | 'registered' | 'forgot' | 'forgot-otp' | 'reset-password';
 
 const AuthPage = () => {
   const navigate = useNavigate();
@@ -25,6 +24,7 @@ const AuthPage = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
+  const [registerEmail, setRegisterEmail] = useState('');
   const [otpValue, setOtpValue] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
@@ -40,13 +40,6 @@ const AuthPage = () => {
   });
 
   useEffect(() => {
-    const preloadImage = (src: string) => {
-      const img = new Image();
-      img.src = src;
-    };
-    preloadImage('/icon/logo.svg');
-    preloadImage('/icon/logo2.svg');
-    
     if (isAuthenticated) {
       navigate('/');
     }
@@ -75,10 +68,54 @@ const AuthPage = () => {
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Registrasi gagal');
-      setMode('registered');
-      toast({ title: 'Pendaftaran Berhasil', description: 'Akun Anda sedang menunggu persetujuan admin' });
+      setRegisterEmail(data.email);
+      setOtpValue('');
+      setMode('register-otp');
+      toast({ title: 'Kode OTP Dikirim', description: 'Cek email Anda untuk kode verifikasi' });
     } catch (error: any) {
       toast({ title: 'Registrasi Gagal', description: error.message || 'Terjadi kesalahan', variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyRegisterOtp = async () => {
+    if (otpValue.length !== 6) {
+      toast({ title: 'Error', description: 'Kode OTP harus 6 digit', variant: 'destructive' });
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth-verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        body: JSON.stringify({ email: registerEmail, otp: otpValue }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Verifikasi gagal');
+      setMode('registered');
+      toast({ title: 'Email Terverifikasi', description: 'Menunggu persetujuan admin untuk akses dashboard' });
+    } catch (error: any) {
+      toast({ title: 'Verifikasi Gagal', description: error.message, variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendRegisterOtp = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth-resend-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        body: JSON.stringify({ email: registerEmail }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Gagal kirim ulang OTP');
+      setOtpValue('');
+      toast({ title: 'OTP Dikirim Ulang', description: 'Cek email Anda untuk kode verifikasi baru' });
+    } catch (error: any) {
+      toast({ title: 'Gagal', description: error.message, variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
@@ -147,6 +184,7 @@ const AuthPage = () => {
     loginForm.reset();
     registerForm.reset();
     setForgotEmail('');
+    setRegisterEmail('');
     setOtpValue('');
     setNewPassword('');
     setConfirmNewPassword('');
@@ -159,6 +197,7 @@ const AuthPage = () => {
     switch (mode) {
       case 'login': return 'DASHBOARD';
       case 'register': return 'Daftar Akun';
+      case 'register-otp': return 'Verifikasi Email';
       case 'registered': return 'Pendaftaran Berhasil';
       case 'forgot': return 'Lupa Password';
       case 'forgot-otp': return 'Verifikasi OTP';
@@ -170,6 +209,7 @@ const AuthPage = () => {
     switch (mode) {
       case 'login': return 'GIZI X DIHATI KAMPAR';
       case 'register': return 'Buat akun baru untuk akses dashboard';
+      case 'register-otp': return `Masukkan kode OTP yang dikirim ke ${registerEmail}`;
       case 'registered': return 'Akun Anda telah terdaftar';
       case 'forgot': return 'Masukkan email untuk menerima kode OTP';
       case 'forgot-otp': return `Masukkan kode OTP yang dikirim ke ${forgotEmail}`;
@@ -291,12 +331,48 @@ const AuthPage = () => {
             </form>
           )}
 
+          {/* Register OTP Verification */}
+          {mode === 'register-otp' && (
+            <div className="space-y-5">
+              <div className="flex flex-col items-center gap-4">
+                <div className="p-3 bg-primary/10 rounded-full">
+                  <KeyRound className="w-8 h-8 text-primary" />
+                </div>
+                <div className="flex justify-center">
+                  <InputOTP maxLength={6} value={otpValue} onChange={(value) => setOtpValue(value)}>
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+                <p className="text-muted-foreground text-xs">Kode berlaku selama 5 menit</p>
+              </div>
+
+              <Button type="button" onClick={handleVerifyRegisterOtp} disabled={isLoading || otpValue.length !== 6} className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
+                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Verifikasi Email <ArrowRight className="w-5 h-5 ml-2" /></>}
+              </Button>
+
+              <button type="button" onClick={handleResendRegisterOtp} disabled={isLoading} className="flex items-center justify-center gap-2 w-full text-primary hover:text-primary/80 text-sm font-medium transition-colors">
+                Kirim ulang kode
+              </button>
+
+              <button type="button" onClick={() => switchMode('register')} className="flex items-center justify-center gap-2 w-full text-muted-foreground hover:text-foreground text-sm transition-colors">
+                <ArrowLeft className="w-4 h-4" /> Kembali ke Registrasi
+              </button>
+            </div>
+          )}
+
           {/* Registration Success */}
           {mode === 'registered' && (
             <div className="space-y-5 text-center">
               <div className="flex justify-center"><CheckCircle className="w-16 h-16 text-green-400" /></div>
               <div className="p-4 bg-muted/50 rounded-xl border border-border">
-                <p className="text-foreground/80 text-sm leading-relaxed">Akun Anda telah berhasil didaftarkan. Anda dapat login setelah mendapat <strong className="text-foreground">izin akses dari Admin</strong>.</p>
+                <p className="text-foreground/80 text-sm leading-relaxed">Email Anda telah terverifikasi. Anda dapat login setelah mendapat <strong className="text-foreground">izin akses dari Admin</strong>.</p>
                 <p className="text-muted-foreground text-xs mt-3">Hubungi admin untuk mendapatkan akses ke dashboard.</p>
               </div>
               <Button type="button" onClick={() => switchMode('login')} className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
