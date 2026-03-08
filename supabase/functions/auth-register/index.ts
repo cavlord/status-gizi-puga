@@ -160,7 +160,7 @@ serve(async (req) => {
 
     const { data: existingUser, error: checkError } = await supabase
       .from('users')
-      .select('id, verified')
+      .select('id, email_verified, verified')
       .eq('email', email)
       .maybeSingle();
 
@@ -171,9 +171,9 @@ serve(async (req) => {
       );
     }
 
-    if (existingUser && existingUser.verified) {
+    if (existingUser && existingUser.email_verified) {
       return new Response(
-        JSON.stringify({ error: "Email sudah terdaftar. Silakan login." }),
+        JSON.stringify({ error: "Email sudah terdaftar. Silakan login atau hubungi admin untuk aktivasi." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
