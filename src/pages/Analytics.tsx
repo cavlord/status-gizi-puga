@@ -52,12 +52,17 @@ const Analytics = () => {
 
     const uniqueNames = Array.from(new Set(results.map(r => r.Nama)));
     
-    if (uniqueNames.length > 0 && !selectedChild) {
-      setSelectedChild(uniqueNames[0]);
+    // Always update selectedChild: keep current if still valid, otherwise pick first
+    if (uniqueNames.length > 0) {
+      if (!selectedChild || !uniqueNames.includes(selectedChild)) {
+        setSelectedChild(uniqueNames[0]);
+      }
+    } else {
+      setSelectedChild(null);
     }
 
     setSearchResults(results);
-  }, [searchQuery, allRecords, selectedChild]);
+  }, [searchQuery, allRecords]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!allRecords || allRecords.length === 0) {
     return (
