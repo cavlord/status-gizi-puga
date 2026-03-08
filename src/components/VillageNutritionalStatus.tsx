@@ -246,20 +246,20 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
 
       {/* Status Gizi with Chart */}
       <Card className="border-0 shadow-lg">
-        <CardHeader className="p-4 md:p-6">
-          <CardTitle className="text-base sm:text-lg md:text-xl flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" />
-            Data Status Gizi (Bulan Terbaru)
+        <CardHeader className="p-3 md:p-4 pb-1">
+          <CardTitle className="text-sm md:text-base flex items-center gap-2">
+            <Users className="h-4 w-4 text-primary" />
+            Status Gizi (Bulan Terbaru)
           </CardTitle>
-          <p className="text-xs sm:text-sm text-muted-foreground">
-            Klik pada kategori untuk melihat detail anak
+          <p className="text-[10px] md:text-xs text-muted-foreground">
+            Klik kategori untuk detail
           </p>
         </CardHeader>
-        <CardContent className="p-4 md:p-6">
+        <CardContent className="p-3 md:p-4 pt-0">
           {/* Chart visualization */}
           {statusChartData.length > 0 && (
-            <div className="mb-6">
-              <ResponsiveContainer width="100%" height={300} className="md:h-[250px]">
+            <div className="mb-3">
+              <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
                   <Pie
                     data={statusChartData}
