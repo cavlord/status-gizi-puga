@@ -394,30 +394,30 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Overview - Compact */}
-      <div className="grid grid-cols-3 gap-3 md:gap-4">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4">
         <Card className="border-0 shadow-lg overflow-hidden relative bg-gradient-to-br from-primary to-accent text-primary-foreground">
-          <CardContent className="p-4 md:p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="p-1.5 rounded-lg bg-white/15">
-                <Users className="h-4 w-4" />
+          <CardContent className="p-3 sm:p-4 md:p-5 text-center">
+            <div className="flex items-center justify-center gap-1.5 mb-2">
+              <div className="p-1 sm:p-1.5 rounded-lg bg-white/15">
+                <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </div>
-              <span className="text-xs font-medium opacity-90">Total Balita</span>
+              <span className="text-[10px] sm:text-xs font-medium opacity-90 leading-tight">Total<br className="sm:hidden" /> Balita</span>
             </div>
-            <div className="text-2xl md:text-3xl font-bold tracking-tight">{totalCount}</div>
-            <p className="text-[10px] md:text-xs opacity-70 mt-1">Balita aktif terdaftar</p>
+            <div className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">{totalCount}</div>
+            <p className="text-[9px] sm:text-[10px] md:text-xs opacity-70 mt-1">Balita aktif terdaftar</p>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-lg overflow-hidden relative bg-gradient-to-br from-secondary to-primary text-primary-foreground">
-          <CardContent className="p-4 md:p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="p-1.5 rounded-lg bg-white/15">
-                <TrendingUp className="h-4 w-4" />
+          <CardContent className="p-3 sm:p-4 md:p-5 text-center">
+            <div className="flex items-center justify-center gap-1.5 mb-2">
+              <div className="p-1 sm:p-1.5 rounded-lg bg-white/15">
+                <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </div>
-              <span className="text-xs font-medium opacity-90">Desa/Kel</span>
+              <span className="text-[10px] sm:text-xs font-medium opacity-90 leading-tight">Desa/<br className="sm:hidden" />Kel</span>
             </div>
-            <div className="text-2xl md:text-3xl font-bold tracking-tight">{villageData.length}</div>
-            <p className="text-[10px] md:text-xs opacity-70 mt-1">Wilayah cakupan</p>
+            <div className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">{villageData.length}</div>
+            <p className="text-[9px] sm:text-[10px] md:text-xs opacity-70 mt-1">Wilayah cakupan</p>
           </CardContent>
         </Card>
 
@@ -425,15 +425,15 @@ const Dashboard = () => {
           className="border-0 shadow-lg overflow-hidden relative bg-gradient-to-br from-destructive to-destructive/80 text-destructive-foreground cursor-pointer hover:shadow-xl transition-all active:scale-[0.98]"
           onClick={() => setShowCumulativeModal(true)}
         >
-          <CardContent className="p-4 md:p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="p-1.5 rounded-lg bg-white/15">
-                <AlertTriangle className="h-4 w-4" />
+          <CardContent className="p-3 sm:p-4 md:p-5 text-center">
+            <div className="flex items-center justify-center gap-1.5 mb-2">
+              <div className="p-1 sm:p-1.5 rounded-lg bg-white/15">
+                <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </div>
-              <span className="text-xs font-medium opacity-90">Tidak Naik BB</span>
+              <span className="text-[10px] sm:text-xs font-medium opacity-90 leading-tight">Tidak<br className="sm:hidden" /> Naik BB</span>
             </div>
-            <div className="text-2xl md:text-3xl font-bold tracking-tight">{cumulativeNotGainingData.count}</div>
-            <p className="text-[10px] md:text-xs opacity-70 mt-1">Akumulatif {selectedYear}</p>
+            <div className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">{cumulativeNotGainingData.count}</div>
+            <p className="text-[9px] sm:text-[10px] md:text-xs opacity-70 mt-1">Akumulatif {selectedYear}</p>
           </CardContent>
         </Card>
       </div>
