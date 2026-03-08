@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { safeStorage } from '@/lib/storage';
 import { useQueryClient } from '@tanstack/react-query';
 
 export interface User {
@@ -33,14 +34,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = useCallback(() => {
     setUser(null);
     setToken(null);
-    localStorage.removeItem(AUTH_STORAGE_KEY);
-    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    safeStorage.removeItem(AUTH_STORAGE_KEY);
+    safeStorage.removeItem(TOKEN_STORAGE_KEY);
     queryClient.clear();
   }, [queryClient]);
 
   useEffect(() => {
-    const storedAuth = localStorage.getItem(AUTH_STORAGE_KEY);
-    const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+    const storedAuth = safeStorage.getItem(AUTH_STORAGE_KEY);
+    const storedToken = safeStorage.getItem(TOKEN_STORAGE_KEY);
     if (storedAuth && storedToken) {
       try {
         const parsed = JSON.parse(storedAuth);
@@ -53,13 +54,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setToken(storedToken);
           } else {
             // Token expired, clear storage
-            localStorage.removeItem(AUTH_STORAGE_KEY);
-            localStorage.removeItem(TOKEN_STORAGE_KEY);
+            safeStorage.removeItem(AUTH_STORAGE_KEY);
+            safeStorage.removeItem(TOKEN_STORAGE_KEY);
           }
         }
       } catch (e) {
-        localStorage.removeItem(AUTH_STORAGE_KEY);
-        localStorage.removeItem(TOKEN_STORAGE_KEY);
+        safeStorage.removeItem(AUTH_STORAGE_KEY);
+        safeStorage.removeItem(TOKEN_STORAGE_KEY);
       }
     }
     setIsLoading(false);
@@ -117,8 +118,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       setUser(userData);
       setToken(data.token);
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
-      localStorage.setItem(TOKEN_STORAGE_KEY, data.token);
+      safeStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
+      safeStorage.setItem(TOKEN_STORAGE_KEY, data.token);
 
       return { success: true };
     } catch (error) {
