@@ -275,6 +275,11 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
                     paddingAngle={3}
                     animationBegin={0}
                     animationDuration={800}
+                    activeIndex={activeStatusIndex}
+                    activeShape={renderActiveShape}
+                    onMouseEnter={(_, index) => setActiveStatusIndex(index)}
+                    onMouseLeave={() => setActiveStatusIndex(undefined)}
+                    onClick={(_, index) => setActiveStatusIndex(prev => prev === index ? undefined : index)}
                     label={({ percent, cx, cy, midAngle, outerRadius }) => {
                       const RADIAN = Math.PI / 180;
                       const radius = outerRadius + 20;
