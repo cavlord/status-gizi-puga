@@ -151,7 +151,7 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
   ].filter(item => item.value > 0);
 
   return (
-    <div className="space-y-4 transition-all duration-300">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 transition-all duration-300">
       {/* Pie Chart - Sebaran Balita Per Desa */}
       <Card className="border-0 shadow-lg">
         <CardHeader className="p-4 md:p-6">
