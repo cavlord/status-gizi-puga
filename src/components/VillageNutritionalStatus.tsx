@@ -151,20 +151,17 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
   ].filter(item => item.value > 0);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 transition-all duration-300">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 transition-all duration-300">
       {/* Pie Chart - Sebaran Balita Per Desa */}
       <Card className="border-0 shadow-lg">
-        <CardHeader className="p-4 md:p-6">
-          <CardTitle className="text-base sm:text-lg md:text-xl flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-primary" />
-            Sebaran Data Balita Per Desa ({year})
+        <CardHeader className="p-3 md:p-4 pb-1">
+          <CardTitle className="text-sm md:text-base flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-primary" />
+            Sebaran Balita Per Desa ({year})
           </CardTitle>
-          <p className="text-xs sm:text-sm text-muted-foreground">
-            Jumlah balita berdasarkan desa/kelurahan
-          </p>
         </CardHeader>
-        <CardContent className="p-4 md:p-6">
-          <ResponsiveContainer width="100%" height={280} className="md:h-[300px]">
+        <CardContent className="p-3 md:p-4 pt-0">
+          <ResponsiveContainer width="100%" height={220}>
             <PieChart>
               <Pie
                 data={villageChartData}
