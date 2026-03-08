@@ -99,12 +99,13 @@ serve(async (req) => {
     }
 
     const otp = generateOTP();
+    const otpHash = hashSync(otp);
     const otpExpiry = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
     const { error: updateError } = await supabase
       .from('users')
       .update({
-        otp,
+        otp: otpHash,
         otp_expiry: otpExpiry,
         updated_at: new Date().toISOString()
       })
