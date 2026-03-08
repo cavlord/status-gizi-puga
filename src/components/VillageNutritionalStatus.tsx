@@ -246,10 +246,8 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
           <CardTitle className="text-sm md:text-base flex items-center gap-2">
             <Users className="h-4 w-4 text-primary" />
             Status Gizi (Bulan Terbaru)
+            <span className="text-[10px] md:text-xs text-muted-foreground font-normal ml-auto">Klik kategori untuk detail</span>
           </CardTitle>
-          <p className="text-[10px] md:text-xs text-muted-foreground">
-            Klik kategori untuk detail
-          </p>
         </CardHeader>
         <CardContent className="p-3 md:p-4 pt-0">
           {/* Chart visualization */}
