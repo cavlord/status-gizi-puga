@@ -151,11 +151,18 @@ serve(async (req) => {
 
     const role = userRole?.role || 'user';
 
-    // Generate JWT token
+    // Generate JWT token using dedicated secret (NOT service role key)
+    const JWT_SECRET = Deno.env.get("JWT_SECRET");
+    if (!JWT_SECRET) {
+      console.error("JWT_SECRET not configured");
+      return new Response(JSON.stringify({ error: "Server configuration error" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const token = await signJwt(
       { sub: user.id, email: user.email, role },
-      SUPABASE_SERVICE_ROLE_KEY,
-      24 * 60 * 60 // 24 hours
+      JWT_SECRET,
+      60 * 60 // 1 hour
     );
 
     console.log("User logged in successfully:", email);

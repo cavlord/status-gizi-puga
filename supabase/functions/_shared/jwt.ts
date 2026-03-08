@@ -89,7 +89,7 @@ export async function extractAuthPayload(req: Request): Promise<JwtPayload | nul
   if (!authHeader?.startsWith('Bearer ')) return null;
 
   const token = authHeader.replace('Bearer ', '');
-  const secret = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const secret = Deno.env.get('JWT_SECRET');
   if (!secret) return null;
 
   return verifyJwt(token, secret);
