@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { compareSync } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -47,7 +48,7 @@ serve(async (req) => {
       );
     }
 
-    if (user.otp !== otp) {
+    if (!compareSync(otp, user.otp)) {
       return new Response(
         JSON.stringify({ error: "Kode OTP salah" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }

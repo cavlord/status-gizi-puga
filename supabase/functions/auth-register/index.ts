@@ -180,6 +180,7 @@ serve(async (req) => {
 
     const hashedPassword = hashSync(password);
     const otp = generateOTP();
+    const otpHash = hashSync(otp);
     const otpExpiry = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
     if (existingUser) {
@@ -187,7 +188,7 @@ serve(async (req) => {
         .from('users')
         .update({
           password_hash: hashedPassword,
-          otp,
+          otp: otpHash,
           otp_expiry: otpExpiry,
           updated_at: new Date().toISOString()
         })
@@ -205,7 +206,7 @@ serve(async (req) => {
         .insert({
           email,
           password_hash: hashedPassword,
-          otp,
+          otp: otpHash,
           otp_expiry: otpExpiry,
           verified: false
         });
