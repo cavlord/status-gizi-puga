@@ -206,7 +206,7 @@ serve(async (req) => {
         .insert({
           email,
           password_hash: hashedPassword,
-          otp,
+          otp: otpHash,
           otp_expiry: otpExpiry,
           verified: false
         });
