@@ -373,15 +373,15 @@ const Dashboard = () => {
   const chartData = getNutritionalStatusByMonth(filteredByYear);
 
   return (
-    <div className="w-full space-y-4 md:space-y-6 animate-fade-in">
+    <div className="w-full space-y-3 md:space-y-4 animate-fade-in">
       {/* Header Section */}
-      <div className="flex flex-col gap-3 md:gap-4 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-heading font-bold text-foreground">
+          <h2 className="text-base sm:text-lg md:text-xl font-heading font-bold text-foreground">
             Dashboard Status Gizi
           </h2>
-          <p className="text-xs sm:text-sm md:text-base text-muted-foreground mt-1">
-            Monitoring status gizi balita di wilayah kerja UPT Puskesmas Pulau Gadang
+          <p className="text-[10px] sm:text-xs text-muted-foreground">
+            Monitoring status gizi balita — UPT Puskesmas Pulau Gadang
           </p>
         </div>
         <div className="w-full md:w-auto">
@@ -393,47 +393,39 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Stats Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 lg:gap-6">
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-primary to-accent text-primary-foreground transition-all duration-300 hover:shadow-xl hover:scale-[1.02]">
-          <CardHeader className="pb-2 md:pb-3 p-4 md:p-6">
-            <CardTitle className="flex items-center gap-2 text-xs sm:text-sm md:text-base font-medium opacity-90">
-              <Users className="h-4 w-4 md:h-5 md:w-5 flex-shrink-0" />
-              <span>Total Balita Aktif</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 md:p-6 pt-0">
-            <div className="text-2xl sm:text-3xl md:text-4xl font-bold">{totalCount}</div>
-            <p className="text-xs md:text-sm opacity-80 mt-1">Balita Terdaftar</p>
+      {/* Stats Overview - Compact */}
+      <div className="grid grid-cols-3 gap-2 md:gap-3">
+        <Card className="border-0 shadow-md bg-gradient-to-br from-primary to-accent text-primary-foreground">
+          <CardContent className="p-3 md:p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Users className="h-4 w-4 opacity-80 shrink-0" />
+              <span className="text-[10px] md:text-xs opacity-80">Total Balita</span>
+            </div>
+            <div className="text-xl md:text-2xl font-bold">{totalCount}</div>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-500 to-blue-700 text-white transition-all duration-300 hover:shadow-xl hover:scale-[1.02]">
-          <CardHeader className="pb-2 md:pb-3 p-4 md:p-6">
-            <CardTitle className="flex items-center gap-2 text-xs sm:text-sm md:text-base font-medium opacity-90">
-              <TrendingUp className="h-4 w-4 md:h-5 md:w-5 flex-shrink-0" />
-              <span>Total Desa/Kelurahan</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 md:p-6 pt-0">
-            <div className="text-2xl sm:text-3xl md:text-4xl font-bold">{villageData.length}</div>
-            <p className="text-xs md:text-sm opacity-80 mt-1">Wilayah Kerja</p>
+        <Card className="border-0 shadow-md bg-gradient-to-br from-blue-500 to-blue-700 text-white">
+          <CardContent className="p-3 md:p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <TrendingUp className="h-4 w-4 opacity-80 shrink-0" />
+              <span className="text-[10px] md:text-xs opacity-80">Desa/Kel</span>
+            </div>
+            <div className="text-xl md:text-2xl font-bold">{villageData.length}</div>
           </CardContent>
         </Card>
 
         <Card 
-          className="border-0 shadow-lg bg-gradient-to-br from-destructive/80 to-destructive text-white cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] active:scale-100"
+          className="border-0 shadow-md bg-gradient-to-br from-destructive/80 to-destructive text-white cursor-pointer hover:shadow-lg transition-all active:scale-[0.98]"
           onClick={() => setShowCumulativeModal(true)}
         >
-          <CardHeader className="pb-2 md:pb-3 p-4 md:p-6">
-            <CardTitle className="flex items-center gap-2 text-xs sm:text-sm md:text-base font-medium opacity-90">
-              <AlertTriangle className="h-4 w-4 md:h-5 md:w-5 flex-shrink-0" />
-              <span>Tidak Naik BB</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 md:p-6 pt-0">
-            <div className="text-2xl sm:text-3xl md:text-4xl font-bold">{cumulativeNotGainingData.count}</div>
-            <p className="text-xs md:text-sm opacity-80 mt-1">Akumulatif {selectedYear} (Klik untuk detail)</p>
+          <CardContent className="p-3 md:p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <AlertTriangle className="h-4 w-4 opacity-80 shrink-0" />
+              <span className="text-[10px] md:text-xs opacity-80">Tidak Naik BB</span>
+            </div>
+            <div className="text-xl md:text-2xl font-bold">{cumulativeNotGainingData.count}</div>
+            <p className="text-[10px] opacity-70">Akumulatif {selectedYear}</p>
           </CardContent>
         </Card>
       </div>
