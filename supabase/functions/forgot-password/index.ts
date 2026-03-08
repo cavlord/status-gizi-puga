@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { hashSync, compareSync } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -90,7 +91,7 @@ serve(async (req) => {
         });
       }
 
-      if (user.otp !== otp) {
+      if (!compareSync(otp, user.otp)) {
         return new Response(JSON.stringify({ error: "Kode OTP salah" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -134,10 +135,13 @@ serve(async (req) => {
     const otpCode = String((array[0] % 900000) + 100000);
     const otpExpiry = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes
 
-    // Store OTP in users table
+    // Hash OTP before storing
+    const otpHash = hashSync(otpCode);
+
+    // Store hashed OTP in users table
     await supabase
       .from("users")
-      .update({ otp: otpCode, otp_expiry: otpExpiry })
+      .update({ otp: otpHash, otp_expiry: otpExpiry })
       .eq("id", user.id);
 
     // Send OTP via send-otp function
