@@ -87,8 +87,10 @@ serve(async (req) => {
       );
     }
 
-    // Generate 6-digit OTP
-    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    // Generate 6-digit OTP using cryptographically secure random
+    const array = new Uint32Array(1);
+    crypto.getRandomValues(array);
+    const otp = String((array[0] % 900000) + 100000);
     const otpExpiry = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes
 
     // Store OTP in users table
