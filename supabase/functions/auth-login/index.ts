@@ -98,7 +98,7 @@ serve(async (req) => {
     const { data: user, error: fetchError } = await supabase
       .from('users')
       .select('id, email, password_hash, verified')
-      .eq('email', email)
+      .eq('email', email.toLowerCase().trim())
       .maybeSingle();
 
     if (fetchError) {
