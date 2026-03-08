@@ -159,9 +159,10 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
                 animationDuration={800}
                 label={({ percent, cx, cy, midAngle, outerRadius }) => {
                   const RADIAN = Math.PI / 180;
-                  const radius = outerRadius + 15;
+                  const radius = outerRadius + 18;
                   const x = cx + radius * Math.cos(-midAngle * RADIAN);
                   const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                  const isMobile = window.innerWidth < 768;
                   
                   return (
                     <text 
@@ -170,7 +171,7 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
                       fill="hsl(220 9% 46%)" 
                       textAnchor={x > cx ? 'start' : 'end'} 
                       dominantBaseline="central"
-                      style={{ fontSize: '10px', fontWeight: 500 }}
+                      style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: 600 }}
                     >
                       {`${(percent * 100).toFixed(0)}%`}
                     </text>
