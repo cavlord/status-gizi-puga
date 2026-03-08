@@ -79,7 +79,7 @@ serve(async (req) => {
 
     const { data: user, error: fetchError } = await supabase
       .from('users')
-      .select('id, email, verified')
+      .select('id, email, email_verified')
       .eq('email', normalizedEmail)
       .maybeSingle();
 
@@ -90,9 +90,9 @@ serve(async (req) => {
       );
     }
 
-    if (user.verified) {
+    if (user.email_verified) {
       return new Response(
-        JSON.stringify({ error: "Email sudah terverifikasi. Silakan login." }),
+        JSON.stringify({ error: "Email sudah terverifikasi. Silakan tunggu persetujuan admin." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
