@@ -52,7 +52,7 @@ function AppSidebar() {
           {!isCollapsed && (
             <div className="flex flex-col items-center text-center">
               <img
-                src="/icon/logos.svg"
+                src="/icon/logos-white.svg"
                 alt="Logo GiziX"
                 className="w-24 h-24 md:w-28 md:h-28 object-contain drop-shadow-[0_4px_12px_rgba(255,255,255,0.1)]"
               />
