@@ -477,42 +477,40 @@ const Dashboard = () => {
       </Card>
 
       {/* Data Balita Section */}
-      <div className="transition-all duration-300">
-        <Card className="border-0 shadow-lg">
-          <CardHeader className="p-4 md:p-6">
-            <CardTitle className="text-base sm:text-lg md:text-xl font-heading">
-              Data Status Gizi Per Posyandu
-            </CardTitle>
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              Pilih desa/kelurahan dan bulan untuk melihat data detail
-            </p>
-          </CardHeader>
-          <CardContent className="p-4 md:p-6">
-            <PosyanduTable
-              data={getPosyanduData(
-                selectedVillage && selectedMonth
-                  ? filterByMonth(filterByVillage(filteredByYear, selectedVillage), selectedMonth)
-                  : []
-              )}
-              villages={getUniqueValues(filteredByYear, 'Desa/Kel')}
-              months={[
-                'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-                'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-              ].filter(month => 
-                filteredByYear.some(record => record['Bulan Pengukuran'] === month)
-              )}
-              selectedVillage={selectedVillage}
-              selectedMonth={selectedMonth}
-              onVillageChange={setSelectedVillage}
-              onMonthChange={setSelectedMonth}
-              allRecords={selectedVillage && selectedMonth
+      <Card className="border-0 shadow-lg">
+        <CardHeader className="p-3 md:p-4 pb-1">
+          <CardTitle className="text-sm md:text-base font-heading">
+            Data Status Gizi Per Posyandu
+          </CardTitle>
+          <p className="text-[10px] md:text-xs text-muted-foreground">
+            Pilih desa/kelurahan dan bulan untuk melihat data detail
+          </p>
+        </CardHeader>
+        <CardContent className="p-3 md:p-4 pt-1">
+          <PosyanduTable
+            data={getPosyanduData(
+              selectedVillage && selectedMonth
                 ? filterByMonth(filterByVillage(filteredByYear, selectedVillage), selectedMonth)
-                : []}
-              yearData={filteredByYear}
-            />
-          </CardContent>
-        </Card>
-      </div>
+                : []
+            )}
+            villages={getUniqueValues(filteredByYear, 'Desa/Kel')}
+            months={[
+              'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+              'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+            ].filter(month => 
+              filteredByYear.some(record => record['Bulan Pengukuran'] === month)
+            )}
+            selectedVillage={selectedVillage}
+            selectedMonth={selectedMonth}
+            onVillageChange={setSelectedVillage}
+            onMonthChange={setSelectedMonth}
+            allRecords={selectedVillage && selectedMonth
+              ? filterByMonth(filterByVillage(filteredByYear, selectedVillage), selectedMonth)
+              : []}
+            yearData={filteredByYear}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 };
