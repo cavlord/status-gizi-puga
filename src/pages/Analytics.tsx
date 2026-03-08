@@ -38,7 +38,7 @@ const Analytics = () => {
     const query = searchQuery.toLowerCase().trim();
     
     // Search logic: full name or NIK (case-insensitive)
-    const results = underFiveRecords.filter(record => {
+    const results = allRecords.filter(record => {
       const nama = (record.Nama || '').toLowerCase().trim();
       const nik = (record.NIK || '').toString().toLowerCase().trim();
       
