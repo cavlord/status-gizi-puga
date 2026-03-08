@@ -167,8 +167,8 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
                 data={villageChartData}
                 cx="50%"
                 cy="50%"
-                innerRadius={50}
-                outerRadius={85}
+                innerRadius={40}
+                outerRadius={80}
                 fill="#8884d8"
                 dataKey="value"
                 paddingAngle={3}
@@ -181,7 +181,7 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
                 onClick={(_, index) => setActiveVillageIndex(prev => prev === index ? undefined : index)}
                 label={({ percent, cx, cy, midAngle, outerRadius }) => {
                   const RADIAN = Math.PI / 180;
-                  const radius = outerRadius + 18;
+                  const radius = outerRadius + 20;
                   const x = cx + radius * Math.cos(-midAngle * RADIAN);
                   const y = cy + radius * Math.sin(-midAngle * RADIAN);
                   const isMobile = window.innerWidth < 768;
@@ -213,31 +213,27 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
                 }}
               />
               <Legend 
-                wrapperStyle={{ fontSize: '10px' }}
-                iconSize={8}
+                wrapperStyle={{ fontSize: '11px' }}
+                iconSize={10}
               />
             </PieChart>
           </ResponsiveContainer>
           
-          {/* Village Summary Cards */}
-          <div className="grid grid-cols-2 gap-2 mt-4">
+          {/* Village Summary Cards - matching right side style */}
+          <div className="grid grid-cols-2 gap-2 mt-3">
             {villageChartData.map((village, index) => (
-              <div key={index} className="flex items-center gap-2.5 p-2.5 rounded-lg border bg-card">
-                <div 
-                  className="w-3 h-3 rounded-full flex-shrink-0" 
-                  style={{ backgroundColor: village.fill }}
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium leading-tight">{village.name}</p>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-lg font-bold" style={{ color: village.fill }}>
-                      {village.value}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">
-                      ({totalChildren > 0 ? ((village.value / totalChildren) * 100).toFixed(1) : 0}%)
-                    </span>
-                  </div>
-                </div>
+              <div 
+                key={index} 
+                className="p-3 rounded-lg border text-center"
+                style={{ borderTop: `3px solid ${village.fill}` }}
+              >
+                <p className="text-xs text-muted-foreground mb-1">{village.name}</p>
+                <p className="text-2xl font-bold" style={{ color: village.fill }}>
+                  {village.value}
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  {totalChildren > 0 ? ((village.value / totalChildren) * 100).toFixed(1) : 0}%
+                </p>
               </div>
             ))}
           </div>
