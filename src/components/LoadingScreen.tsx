@@ -12,7 +12,7 @@ const LoadingScreen = () => {
         {/* Large logo */}
         <div className="flex justify-center">
           <img
-            src="/icon/logo.webp"
+            src="/icon/logos.svg"
             alt="Logo GiziX Dihati Kampar"
             className="w-52 h-52 md:w-64 md:h-64 object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
           />
