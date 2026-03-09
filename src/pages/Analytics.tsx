@@ -68,6 +68,29 @@ const Analytics = () => {
     }
   }, [filteredResults]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const parseDateDDMMYYYY = useCallback((dateStr: string): Date => {
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const year = parseInt(parts[2], 10);
+      return new Date(year, month, day);
+    }
+    return new Date(0);
+  }, []);
+
+  const childHistory = useMemo(() => selectedChild
+    ? searchResults
+        .filter(r => r.Nama === selectedChild)
+        .sort((a, b) => {
+          const dateA = parseDateDDMMYYYY(a['Tanggal Pengukuran']);
+          const dateB = parseDateDDMMYYYY(b['Tanggal Pengukuran']);
+          return dateA.getTime() - dateB.getTime();
+        })
+    : [], [selectedChild, searchResults, parseDateDDMMYYYY]);
+
+  const uniqueChildren = useMemo(() => Array.from(new Set(searchResults.map(r => r.Nama))).filter(Boolean), [searchResults]);
+
   if (!allRecords || allRecords.length === 0) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -80,28 +103,6 @@ const Analytics = () => {
     );
   }
 
-  const parseDateDDMMYYYY = (dateStr: string): Date => {
-    const parts = dateStr.split('/');
-    if (parts.length === 3) {
-      const day = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1;
-      const year = parseInt(parts[2], 10);
-      return new Date(year, month, day);
-    }
-    return new Date(0);
-  };
-
-  const childHistory = useMemo(() => selectedChild
-    ? searchResults
-        .filter(r => r.Nama === selectedChild)
-        .sort((a, b) => {
-          const dateA = parseDateDDMMYYYY(a['Tanggal Pengukuran']);
-          const dateB = parseDateDDMMYYYY(b['Tanggal Pengukuran']);
-          return dateA.getTime() - dateB.getTime();
-        })
-    : [], [selectedChild, searchResults]);
-
-  const uniqueChildren = useMemo(() => Array.from(new Set(searchResults.map(r => r.Nama))).filter(Boolean), [searchResults]);
 
   const getStatusColor = (status: string) => {
     const map: Record<string, { bg: string; text: string; border: string }> = {
