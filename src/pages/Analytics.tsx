@@ -16,8 +16,10 @@ import {
 const Analytics = () => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [searchResults, setSearchResults] = useState<ChildRecord[]>([]);
   const [selectedChild, setSelectedChild] = useState<string | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   const { allRecords, error } = useData();
 
@@ -31,25 +33,32 @@ const Analytics = () => {
     }
   }, [error, toast]);
 
+  // Debounce search query
   useEffect(() => {
-    if (!allRecords || !searchQuery.trim()) {
-      setSearchResults([]);
-      setSelectedChild(null);
-      return;
-    }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 300);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [searchQuery]);
 
-    const query = searchQuery.toLowerCase().trim();
-
-    const results = allRecords.filter(record => {
+  // Filter results based on debounced query
+  const filteredResults = useMemo(() => {
+    if (!allRecords || !debouncedQuery.trim()) return [];
+    const query = debouncedQuery.toLowerCase().trim();
+    return allRecords.filter(record => {
       const nama = (record.Nama || '').toLowerCase().trim();
       const nik = (record.NIK || '').toString().toLowerCase().trim();
-      if (nik && nik.includes(query)) return true;
-      if (nama.includes(query)) return true;
-      return false;
+      return (nik && nik.includes(query)) || nama.includes(query);
     });
+  }, [debouncedQuery, allRecords]);
 
-    const uniqueNames = Array.from(new Set(results.map(r => r.Nama)));
-
+  // Update search results and selected child
+  useEffect(() => {
+    setSearchResults(filteredResults);
+    const uniqueNames = Array.from(new Set(filteredResults.map(r => r.Nama)));
     if (uniqueNames.length > 0) {
       if (!selectedChild || !uniqueNames.includes(selectedChild)) {
         setSelectedChild(uniqueNames[0]);
@@ -57,9 +66,7 @@ const Analytics = () => {
     } else {
       setSelectedChild(null);
     }
-
-    setSearchResults(results);
-  }, [searchQuery, allRecords]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [filteredResults]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!allRecords || allRecords.length === 0) {
     return (
