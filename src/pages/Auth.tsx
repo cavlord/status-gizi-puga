@@ -490,7 +490,16 @@ const AuthPage = () => {
 
           {/* Reset Password - New Password */}
           {mode === 'reset-password' && (
-            <div className="space-y-5">
+            <div className="space-y-6">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-primary/20 flex items-center justify-center">
+                  <Lock className="w-8 h-8 text-primary" />
+                </div>
+                <p className="text-muted-foreground text-sm text-center">
+                  Buat password baru untuk akun Anda
+                </p>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="new-password" className="text-foreground text-sm">Password Baru</Label>
                 <div className="relative">
