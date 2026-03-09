@@ -91,7 +91,7 @@ const Analytics = () => {
     return new Date(0);
   };
 
-  const childHistory = selectedChild
+  const childHistory = useMemo(() => selectedChild
     ? searchResults
         .filter(r => r.Nama === selectedChild)
         .sort((a, b) => {
@@ -99,9 +99,9 @@ const Analytics = () => {
           const dateB = parseDateDDMMYYYY(b['Tanggal Pengukuran']);
           return dateA.getTime() - dateB.getTime();
         })
-    : [];
+    : [], [selectedChild, searchResults]);
 
-  const uniqueChildren = Array.from(new Set(searchResults.map(r => r.Nama))).filter(Boolean);
+  const uniqueChildren = useMemo(() => Array.from(new Set(searchResults.map(r => r.Nama))).filter(Boolean), [searchResults]);
 
   const getStatusColor = (status: string) => {
     const map: Record<string, { bg: string; text: string; border: string }> = {
