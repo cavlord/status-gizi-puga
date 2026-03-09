@@ -211,7 +211,7 @@ const AuthPage = () => {
   const getTitle = () => {
     switch (mode) {
       case 'login': return 'DASHBOARD';
-      case 'register': return 'Daftar Akun';
+      case 'register': return 'Registrasi';
       case 'register-otp': return 'Verifikasi Email';
       case 'registered': return 'Pendaftaran Berhasil';
       case 'forgot': return 'Lupa Password';
