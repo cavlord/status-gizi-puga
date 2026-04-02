@@ -133,33 +133,58 @@ serve(async (req) => {
 
     console.log(`Prepared ${records.length} records for import`);
 
-    const { error: deleteError } = await supabase
-      .from('child_records')
-      .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000');
-
-    if (deleteError) console.error("Error clearing existing data:", deleteError);
-
     const batchSize = 100;
-    let imported = 0;
+    let upserted = 0;
+    let errors = 0;
 
     for (let i = 0; i < records.length; i += batchSize) {
       const batch = records.slice(i, i + batchSize);
-      const { error: insertError } = await supabase.from('child_records').insert(batch);
+      const { error: upsertError } = await supabase
+        .from('child_records')
+        .upsert(batch, { 
+          onConflict: 'nik,tanggal_pengukuran',
+          ignoreDuplicates: false 
+        });
 
-      if (insertError) {
-        console.error(`Error inserting batch:`, insertError);
-        return new Response(
-          JSON.stringify({ error: `Failed to import batch: ${insertError.message}` }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+      if (upsertError) {
+        console.error(`Error upserting batch ${i}:`, upsertError);
+        errors++;
+        continue;
       }
 
-      imported += batch.length;
+      upserted += batch.length;
     }
 
+    // Remove records from DB that no longer exist in the sheet
+    const sheetKeys = new Set(records.map(r => `${r.nik}||${r.tanggal_pengukuran}`));
+    
+    // Fetch all existing records' keys from DB
+    const { data: existingRecords, error: fetchError } = await supabase
+      .from('child_records')
+      .select('id, nik, tanggal_pengukuran');
+
+    let deleted = 0;
+    if (!fetchError && existingRecords) {
+      const idsToDelete = existingRecords
+        .filter(r => !sheetKeys.has(`${r.nik}||${r.tanggal_pengukuran}`))
+        .map(r => r.id);
+
+      if (idsToDelete.length > 0) {
+        for (let i = 0; i < idsToDelete.length; i += batchSize) {
+          const batch = idsToDelete.slice(i, i + batchSize);
+          const { error: delError } = await supabase
+            .from('child_records')
+            .delete()
+            .in('id', batch);
+          if (!delError) deleted += batch.length;
+        }
+      }
+    }
+
+    const message = `Berhasil sinkronisasi: ${upserted} record diperbarui/ditambahkan, ${deleted} record dihapus${errors > 0 ? `, ${errors} batch gagal` : ''}`;
+
     return new Response(
-      JSON.stringify({ success: true, message: `Successfully imported ${imported} records`, count: imported }),
+      JSON.stringify({ success: true, message, count: upserted, deleted }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
