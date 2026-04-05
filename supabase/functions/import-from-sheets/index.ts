@@ -19,13 +19,49 @@ const importSchema = z.object({
   sheetName: z.string().min(1).max(100).regex(/^[a-zA-Z0-9\s_-]+$/),
 });
 
+const headerMap: Record<string, string> = {
+  'NIK': 'nik', 'Nama': 'nama', 'JK': 'jk', 'Tgl Lahir': 'tgl_lahir',
+  'BB Lahir': 'bb_lahir', 'TB Lahir': 'tb_lahir', 'Nama Ortu': 'nama_ortu',
+  'Prov': 'prov', 'Kab/Kota': 'kab_kota', 'Kec': 'kec', 'Pukesmas': 'puskesmas',
+  'Desa/Kel': 'desa_kel', 'Posyandu': 'posyandu', 'RT': 'rt', 'RW': 'rw',
+  'Alamat': 'alamat', 'Usia Saat Ukur': 'usia_saat_ukur',
+  'Tanggal Pengukuran': 'tanggal_pengukuran', 'Bulan Pengukuran': 'bulan_pengukuran',
+  'Status Bulan': 'status_bulan', 'status tahun': 'status_tahun',
+  'Berat': 'berat', 'Tinggi': 'tinggi', 'Cara Ukur': 'cara_ukur', 'LiLA': 'lila',
+  'BB/U': 'bb_u', 'ZS BB/U': 'zs_bb_u', 'TB/U': 'tb_u', 'ZS TB/U': 'zs_tb_u',
+  'BB/TB': 'bb_tb', 'ZS BB/TB': 'zs_bb_tb', 'Naik Berat Badan': 'naik_berat_badan',
+  'PMT Diterima (kg)': 'pmt_diterima', 'Jml Vit A': 'jml_vit_a',
+  'KPSP': 'kpsp', 'KIA': 'kia', 'Detail Status': 'detail_status', 'status desa': 'status_desa',
+};
+
+async function fetchAllExistingRecords(supabase: any) {
+  const allRecords: any[] = [];
+  const pageSize = 1000;
+  let from = 0;
+  
+  while (true) {
+    const { data, error } = await supabase
+      .from('child_records')
+      .select('id, nik, tanggal_pengukuran')
+      .range(from, from + pageSize - 1);
+    
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    
+    allRecords.push(...data);
+    if (data.length < pageSize) break;
+    from += pageSize;
+  }
+  
+  return allRecords;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Verify JWT token
     const payload = await extractAuthPayload(req);
     if (!payload) {
       return new Response(
@@ -55,7 +91,6 @@ serve(async (req) => {
     const { spreadsheetId, sheetName } = validationResult.data;
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Check if user has admin role using verified user ID from JWT
     const { data: roleData } = await supabase
       .from('user_roles')
       .select('role')
@@ -78,7 +113,6 @@ serve(async (req) => {
     }
 
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values/${encodeURIComponent(sheetName)}?key=${GOOGLE_SHEETS_API_KEY}`;
-
     const response = await fetch(url);
 
     if (!response.ok) {
@@ -101,24 +135,13 @@ serve(async (req) => {
     }
 
     const headers = rows[0];
+    const totalDataRows = rows.length - 1;
 
-    const headerMap: Record<string, string> = {
-      'NIK': 'nik', 'Nama': 'nama', 'JK': 'jk', 'Tgl Lahir': 'tgl_lahir',
-      'BB Lahir': 'bb_lahir', 'TB Lahir': 'tb_lahir', 'Nama Ortu': 'nama_ortu',
-      'Prov': 'prov', 'Kab/Kota': 'kab_kota', 'Kec': 'kec', 'Pukesmas': 'puskesmas',
-      'Desa/Kel': 'desa_kel', 'Posyandu': 'posyandu', 'RT': 'rt', 'RW': 'rw',
-      'Alamat': 'alamat', 'Usia Saat Ukur': 'usia_saat_ukur',
-      'Tanggal Pengukuran': 'tanggal_pengukuran', 'Bulan Pengukuran': 'bulan_pengukuran',
-      'Status Bulan': 'status_bulan', 'status tahun': 'status_tahun',
-      'Berat': 'berat', 'Tinggi': 'tinggi', 'Cara Ukur': 'cara_ukur', 'LiLA': 'lila',
-      'BB/U': 'bb_u', 'ZS BB/U': 'zs_bb_u', 'TB/U': 'tb_u', 'ZS TB/U': 'zs_tb_u',
-      'BB/TB': 'bb_tb', 'ZS BB/TB': 'zs_bb_tb', 'Naik Berat Badan': 'naik_berat_badan',
-      'PMT Diterima (kg)': 'pmt_diterima', 'Jml Vit A': 'jml_vit_a',
-      'KPSP': 'kpsp', 'KIA': 'kia', 'Detail Status': 'detail_status', 'status desa': 'status_desa',
-    };
-
-    // Use a map to deduplicate by nik+tanggal_pengukuran, keeping last occurrence
+    // Parse all rows, keeping ALL records including those without nik/nama
     const recordMap = new Map<string, Record<string, string>>();
+    let skippedNoNik = 0;
+    let skippedNoNama = 0;
+    let duplicatesOverwritten = 0;
 
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
@@ -129,31 +152,43 @@ serve(async (req) => {
         if (dbColumn) record[dbColumn] = row[index] || '';
       });
 
-      if (record.nik && record.nama) {
-        const key = `${record.nik}||${record.tanggal_pengukuran}`;
-        recordMap.set(key, record);
+      if (!record.nik || record.nik.trim() === '') {
+        skippedNoNik++;
+        continue;
       }
+      if (!record.nama || record.nama.trim() === '') {
+        skippedNoNama++;
+        continue;
+      }
+
+      const key = `${record.nik}||${record.tanggal_pengukuran}`;
+      if (recordMap.has(key)) {
+        duplicatesOverwritten++;
+      }
+      recordMap.set(key, record);
     }
 
     const records = Array.from(recordMap.values());
 
-    console.log(`Prepared ${records.length} records for import`);
+    console.log(`Sheet total rows: ${totalDataRows}, After filter: ${records.length}, Skipped no NIK: ${skippedNoNik}, Skipped no Nama: ${skippedNoNama}, Duplicates overwritten: ${duplicatesOverwritten}`);
 
     const batchSize = 100;
     let upserted = 0;
     let errors = 0;
+    const errorDetails: string[] = [];
 
     for (let i = 0; i < records.length; i += batchSize) {
       const batch = records.slice(i, i + batchSize);
       const { error: upsertError } = await supabase
         .from('child_records')
-        .upsert(batch, { 
+        .upsert(batch, {
           onConflict: 'nik,tanggal_pengukuran',
-          ignoreDuplicates: false 
+          ignoreDuplicates: false
         });
 
       if (upsertError) {
         console.error(`Error upserting batch ${i}:`, upsertError);
+        errorDetails.push(`Batch ${i}: ${upsertError.message}`);
         errors++;
         continue;
       }
@@ -161,19 +196,17 @@ serve(async (req) => {
       upserted += batch.length;
     }
 
-    // Remove records from DB that no longer exist in the sheet
+    // Remove records from DB that no longer exist in the sheet (paginated fetch)
     const sheetKeys = new Set(records.map(r => `${r.nik}||${r.tanggal_pengukuran}`));
-    
-    // Fetch all existing records' keys from DB
-    const { data: existingRecords, error: fetchError } = await supabase
-      .from('child_records')
-      .select('id, nik, tanggal_pengukuran');
 
     let deleted = 0;
-    if (!fetchError && existingRecords) {
+    try {
+      const existingRecords = await fetchAllExistingRecords(supabase);
+      console.log(`Fetched ${existingRecords.length} existing records from DB for sync check`);
+
       const idsToDelete = existingRecords
-        .filter(r => !sheetKeys.has(`${r.nik}||${r.tanggal_pengukuran}`))
-        .map(r => r.id);
+        .filter((r: any) => !sheetKeys.has(`${r.nik}||${r.tanggal_pengukuran}`))
+        .map((r: any) => r.id);
 
       if (idsToDelete.length > 0) {
         for (let i = 0; i < idsToDelete.length; i += batchSize) {
@@ -185,12 +218,20 @@ serve(async (req) => {
           if (!delError) deleted += batch.length;
         }
       }
+    } catch (fetchErr: any) {
+      console.error("Error fetching existing records for delete sync:", fetchErr);
     }
 
-    const message = `Berhasil sinkronisasi: ${upserted} record diperbarui/ditambahkan, ${deleted} record dihapus${errors > 0 ? `, ${errors} batch gagal` : ''}`;
+    const message = `Berhasil sinkronisasi: ${upserted} record diperbarui/ditambahkan, ${deleted} record dihapus. Total baris sheet: ${totalDataRows}, dilewati (NIK kosong: ${skippedNoNik}, Nama kosong: ${skippedNoNama}, duplikat: ${duplicatesOverwritten})${errors > 0 ? `, ${errors} batch gagal` : ''}`;
 
     return new Response(
-      JSON.stringify({ success: true, message, count: upserted, deleted }),
+      JSON.stringify({
+        success: true,
+        message,
+        count: upserted,
+        deleted,
+        stats: { totalDataRows, skippedNoNik, skippedNoNama, duplicatesOverwritten, errors, errorDetails }
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
