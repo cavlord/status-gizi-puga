@@ -117,7 +117,8 @@ serve(async (req) => {
       'KPSP': 'kpsp', 'KIA': 'kia', 'Detail Status': 'detail_status', 'status desa': 'status_desa',
     };
 
-    const records: Record<string, string>[] = [];
+    // Use a map to deduplicate by nik+tanggal_pengukuran, keeping last occurrence
+    const recordMap = new Map<string, Record<string, string>>();
 
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
@@ -128,8 +129,13 @@ serve(async (req) => {
         if (dbColumn) record[dbColumn] = row[index] || '';
       });
 
-      if (record.nik && record.nama) records.push(record);
+      if (record.nik && record.nama) {
+        const key = `${record.nik}||${record.tanggal_pengukuran}`;
+        recordMap.set(key, record);
+      }
     }
+
+    const records = Array.from(recordMap.values());
 
     console.log(`Prepared ${records.length} records for import`);
 
