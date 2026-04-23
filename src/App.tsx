@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext, useMemo } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,14 +7,16 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { DataProvider, useData } from "./contexts/DataContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { AppLayout } from "./components/AppLayout";
-import Dashboard from "./pages/Dashboard";
-import DataRecords from "./pages/DataRecords";
-import Analytics from "./pages/Analytics";
-import Settings from "./pages/Settings";
-import NotFound from "./pages/NotFound";
-import AuthPage from "./pages/Auth";
-import UserManagement from "./pages/UserManagement";
 import LoadingScreen from "./components/LoadingScreen";
+
+// Lazy-loaded routes for code splitting (reduces initial JS bundle)
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const DataRecords = lazy(() => import("./pages/DataRecords"));
+const Analytics = lazy(() => import("./pages/Analytics"));
+const Settings = lazy(() => import("./pages/Settings"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const AuthPage = lazy(() => import("./pages/Auth"));
+const UserManagement = lazy(() => import("./pages/UserManagement"));
 
 // Create QueryClient instance that persists across renders
 const queryClient = new QueryClient({
@@ -96,68 +98,70 @@ const AppContent = () => {
   }
 
   return (
-    <Routes>
-      <Route
-        path="/auth"
-        element={
-          <AuthRoute>
-            <AuthPage />
-          </AuthRoute>
-        }
-      />
-      
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <Dashboard />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/data"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <DataRecords />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/analytics"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <Analytics />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/settings"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <Settings />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/users"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <UserManagement />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <Suspense fallback={<LoadingScreen />}>
+      <Routes>
+        <Route
+          path="/auth"
+          element={
+            <AuthRoute>
+              <AuthPage />
+            </AuthRoute>
+          }
+        />
+        
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <Dashboard />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/data"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <DataRecords />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/analytics"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <Analytics />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <Settings />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <UserManagement />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   );
 };
 
