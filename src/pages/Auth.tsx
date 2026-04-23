@@ -551,7 +551,7 @@ const AuthPage = () => {
         </div>
 
         <p className="text-center text-muted-foreground/60 text-xs mt-6">
-          © 2024 Posyandu Dashboard. All rights reserved.
+          © 2024 Rossa Gusti Yolanda S.Gz. All rights reserved.
         </p>
       </div>
     </div>
