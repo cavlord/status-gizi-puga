@@ -250,6 +250,9 @@ const AuthPage = () => {
               style={{ animationDuration: '1s', animationFillMode: 'both' }}
               loading="eager"
               decoding="async"
+              fetchPriority="high"
+              width={220}
+              height={220}
             />
             {mode === 'login' ? (
               <>
