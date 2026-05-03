@@ -60,12 +60,13 @@ const QuoteRotator: React.FC = () => {
       </div>
       <blockquote
         key={index}
-        className={`transition-all duration-700 ease-out ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+        className={`relative min-h-[320px] xl:min-h-[360px] flex flex-col transition-all duration-700 ease-out ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
       >
         <span className="block text-6xl font-serif leading-none text-primary/30 mb-2">"</span>
         <p className="text-xl xl:text-2xl font-medium leading-relaxed text-slate-700 italic">
           {QUOTES[index]}
         </p>
+        <span className="block text-6xl font-serif leading-none text-primary/30 self-end mt-2 -mb-4">"</span>
       </blockquote>
       <div className="mt-8 flex gap-2">
         {QUOTES.map((_, i) => (
