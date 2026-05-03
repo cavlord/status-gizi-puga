@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2, CheckCircle, ArrowLeft, KeyRound } from 'lucide-react';
+import quotesIllustration from '@/assets/quotes-illustration.png';
 
 type AuthMode = 'login' | 'register' | 'register-otp' | 'registered' | 'forgot' | 'forgot-otp' | 'reset-password';
 
@@ -42,7 +43,16 @@ const QuoteRotator: React.FC = () => {
   }, []);
 
   return (
-    <div className="max-w-lg w-full">
+    <div className="max-w-lg w-full relative">
+      <img
+        src={quotesIllustration}
+        alt=""
+        aria-hidden="true"
+        loading="lazy"
+        width={1024}
+        height={1024}
+        className="pointer-events-none select-none absolute -top-16 -right-10 w-[420px] xl:w-[500px] opacity-20 mix-blend-multiply"
+      />
       <div className="mb-6 flex items-center gap-3">
         <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/40 to-primary/60" />
         <span className="text-xs font-bold tracking-[0.3em] text-primary/70">INSPIRASI</span>
