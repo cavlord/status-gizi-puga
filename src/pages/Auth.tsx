@@ -43,7 +43,16 @@ const QuoteRotator: React.FC = () => {
   }, []);
 
   return (
-    <div className="max-w-lg w-full">
+    <div className="max-w-lg w-full relative">
+      <img
+        src={quotesIllustration}
+        alt=""
+        aria-hidden="true"
+        loading="lazy"
+        width={1024}
+        height={1024}
+        className="pointer-events-none select-none absolute -top-16 -right-10 w-[420px] xl:w-[500px] opacity-20 mix-blend-multiply"
+      />
       <div className="mb-6 flex items-center gap-3">
         <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/40 to-primary/60" />
         <span className="text-xs font-bold tracking-[0.3em] text-primary/70">INSPIRASI</span>
