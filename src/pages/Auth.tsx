@@ -37,8 +37,8 @@ const QuoteRotator: React.FC = () => {
           return next;
         });
         setVisible(true);
-      }, 600);
-    }, 7000);
+      }, 1000);
+    }, 7500);
     return () => clearInterval(interval);
   }, []);
 
