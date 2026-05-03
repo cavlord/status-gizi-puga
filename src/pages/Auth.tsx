@@ -13,6 +13,62 @@ import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2, CheckCircle, ArrowLeft, K
 
 type AuthMode = 'login' | 'register' | 'register-otp' | 'registered' | 'forgot' | 'forgot-otp' | 'reset-password';
 
+const QUOTES = [
+  "Memutus rantai stunting butuh satu kampung. Kader posyandu, tenaga kesehatan, orang tua, dan pemerintah — semua berperan dalam tumbuh sehatnya satu balita.",
+  "Setiap centimeter tinggi badan balita adalah cerita. Grafik pertumbuhan bukan sekadar angka — ia adalah cermin dari masa depan anak bangsa.",
+  "Posyandu bukan sekadar tempat timbang berat badan. Ia adalah pos pengamatan pertumbuhan, tempat data berbicara, dan tempat harapan dijaga setiap bulannya.",
+  "Data yang tidak ditindaklanjuti hanyalah angka. Data yang direspons dengan cepat adalah nyawa masa depan yang diselamatkan.",
+  "Timbang, ukur, catat — tiga kata sederhana yang bisa mengubah nasib seorang balita. Konsistensi monitoring adalah bentuk cinta yang paling nyata.",
+  "Tumbuh bukan hanya soal tinggi. Tapi tinggi badan adalah sinyal yang paling jujur tentang bagaimana tubuh seorang anak diperlakukan di tahun-tahun pertamanya.",
+];
+
+const QuoteRotator: React.FC = () => {
+  const [index, setIndex] = useState(() => Math.floor(Math.random() * QUOTES.length));
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setVisible(false);
+      setTimeout(() => {
+        setIndex((prev) => {
+          let next = Math.floor(Math.random() * QUOTES.length);
+          if (next === prev) next = (next + 1) % QUOTES.length;
+          return next;
+        });
+        setVisible(true);
+      }, 600);
+    }, 7000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="max-w-lg w-full">
+      <div className="mb-6 flex items-center gap-3">
+        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/40 to-primary/60" />
+        <span className="text-xs font-bold tracking-[0.3em] text-primary/70">INSPIRASI</span>
+        <div className="h-px flex-1 bg-gradient-to-l from-transparent via-primary/40 to-primary/60" />
+      </div>
+      <blockquote
+        key={index}
+        className={`transition-all duration-700 ease-out ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+      >
+        <span className="block text-6xl font-serif leading-none text-primary/30 mb-2">"</span>
+        <p className="text-xl xl:text-2xl font-medium leading-relaxed text-slate-700 italic">
+          {QUOTES[index]}
+        </p>
+      </blockquote>
+      <div className="mt-8 flex gap-2">
+        {QUOTES.map((_, i) => (
+          <div
+            key={i}
+            className={`h-1 rounded-full transition-all duration-500 ${i === index ? 'w-8 bg-primary' : 'w-2 bg-primary/20'}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const AuthPage = () => {
   const navigate = useNavigate();
   const { login, isAuthenticated } = useAuth();
