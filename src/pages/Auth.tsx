@@ -233,45 +233,50 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-100 via-gray-50 to-slate-100 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center lg:justify-end p-4 lg:px-12 bg-gradient-to-br from-slate-100 via-gray-50 to-slate-100 relative overflow-hidden">
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/8 rounded-full blur-3xl animate-pulse" />
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-secondary/8 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-accent/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
 
-      <div className="w-full max-w-md relative z-10">
-        <div className="backdrop-blur-xl bg-white/90 border border-slate-200/80 rounded-3xl shadow-[0_8px_40px_-12px_rgba(0,0,0,0.12)] p-8">
-          <div className="text-center mb-8 flex flex-col items-center">
+      {/* Quotes Panel - desktop only */}
+      <div className="hidden lg:flex absolute left-0 top-0 bottom-0 w-1/2 items-center justify-center p-12 z-10">
+        <QuoteRotator />
+      </div>
+
+      <div className="w-full max-w-sm relative z-10 lg:mr-8">
+        <div className="backdrop-blur-xl bg-white/90 border border-slate-200/80 rounded-2xl shadow-[0_8px_40px_-12px_rgba(0,0,0,0.12)] p-5 sm:p-6">
+          <div className="text-center mb-4 flex flex-col items-center">
             <img
               src="/icon/logos.svg"
               alt="Logo Gizi X Dihati Kampar"
-              className="w-[220px] h-[220px] object-contain mx-auto -mb-4 drop-shadow-[0_10px_25px_rgba(0,0,0,0.15)] animate-fade-in"
+              className="w-[120px] h-[120px] object-contain mx-auto -mb-2 drop-shadow-[0_10px_25px_rgba(0,0,0,0.15)] animate-fade-in"
               style={{ animationDuration: '1s', animationFillMode: 'both' }}
               loading="eager"
               decoding="async"
               fetchPriority="high"
-              width={220}
-              height={220}
+              width={120}
+              height={120}
             />
             {mode === 'login' ? (
               <>
-                <p className="text-sm leading-none font-bold tracking-[0.2em] mb-1.5 animate-fade-in"
+                <p className="text-xs leading-none font-bold tracking-[0.2em] mb-1 animate-fade-in"
                   style={{ color: '#0f172a', animationDuration: '0.8s', animationDelay: '0.5s', animationFillMode: 'both' }}>
                   DIHATI KAMPAR
                 </p>
-                <h1 className="text-3xl font-bold font-heading leading-none tracking-widest drop-shadow-[0_1px_2px_rgba(0,0,0,0.08)] animate-fade-in"
+                <h1 className="text-2xl font-bold font-heading leading-none tracking-widest drop-shadow-[0_1px_2px_rgba(0,0,0,0.08)] animate-fade-in"
                   style={{ background: 'linear-gradient(135deg, #10b981, #0ea5e9, #0284c7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', animationDuration: '0.8s', animationDelay: '0.8s', animationFillMode: 'both' }}>
                   DASHBOARD
                 </h1>
               </>
             ) : (
               <>
-                <h1 className="text-3xl font-bold font-heading leading-none mb-1 tracking-wide text-slate-800 drop-shadow-[0_1px_2px_rgba(0,0,0,0.08)] animate-fade-in"
+                <h1 className="text-2xl font-bold font-heading leading-none mb-1 tracking-wide text-slate-800 drop-shadow-[0_1px_2px_rgba(0,0,0,0.08)] animate-fade-in"
                   style={{ animationDuration: '0.8s', animationDelay: '0.5s', animationFillMode: 'both' }}>
                   {getTitle()}
                 </h1>
-                <p className="text-sm leading-none font-medium tracking-wide text-muted-foreground animate-fade-in"
+                <p className="text-xs leading-none font-medium tracking-wide text-muted-foreground animate-fade-in"
                   style={{ animationDuration: '0.8s', animationDelay: '0.8s', animationFillMode: 'both' }}>
                   {getSubtitle()}
                 </p>
