@@ -13,6 +13,62 @@ import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2, CheckCircle, ArrowLeft, K
 
 type AuthMode = 'login' | 'register' | 'register-otp' | 'registered' | 'forgot' | 'forgot-otp' | 'reset-password';
 
+const QUOTES = [
+  "Memutus rantai stunting butuh satu kampung. Kader posyandu, tenaga kesehatan, orang tua, dan pemerintah — semua berperan dalam tumbuh sehatnya satu balita.",
+  "Setiap centimeter tinggi badan balita adalah cerita. Grafik pertumbuhan bukan sekadar angka — ia adalah cermin dari masa depan anak bangsa.",
+  "Posyandu bukan sekadar tempat timbang berat badan. Ia adalah pos pengamatan pertumbuhan, tempat data berbicara, dan tempat harapan dijaga setiap bulannya.",
+  "Data yang tidak ditindaklanjuti hanyalah angka. Data yang direspons dengan cepat adalah nyawa masa depan yang diselamatkan.",
+  "Timbang, ukur, catat — tiga kata sederhana yang bisa mengubah nasib seorang balita. Konsistensi monitoring adalah bentuk cinta yang paling nyata.",
+  "Tumbuh bukan hanya soal tinggi. Tapi tinggi badan adalah sinyal yang paling jujur tentang bagaimana tubuh seorang anak diperlakukan di tahun-tahun pertamanya.",
+];
+
+const QuoteRotator: React.FC = () => {
+  const [index, setIndex] = useState(() => Math.floor(Math.random() * QUOTES.length));
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setVisible(false);
+      setTimeout(() => {
+        setIndex((prev) => {
+          let next = Math.floor(Math.random() * QUOTES.length);
+          if (next === prev) next = (next + 1) % QUOTES.length;
+          return next;
+        });
+        setVisible(true);
+      }, 600);
+    }, 7000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="max-w-lg w-full">
+      <div className="mb-6 flex items-center gap-3">
+        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/40 to-primary/60" />
+        <span className="text-xs font-bold tracking-[0.3em] text-primary/70">INSPIRASI</span>
+        <div className="h-px flex-1 bg-gradient-to-l from-transparent via-primary/40 to-primary/60" />
+      </div>
+      <blockquote
+        key={index}
+        className={`transition-all duration-700 ease-out ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+      >
+        <span className="block text-6xl font-serif leading-none text-primary/30 mb-2">"</span>
+        <p className="text-xl xl:text-2xl font-medium leading-relaxed text-slate-700 italic">
+          {QUOTES[index]}
+        </p>
+      </blockquote>
+      <div className="mt-8 flex gap-2">
+        {QUOTES.map((_, i) => (
+          <div
+            key={i}
+            className={`h-1 rounded-full transition-all duration-500 ${i === index ? 'w-8 bg-primary' : 'w-2 bg-primary/20'}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const AuthPage = () => {
   const navigate = useNavigate();
   const { login, isAuthenticated } = useAuth();
@@ -233,45 +289,50 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-100 via-gray-50 to-slate-100 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center lg:justify-end p-4 lg:px-12 bg-gradient-to-br from-slate-100 via-gray-50 to-slate-100 relative overflow-hidden">
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/8 rounded-full blur-3xl animate-pulse" />
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-secondary/8 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-accent/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
 
-      <div className="w-full max-w-md relative z-10">
-        <div className="backdrop-blur-xl bg-white/90 border border-slate-200/80 rounded-3xl shadow-[0_8px_40px_-12px_rgba(0,0,0,0.12)] p-8">
-          <div className="text-center mb-8 flex flex-col items-center">
+      {/* Quotes Panel - desktop only */}
+      <div className="hidden lg:flex absolute left-0 top-0 bottom-0 w-1/2 items-center justify-center p-12 z-10">
+        <QuoteRotator />
+      </div>
+
+      <div className="w-full max-w-sm relative z-10 lg:mr-8">
+        <div className="backdrop-blur-xl bg-white/90 border border-slate-200/80 rounded-2xl shadow-[0_8px_40px_-12px_rgba(0,0,0,0.12)] p-5 sm:p-6">
+          <div className="text-center mb-4 flex flex-col items-center">
             <img
               src="/icon/logos.svg"
               alt="Logo Gizi X Dihati Kampar"
-              className="w-[220px] h-[220px] object-contain mx-auto -mb-4 drop-shadow-[0_10px_25px_rgba(0,0,0,0.15)] animate-fade-in"
+              className="w-[120px] h-[120px] object-contain mx-auto -mb-2 drop-shadow-[0_10px_25px_rgba(0,0,0,0.15)] animate-fade-in"
               style={{ animationDuration: '1s', animationFillMode: 'both' }}
               loading="eager"
               decoding="async"
               fetchPriority="high"
-              width={220}
-              height={220}
+              width={120}
+              height={120}
             />
             {mode === 'login' ? (
               <>
-                <p className="text-sm leading-none font-bold tracking-[0.2em] mb-1.5 animate-fade-in"
+                <p className="text-xs leading-none font-bold tracking-[0.2em] mb-1 animate-fade-in"
                   style={{ color: '#0f172a', animationDuration: '0.8s', animationDelay: '0.5s', animationFillMode: 'both' }}>
                   DIHATI KAMPAR
                 </p>
-                <h1 className="text-3xl font-bold font-heading leading-none tracking-widest drop-shadow-[0_1px_2px_rgba(0,0,0,0.08)] animate-fade-in"
+                <h1 className="text-2xl font-bold font-heading leading-none tracking-widest drop-shadow-[0_1px_2px_rgba(0,0,0,0.08)] animate-fade-in"
                   style={{ background: 'linear-gradient(135deg, #10b981, #0ea5e9, #0284c7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', animationDuration: '0.8s', animationDelay: '0.8s', animationFillMode: 'both' }}>
                   DASHBOARD
                 </h1>
               </>
             ) : (
               <>
-                <h1 className="text-3xl font-bold font-heading leading-none mb-1 tracking-wide text-slate-800 drop-shadow-[0_1px_2px_rgba(0,0,0,0.08)] animate-fade-in"
+                <h1 className="text-2xl font-bold font-heading leading-none mb-1 tracking-wide text-slate-800 drop-shadow-[0_1px_2px_rgba(0,0,0,0.08)] animate-fade-in"
                   style={{ animationDuration: '0.8s', animationDelay: '0.5s', animationFillMode: 'both' }}>
                   {getTitle()}
                 </h1>
-                <p className="text-sm leading-none font-medium tracking-wide text-muted-foreground animate-fade-in"
+                <p className="text-xs leading-none font-medium tracking-wide text-muted-foreground animate-fade-in"
                   style={{ animationDuration: '0.8s', animationDelay: '0.8s', animationFillMode: 'both' }}>
                   {getSubtitle()}
                 </p>
@@ -281,12 +342,12 @@ const AuthPage = () => {
 
           {/* Login Form */}
           {mode === 'login' && (
-            <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-5 animate-fade-in" style={{ animationDuration: '0.8s', animationDelay: '1.3s', animationFillMode: 'both' }}>
+            <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-3 animate-fade-in" style={{ animationDuration: '0.8s', animationDelay: '1.3s', animationFillMode: 'both' }}>
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-foreground text-sm">Email</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input id="email" type="email" placeholder="nama@email.com" className="pl-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300" {...loginForm.register('email')} />
+                  <Input id="email" type="email" placeholder="nama@email.com" className="pl-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-10 rounded-lg transition-all duration-300" {...loginForm.register('email')} />
                 </div>
                 {loginForm.formState.errors.email && <p className="text-red-400 text-xs mt-1">{loginForm.formState.errors.email.message}</p>}
               </div>
@@ -295,7 +356,7 @@ const AuthPage = () => {
                 <Label htmlFor="password" className="text-foreground text-sm">Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="••••••••" className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300" {...loginForm.register('password')} />
+                  <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="••••••••" className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-10 rounded-lg transition-all duration-300" {...loginForm.register('password')} />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
@@ -309,7 +370,7 @@ const AuthPage = () => {
                 </button>
               </div>
 
-              <Button type="submit" disabled={isLoading} className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
+              <Button type="submit" disabled={isLoading} className="w-full h-10 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
                 {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Login <ArrowRight className="w-5 h-5 ml-2" /></>}
               </Button>
 
@@ -322,12 +383,12 @@ const AuthPage = () => {
 
           {/* Register Form */}
           {mode === 'register' && (
-            <form onSubmit={registerForm.handleSubmit(handleRegister)} className="space-y-5">
+            <form onSubmit={registerForm.handleSubmit(handleRegister)} className="space-y-3">
               <div className="space-y-2">
                 <Label htmlFor="reg-email" className="text-foreground text-sm">Email</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input id="reg-email" type="email" placeholder="nama@email.com" className="pl-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300" {...registerForm.register('email')} />
+                  <Input id="reg-email" type="email" placeholder="nama@email.com" className="pl-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-10 rounded-lg transition-all duration-300" {...registerForm.register('email')} />
                 </div>
                 {registerForm.formState.errors.email && <p className="text-red-400 text-xs mt-1">{registerForm.formState.errors.email.message}</p>}
               </div>
@@ -336,7 +397,7 @@ const AuthPage = () => {
                 <Label htmlFor="reg-password" className="text-foreground text-sm">Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input id="reg-password" type={showPassword ? 'text' : 'password'} placeholder="Minimal 8 karakter" className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300" {...registerForm.register('password')} />
+                  <Input id="reg-password" type={showPassword ? 'text' : 'password'} placeholder="Minimal 8 karakter" className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-10 rounded-lg transition-all duration-300" {...registerForm.register('password')} />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
@@ -348,7 +409,7 @@ const AuthPage = () => {
                 <Label htmlFor="confirm-password" className="text-foreground text-sm">Konfirmasi Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input id="confirm-password" type={showConfirmPassword ? 'text' : 'password'} placeholder="Ulangi password" className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300" {...registerForm.register('confirmPassword')} />
+                  <Input id="confirm-password" type={showConfirmPassword ? 'text' : 'password'} placeholder="Ulangi password" className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-10 rounded-lg transition-all duration-300" {...registerForm.register('confirmPassword')} />
                   <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                     {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
@@ -356,7 +417,7 @@ const AuthPage = () => {
                 {registerForm.formState.errors.confirmPassword && <p className="text-red-400 text-xs mt-1">{registerForm.formState.errors.confirmPassword.message}</p>}
               </div>
 
-              <Button type="submit" disabled={isLoading} className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
+              <Button type="submit" disabled={isLoading} className="w-full h-10 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
                 {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Daftar <ArrowRight className="w-5 h-5 ml-2" /></>}
               </Button>
 
@@ -369,7 +430,7 @@ const AuthPage = () => {
 
           {/* Register OTP Verification */}
           {mode === 'register-otp' && (
-            <div className="space-y-5">
+            <div className="space-y-3">
               <div className="flex flex-col items-center gap-4">
                 <div className="p-3 bg-primary/10 rounded-full">
                   <KeyRound className="w-8 h-8 text-primary" />
@@ -389,7 +450,7 @@ const AuthPage = () => {
                 <p className="text-muted-foreground text-xs">Kode berlaku selama 5 menit</p>
               </div>
 
-              <Button type="button" onClick={handleVerifyRegisterOtp} disabled={isLoading || otpValue.length !== 6} className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
+              <Button type="button" onClick={handleVerifyRegisterOtp} disabled={isLoading || otpValue.length !== 6} className="w-full h-10 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
                 {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Verifikasi Email <ArrowRight className="w-5 h-5 ml-2" /></>}
               </Button>
 
@@ -405,13 +466,13 @@ const AuthPage = () => {
 
           {/* Registration Success */}
           {mode === 'registered' && (
-            <div className="space-y-5 text-center">
+            <div className="space-y-3 text-center">
               <div className="flex justify-center"><CheckCircle className="w-16 h-16 text-green-400" /></div>
               <div className="p-4 bg-muted/50 rounded-xl border border-border">
                 <p className="text-foreground/80 text-sm leading-relaxed">Email Anda telah terverifikasi. Anda dapat login setelah mendapat <strong className="text-foreground">izin akses dari Admin</strong>.</p>
                 <p className="text-muted-foreground text-xs mt-3">Hubungi admin untuk mendapatkan akses ke dashboard.</p>
               </div>
-              <Button type="button" onClick={() => switchMode('login')} className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
+              <Button type="button" onClick={() => switchMode('login')} className="w-full h-10 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
                 Kembali ke Login
               </Button>
             </div>
@@ -419,7 +480,7 @@ const AuthPage = () => {
 
           {/* Forgot Password - Email Input */}
           {mode === 'forgot' && (
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div className="flex flex-col items-center gap-3">
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
                   <Mail className="w-8 h-8 text-primary" />
@@ -439,12 +500,12 @@ const AuthPage = () => {
                     placeholder="nama@email.com"
                     value={forgotEmail}
                     onChange={(e) => setForgotEmail(e.target.value)}
-                    className="pl-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300"
+                    className="pl-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-10 rounded-lg transition-all duration-300"
                   />
                 </div>
               </div>
 
-              <Button type="button" onClick={handleForgotPassword} disabled={isLoading || !forgotEmail} className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
+              <Button type="button" onClick={handleForgotPassword} disabled={isLoading || !forgotEmail} className="w-full h-10 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
                 {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Kirim Kode OTP <ArrowRight className="w-5 h-5 ml-2" /></>}
               </Button>
 
@@ -456,7 +517,7 @@ const AuthPage = () => {
 
           {/* Forgot Password - OTP Verification */}
           {mode === 'forgot-otp' && (
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div className="flex flex-col items-center gap-3">
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
                   <KeyRound className="w-8 h-8 text-primary" />
@@ -481,7 +542,7 @@ const AuthPage = () => {
 
               <p className="text-muted-foreground text-xs text-center">Kode berlaku selama 5 menit</p>
 
-              <Button type="button" onClick={handleVerifyOtpAndReset} disabled={isLoading || otpValue.length !== 6} className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
+              <Button type="button" onClick={handleVerifyOtpAndReset} disabled={isLoading || otpValue.length !== 6} className="w-full h-10 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
                 {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Verifikasi <ArrowRight className="w-5 h-5 ml-2" /></>}
               </Button>
 
@@ -493,7 +554,7 @@ const AuthPage = () => {
 
           {/* Reset Password - New Password */}
           {mode === 'reset-password' && (
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div className="flex flex-col items-center gap-3">
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-primary/20 flex items-center justify-center">
                   <Lock className="w-8 h-8 text-primary" />
@@ -513,7 +574,7 @@ const AuthPage = () => {
                     placeholder="Minimal 8 karakter"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300"
+                    className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-10 rounded-lg transition-all duration-300"
                   />
                   <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                     {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -531,7 +592,7 @@ const AuthPage = () => {
                     placeholder="Ulangi password baru"
                     value={confirmNewPassword}
                     onChange={(e) => setConfirmNewPassword(e.target.value)}
-                    className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300"
+                    className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-10 rounded-lg transition-all duration-300"
                   />
                   <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                     {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -539,7 +600,7 @@ const AuthPage = () => {
                 </div>
               </div>
 
-              <Button type="button" onClick={handleResetPassword} disabled={isLoading} className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
+              <Button type="button" onClick={handleResetPassword} disabled={isLoading} className="w-full h-10 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
                 {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Reset Password <ArrowRight className="w-5 h-5 ml-2" /></>}
               </Button>
 
