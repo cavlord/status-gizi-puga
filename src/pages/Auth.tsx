@@ -37,8 +37,8 @@ const QuoteRotator: React.FC = () => {
           return next;
         });
         setVisible(true);
-      }, 600);
-    }, 7000);
+      }, 1000);
+    }, 7500);
     return () => clearInterval(interval);
   }, []);
 
@@ -59,8 +59,7 @@ const QuoteRotator: React.FC = () => {
         <div className="h-px flex-1 bg-gradient-to-l from-transparent via-primary/40 to-primary/60" />
       </div>
       <blockquote
-        key={index}
-        className={`relative min-h-[320px] xl:min-h-[360px] flex flex-col transition-all duration-700 ease-out ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+        className={`relative min-h-[320px] xl:min-h-[360px] flex flex-col transition-all duration-1000 ease-[cubic-bezier(0.22,1,0.36,1)] ${visible ? 'opacity-100 translate-y-0 blur-0 scale-100' : 'opacity-0 translate-y-6 blur-sm scale-[0.98]'}`}
       >
         <span className="block text-6xl font-serif leading-none text-primary/30 mb-2">"</span>
         <p className="text-xl xl:text-2xl font-medium leading-relaxed text-slate-700 italic">
