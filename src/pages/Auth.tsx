@@ -286,12 +286,12 @@ const AuthPage = () => {
 
           {/* Login Form */}
           {mode === 'login' && (
-            <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-5 animate-fade-in" style={{ animationDuration: '0.8s', animationDelay: '1.3s', animationFillMode: 'both' }}>
+            <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-3 animate-fade-in" style={{ animationDuration: '0.8s', animationDelay: '1.3s', animationFillMode: 'both' }}>
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-foreground text-sm">Email</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input id="email" type="email" placeholder="nama@email.com" className="pl-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300" {...loginForm.register('email')} />
+                  <Input id="email" type="email" placeholder="nama@email.com" className="pl-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-10 rounded-lg transition-all duration-300" {...loginForm.register('email')} />
                 </div>
                 {loginForm.formState.errors.email && <p className="text-red-400 text-xs mt-1">{loginForm.formState.errors.email.message}</p>}
               </div>
@@ -300,7 +300,7 @@ const AuthPage = () => {
                 <Label htmlFor="password" className="text-foreground text-sm">Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="••••••••" className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300" {...loginForm.register('password')} />
+                  <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="••••••••" className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-10 rounded-lg transition-all duration-300" {...loginForm.register('password')} />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
@@ -314,7 +314,7 @@ const AuthPage = () => {
                 </button>
               </div>
 
-              <Button type="submit" disabled={isLoading} className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
+              <Button type="submit" disabled={isLoading} className="w-full h-10 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
                 {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Login <ArrowRight className="w-5 h-5 ml-2" /></>}
               </Button>
 
@@ -327,12 +327,12 @@ const AuthPage = () => {
 
           {/* Register Form */}
           {mode === 'register' && (
-            <form onSubmit={registerForm.handleSubmit(handleRegister)} className="space-y-5">
+            <form onSubmit={registerForm.handleSubmit(handleRegister)} className="space-y-3">
               <div className="space-y-2">
                 <Label htmlFor="reg-email" className="text-foreground text-sm">Email</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input id="reg-email" type="email" placeholder="nama@email.com" className="pl-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300" {...registerForm.register('email')} />
+                  <Input id="reg-email" type="email" placeholder="nama@email.com" className="pl-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-10 rounded-lg transition-all duration-300" {...registerForm.register('email')} />
                 </div>
                 {registerForm.formState.errors.email && <p className="text-red-400 text-xs mt-1">{registerForm.formState.errors.email.message}</p>}
               </div>
@@ -341,7 +341,7 @@ const AuthPage = () => {
                 <Label htmlFor="reg-password" className="text-foreground text-sm">Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input id="reg-password" type={showPassword ? 'text' : 'password'} placeholder="Minimal 8 karakter" className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300" {...registerForm.register('password')} />
+                  <Input id="reg-password" type={showPassword ? 'text' : 'password'} placeholder="Minimal 8 karakter" className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-10 rounded-lg transition-all duration-300" {...registerForm.register('password')} />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
@@ -353,7 +353,7 @@ const AuthPage = () => {
                 <Label htmlFor="confirm-password" className="text-foreground text-sm">Konfirmasi Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input id="confirm-password" type={showConfirmPassword ? 'text' : 'password'} placeholder="Ulangi password" className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300" {...registerForm.register('confirmPassword')} />
+                  <Input id="confirm-password" type={showConfirmPassword ? 'text' : 'password'} placeholder="Ulangi password" className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-10 rounded-lg transition-all duration-300" {...registerForm.register('confirmPassword')} />
                   <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                     {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
@@ -361,7 +361,7 @@ const AuthPage = () => {
                 {registerForm.formState.errors.confirmPassword && <p className="text-red-400 text-xs mt-1">{registerForm.formState.errors.confirmPassword.message}</p>}
               </div>
 
-              <Button type="submit" disabled={isLoading} className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
+              <Button type="submit" disabled={isLoading} className="w-full h-10 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
                 {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Daftar <ArrowRight className="w-5 h-5 ml-2" /></>}
               </Button>
 
@@ -374,7 +374,7 @@ const AuthPage = () => {
 
           {/* Register OTP Verification */}
           {mode === 'register-otp' && (
-            <div className="space-y-5">
+            <div className="space-y-3">
               <div className="flex flex-col items-center gap-4">
                 <div className="p-3 bg-primary/10 rounded-full">
                   <KeyRound className="w-8 h-8 text-primary" />
@@ -394,7 +394,7 @@ const AuthPage = () => {
                 <p className="text-muted-foreground text-xs">Kode berlaku selama 5 menit</p>
               </div>
 
-              <Button type="button" onClick={handleVerifyRegisterOtp} disabled={isLoading || otpValue.length !== 6} className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
+              <Button type="button" onClick={handleVerifyRegisterOtp} disabled={isLoading || otpValue.length !== 6} className="w-full h-10 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
                 {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Verifikasi Email <ArrowRight className="w-5 h-5 ml-2" /></>}
               </Button>
 
@@ -410,13 +410,13 @@ const AuthPage = () => {
 
           {/* Registration Success */}
           {mode === 'registered' && (
-            <div className="space-y-5 text-center">
+            <div className="space-y-3 text-center">
               <div className="flex justify-center"><CheckCircle className="w-16 h-16 text-green-400" /></div>
               <div className="p-4 bg-muted/50 rounded-xl border border-border">
                 <p className="text-foreground/80 text-sm leading-relaxed">Email Anda telah terverifikasi. Anda dapat login setelah mendapat <strong className="text-foreground">izin akses dari Admin</strong>.</p>
                 <p className="text-muted-foreground text-xs mt-3">Hubungi admin untuk mendapatkan akses ke dashboard.</p>
               </div>
-              <Button type="button" onClick={() => switchMode('login')} className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
+              <Button type="button" onClick={() => switchMode('login')} className="w-full h-10 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
                 Kembali ke Login
               </Button>
             </div>
@@ -424,7 +424,7 @@ const AuthPage = () => {
 
           {/* Forgot Password - Email Input */}
           {mode === 'forgot' && (
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div className="flex flex-col items-center gap-3">
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
                   <Mail className="w-8 h-8 text-primary" />
@@ -444,12 +444,12 @@ const AuthPage = () => {
                     placeholder="nama@email.com"
                     value={forgotEmail}
                     onChange={(e) => setForgotEmail(e.target.value)}
-                    className="pl-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300"
+                    className="pl-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-10 rounded-lg transition-all duration-300"
                   />
                 </div>
               </div>
 
-              <Button type="button" onClick={handleForgotPassword} disabled={isLoading || !forgotEmail} className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
+              <Button type="button" onClick={handleForgotPassword} disabled={isLoading || !forgotEmail} className="w-full h-10 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
                 {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Kirim Kode OTP <ArrowRight className="w-5 h-5 ml-2" /></>}
               </Button>
 
@@ -461,7 +461,7 @@ const AuthPage = () => {
 
           {/* Forgot Password - OTP Verification */}
           {mode === 'forgot-otp' && (
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div className="flex flex-col items-center gap-3">
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
                   <KeyRound className="w-8 h-8 text-primary" />
@@ -486,7 +486,7 @@ const AuthPage = () => {
 
               <p className="text-muted-foreground text-xs text-center">Kode berlaku selama 5 menit</p>
 
-              <Button type="button" onClick={handleVerifyOtpAndReset} disabled={isLoading || otpValue.length !== 6} className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
+              <Button type="button" onClick={handleVerifyOtpAndReset} disabled={isLoading || otpValue.length !== 6} className="w-full h-10 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
                 {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Verifikasi <ArrowRight className="w-5 h-5 ml-2" /></>}
               </Button>
 
@@ -498,7 +498,7 @@ const AuthPage = () => {
 
           {/* Reset Password - New Password */}
           {mode === 'reset-password' && (
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div className="flex flex-col items-center gap-3">
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-primary/20 flex items-center justify-center">
                   <Lock className="w-8 h-8 text-primary" />
@@ -518,7 +518,7 @@ const AuthPage = () => {
                     placeholder="Minimal 8 karakter"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300"
+                    className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-10 rounded-lg transition-all duration-300"
                   />
                   <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                     {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -536,7 +536,7 @@ const AuthPage = () => {
                     placeholder="Ulangi password baru"
                     value={confirmNewPassword}
                     onChange={(e) => setConfirmNewPassword(e.target.value)}
-                    className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12 rounded-xl transition-all duration-300"
+                    className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-10 rounded-lg transition-all duration-300"
                   />
                   <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                     {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -544,7 +544,7 @@ const AuthPage = () => {
                 </div>
               </div>
 
-              <Button type="button" onClick={handleResetPassword} disabled={isLoading} className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
+              <Button type="button" onClick={handleResetPassword} disabled={isLoading} className="w-full h-10 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300">
                 {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Reset Password <ArrowRight className="w-5 h-5 ml-2" /></>}
               </Button>
 
