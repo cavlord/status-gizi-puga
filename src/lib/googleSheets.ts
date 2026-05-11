@@ -3,6 +3,46 @@ import { supabase } from "@/integrations/supabase/client";
 const SPREADSHEET_ID = import.meta.env.VITE_SPREADSHEET_ID || '1o-Lok3oWtmGXaN5Q9CeFj4ji9WFOINYW3M_RBNBUw60';
 const SHEET_NAME = 'RECORDS';
 
+// Configuration constants
+const AUTH_TOKEN_KEY = 'posyandu_token';
+const AUTH_DATA_KEY = 'posyandu_auth';
+const AUTH_REDIRECT_PATH = '/auth';
+const REQUEST_TIMEOUT_MS = 30000;
+const MAX_RETRIES = 2;
+const BASE_RETRY_DELAY_MS = 1000;
+
+// Type definitions
+interface ApiResponse<T> {
+  data: T[];
+  error?: string;
+}
+
+interface RetryConfig {
+  maxRetries: number;
+  baseDelay: number;
+  timeout: number;
+}
+
+// Custom error classes
+class AuthenticationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AuthenticationError';
+  }
+}
+
+class NetworkError extends Error {
+  public readonly status?: number;
+  public readonly isRetryable: boolean;
+
+  constructor(message: string, status?: number, isRetryable = true) {
+    super(message);
+    this.name = 'NetworkError';
+    this.status = status;
+    this.isRetryable = isRetryable;
+  }
+}
+
 export interface ChildRecord {
   NIK: string;
   Nama: string;
@@ -87,74 +127,120 @@ function mapDbToRecord(dbRecord: any): ChildRecord {
   };
 }
 
+// Utility functions
 function getAuthToken(): string | null {
-  return localStorage.getItem('posyandu_token');
+  return localStorage.getItem(AUTH_TOKEN_KEY);
+}
+
+function logError(message: string, error?: unknown): void {
+  if (import.meta.env.DEV) {
+    console.error(message, error);
+  }
+}
+
+function handleAuthenticationFailure(): never {
+  localStorage.removeItem(AUTH_DATA_KEY);
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+  window.location.href = AUTH_REDIRECT_PATH;
+  throw new AuthenticationError('Authentication required');
+}
+
+async function retryWithBackoff<T>(
+  operation: () => Promise<T>,
+  config: RetryConfig
+): Promise<T> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= config.maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      
+      logError(`Attempt ${attempt + 1} failed:`, lastError.message);
+
+      // Don't retry on authentication errors
+      if (lastError instanceof AuthenticationError) {
+        throw lastError;
+      }
+
+      // Don't retry on non-retryable network errors
+      if (lastError instanceof NetworkError && !lastError.isRetryable) {
+        throw lastError;
+      }
+
+      // Wait before retry with linear backoff
+      if (attempt < config.maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, config.baseDelay * (attempt + 1)));
+      }
+    }
+  }
+
+  throw lastError || new NetworkError('Gagal mengambil data. Silakan coba lagi.');
+}
+
+async function makeAuthenticatedRequest<T>(
+  url: string,
+  token: string,
+  body: unknown,
+  timeout: number
+): Promise<ApiResponse<T>> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+
+    if (response.status === 401) {
+      handleAuthenticationFailure();
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Server error' }));
+      throw new NetworkError(
+        errorData.error || `Server error: ${response.status}`,
+        response.status,
+        response.status >= 500 // Retry on 5xx errors
+      );
+    }
+
+    return await response.json();
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 export async function fetchSheetData(): Promise<ChildRecord[]> {
   const token = getAuthToken();
   if (!token) {
-    console.log('No auth token found');
-    throw new Error('Sesi telah berakhir. Silakan login kembali.');
+    throw new AuthenticationError('Sesi telah berakhir. Silakan login kembali.');
   }
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  
-  // Retry logic for mobile network issues
-  const maxRetries = 2;
-  let lastError: Error | null = null;
-  
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+  const endpoint = `${supabaseUrl}/functions/v1/get-child-records`;
 
-      const response = await fetch(`${supabaseUrl}/functions/v1/get-child-records`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ fetchAll: true }),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (response.status === 401) {
-        localStorage.removeItem('posyandu_auth');
-        localStorage.removeItem('posyandu_token');
-        window.location.href = '/auth';
-        return [];
-      }
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Server error' }));
-        throw new Error(errorData.error || `Server error: ${response.status}`);
-      }
-
-      const result = await response.json();
-      
-      if (!result.data || result.data.length === 0) {
-        return [];
-      }
-
-      return result.data.map(mapDbToRecord);
-    } catch (error: any) {
-      lastError = error;
-      console.error(`Fetch attempt ${attempt + 1} failed:`, error.message);
-      
-      // Don't retry on auth errors
-      if (error.message?.includes('login')) throw error;
-      
-      // Wait before retry
-      if (attempt < maxRetries) {
-        await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
-      }
+  const result = await retryWithBackoff(
+    () => makeAuthenticatedRequest<any>(endpoint, token, { fetchAll: true }, REQUEST_TIMEOUT_MS),
+    {
+      maxRetries: MAX_RETRIES,
+      baseDelay: BASE_RETRY_DELAY_MS,
+      timeout: REQUEST_TIMEOUT_MS,
     }
+  );
+
+  if (!result.data || result.data.length === 0) {
+    return [];
   }
 
-  throw lastError || new Error('Gagal mengambil data. Silakan coba lagi.');
+  return result.data.map(mapDbToRecord);
 }
 
 export async function importFromGoogleSheets(userEmail: string): Promise<{ success: boolean; message: string; count?: number }> {
