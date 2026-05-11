@@ -8,8 +8,12 @@ export const emailSchema = z
 
 export const passwordSchema = z
   .string()
-  .min(8, 'Password minimal 8 karakter')
-  .max(100, 'Password maksimal 100 karakter');
+  .min(12, 'Password minimal 12 karakter')
+  .max(100, 'Password maksimal 100 karakter')
+  .regex(/[A-Z]/, 'Password harus mengandung minimal 1 huruf besar')
+  .regex(/[a-z]/, 'Password harus mengandung minimal 1 huruf kecil')
+  .regex(/[0-9]/, 'Password harus mengandung minimal 1 angka')
+  .regex(/[^A-Za-z0-9]/, 'Password harus mengandung minimal 1 karakter khusus (!@#$%^&*)');
 
 export const loginSchema = z.object({
   email: emailSchema,
