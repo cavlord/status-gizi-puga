@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import {
   getUniqueYears,
   filterByYear,
@@ -11,14 +12,39 @@ import {
   ChildRecord,
 } from "@/lib/googleSheets";
 import { useData } from "@/contexts/DataContext";
-import { YearFilter } from "@/components/YearFilter";
-import { NutritionalStatusChart } from "@/components/NutritionalStatusChart";
+import { AnimatedFilter } from "@/components/AnimatedFilter";
+import { EnhancedNutritionalChart } from "@/components/EnhancedNutritionalChart";
 import { VillageNutritionalStatus } from "@/components/VillageNutritionalStatus";
 import { ChildDetailsModal } from "@/components/ChildDetailsModal";
 import { PosyanduTable } from "@/components/PosyanduTable";
+import { StatCard } from "@/components/StatCard";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, Users, AlertTriangle } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Users, MapPin, AlertTriangle, TrendingUp, BarChart3 } from "lucide-react";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring" as const,
+      stiffness: 100,
+      damping: 15
+    }
+  }
+};
 
 const Dashboard = () => {
   const { toast } = useToast();
@@ -80,11 +106,17 @@ const Dashboard = () => {
   if (!allRecords || allRecords.length === 0) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="text-center">
-          <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-          <p className="text-xl font-semibold mb-2">Data Tidak Tersedia</p>
-          <p className="text-muted-foreground">Belum ada data yang tersedia saat ini. Silakan coba lagi nanti.</p>
-        </div>
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="text-center space-y-4"
+        >
+          <Users className="h-16 w-16 text-muted-foreground mx-auto opacity-50" />
+          <div>
+            <p className="text-xl font-semibold mb-2">Data Tidak Tersedia</p>
+            <p className="text-muted-foreground">Belum ada data yang tersedia saat ini.</p>
+          </div>
+        </motion.div>
       </div>
     );
   }
@@ -93,7 +125,6 @@ const Dashboard = () => {
   const years = getUniqueYears(underFiveRecords);
   const filteredByYear = selectedYear ? filterByYear(underFiveRecords, selectedYear) : underFiveRecords;
 
-  // Get latest record per child
   const getLatestRecords = (records: ChildRecord[]): ChildRecord[] => {
     const latestMap = new Map<string, ChildRecord>();
     
@@ -117,11 +148,9 @@ const Dashboard = () => {
 
   const latestRecords = getLatestRecords(filteredByYear);
 
-  // Get most recent month's data for nutritional status distribution
   const getMostRecentMonthRecords = (records: ChildRecord[]): ChildRecord[] => {
     if (records.length === 0) return [];
     
-    // Helper to parse DD/MM/YYYY date format
     const parseDate = (dateStr: string): Date => {
       if (dateStr.includes('/')) {
         const [day, month, year] = dateStr.split('/').map(Number);
@@ -130,7 +159,6 @@ const Dashboard = () => {
       return new Date(dateStr);
     };
     
-    // Find the most recent date
     const mostRecentDate = records.reduce((latest, record) => {
       const recordDate = parseDate(record['Tanggal Pengukuran']);
       return recordDate > latest ? recordDate : latest;
@@ -139,7 +167,6 @@ const Dashboard = () => {
     const mostRecentMonth = mostRecentDate.getMonth();
     const mostRecentYear = mostRecentDate.getFullYear();
     
-    // Filter records from that month and get latest per child
     const monthRecords = records.filter(record => {
       const recordDate = parseDate(record['Tanggal Pengukuran']);
       return recordDate.getMonth() === mostRecentMonth && 
@@ -151,7 +178,6 @@ const Dashboard = () => {
 
   const mostRecentMonthRecords = getMostRecentMonthRecords(filteredByYear);
 
-  // Calculate village data from latest records
   const villageMap = new Map<string, Set<string>>();
   latestRecords.forEach(record => {
     const village = record['Desa/Kel'];
@@ -170,11 +196,9 @@ const Dashboard = () => {
 
   const totalCount = latestRecords.length;
 
-  // HANYA membandingkan BB bulan terbaru vs 1 bulan sebelumnya
   const getNotGainingWeight = (): { count: number; children: ChildRecord[] } => {
     if (filteredByYear.length === 0) return { count: 0, children: [] };
     
-    // Helper function to parse DD/MM/YYYY date format
     const parseDate = (dateStr: string): Date => {
       if (dateStr.includes('/')) {
         const [day, month, year] = dateStr.split('/').map(Number);
@@ -183,7 +207,6 @@ const Dashboard = () => {
       return new Date(dateStr);
     };
     
-    // Helper function to format date to DD/MM/YYYY
     const formatDate = (dateStr: string): string => {
       if (dateStr.includes('/')) {
         const parts = dateStr.split('/');
@@ -201,20 +224,15 @@ const Dashboard = () => {
       return `${day}/${month}/${year}`;
     };
     
-    // 1. Cari bulan terbaru dari SEMUA data
     const allDates = filteredByYear.map(r => parseDate(r['Tanggal Pengukuran']));
     const mostRecentDate = new Date(Math.max(...allDates.map(d => d.getTime())));
     const currentMonth = mostRecentDate.getMonth();
     const currentYear = mostRecentDate.getFullYear();
     
-    // 2. Hitung bulan sebelumnya (bulan terbaru - 1)
     const prevDate = new Date(currentYear, currentMonth - 1, 1);
     const previousMonth = prevDate.getMonth();
     const previousYear = prevDate.getFullYear();
     
-    
-    
-    // 3. Kelompokkan data per anak
     const childrenMap = new Map<string, ChildRecord[]>();
     filteredByYear.forEach(record => {
       if (!record.Nama) return;
@@ -226,40 +244,32 @@ const Dashboard = () => {
     
     const notGainingChildren: ChildRecord[] = [];
     
-    // 4. Untuk setiap anak, bandingkan BB bulan terbaru vs bulan sebelumnya
     childrenMap.forEach((allRecords, childName) => {
-      // Ambil HANYA data dari bulan terbaru
       const currentMonthData = allRecords.filter(r => {
         const d = parseDate(r['Tanggal Pengukuran']);
         return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
       });
       
-      // Ambil HANYA data dari bulan sebelumnya (bulan terbaru - 1)
       const previousMonthData = allRecords.filter(r => {
         const d = parseDate(r['Tanggal Pengukuran']);
         return d.getMonth() === previousMonth && d.getFullYear() === previousYear;
       });
       
-      // SKIP jika tidak ada data di salah satu dari kedua bulan
       if (currentMonthData.length === 0 || previousMonthData.length === 0) {
         return;
       }
       
-      // Ambil data terbaru dari bulan terbaru
       const latestCurrent = currentMonthData.reduce((latest, r) => {
         return parseDate(r['Tanggal Pengukuran']) > parseDate(latest['Tanggal Pengukuran']) ? r : latest;
       });
       
-      // Ambil data terbaru dari bulan sebelumnya
       const latestPrevious = previousMonthData.reduce((latest, r) => {
         return parseDate(r['Tanggal Pengukuran']) > parseDate(latest['Tanggal Pengukuran']) ? r : latest;
       });
       
-      // Parse berat badan
       const currentWeight = parseFloat(latestCurrent.Berat);
       const previousWeight = parseFloat(latestPrevious.Berat);
       
-      // HANYA tambahkan jika BB TIDAK NAIK (turun atau tetap)
       if (!isNaN(currentWeight) && !isNaN(previousWeight)) {
         if (currentWeight <= previousWeight) {
           const formattedDate = formatDate(latestCurrent['Tanggal Pengukuran']);
@@ -278,7 +288,6 @@ const Dashboard = () => {
 
   const notGainingWeightData = getNotGainingWeight();
 
-  // Akumulatif Tidak Naik BB sepanjang tahun
   const getCumulativeNotGainingWeight = (): { count: number; children: ChildRecord[] } => {
     if (filteredByYear.length === 0) return { count: 0, children: [] };
 
@@ -299,10 +308,10 @@ const Dashboard = () => {
       }
       const date = new Date(dateStr);
       if (isNaN(date.getTime())) return dateStr;
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const dayStr = String(date.getDate()).padStart(2, '0');
+      const monthStr = String(date.getMonth() + 1).padStart(2, '0');
       const yr = date.getFullYear();
-      return `${day}/${month}/${yr}`;
+      return `${dayStr}/${monthStr}/${yr}`;
     };
 
     const childrenMap = new Map<string, ChildRecord[]>();
@@ -373,73 +382,59 @@ const Dashboard = () => {
   const chartData = getNutritionalStatusByMonth(filteredByYear);
 
   return (
-    <div className="w-full space-y-3 md:space-y-4 animate-fade-in">
+    <motion.div 
+      className="space-y-8"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
       {/* Header Section */}
-      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h2 className="text-base sm:text-lg md:text-xl font-heading font-bold text-foreground">
-            Dashboard Status Gizi
-          </h2>
-          <p className="text-[10px] sm:text-xs text-muted-foreground">
+      <motion.div variants={itemVariants}>
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard Status Gizi</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">
             Monitoring status gizi balita — UPT Puskesmas Pulau Gadang
           </p>
         </div>
-        <div className="w-full md:w-auto">
-          <YearFilter
-            years={years}
-            selectedYear={selectedYear}
-            onYearChange={setSelectedYear}
-          />
-        </div>
-      </div>
+        <AnimatedFilter
+          years={years}
+          selectedYear={selectedYear}
+          onYearChange={setSelectedYear}
+          showYear={true}
+        />
+      </motion.div>
 
-      {/* Stats Overview - Compact */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4">
-        <Card className="border-0 shadow-lg overflow-hidden relative bg-gradient-to-br from-primary to-accent text-primary-foreground">
-          <CardContent className="p-3 sm:p-4 md:p-5 text-center">
-            <div className="flex items-center justify-center gap-1.5 mb-2">
-              <div className="p-1 sm:p-1.5 rounded-lg bg-white/15">
-                <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              </div>
-              <span className="text-[10px] sm:text-xs font-medium opacity-90 leading-tight">Total<br className="sm:hidden" /> Balita</span>
-            </div>
-            <div className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">{totalCount}</div>
-            <p className="text-[9px] sm:text-[10px] md:text-xs opacity-70 mt-1">Balita aktif terdaftar</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg overflow-hidden relative bg-gradient-to-br from-secondary to-primary text-primary-foreground">
-          <CardContent className="p-3 sm:p-4 md:p-5 text-center">
-            <div className="flex items-center justify-center gap-1.5 mb-2">
-              <div className="p-1 sm:p-1.5 rounded-lg bg-white/15">
-                <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              </div>
-              <span className="text-[10px] sm:text-xs font-medium opacity-90 leading-tight">Desa/<br className="sm:hidden" />Kel</span>
-            </div>
-            <div className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">{villageData.length}</div>
-            <p className="text-[9px] sm:text-[10px] md:text-xs opacity-70 mt-1">Wilayah cakupan</p>
-          </CardContent>
-        </Card>
-
-        <Card 
-          className="border-0 shadow-lg overflow-hidden relative bg-gradient-to-br from-destructive to-destructive/80 text-destructive-foreground cursor-pointer hover:shadow-xl transition-all active:scale-[0.98]"
+      {/* Stats Grid */}
+      <div className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <StatCard
+          title="Total Balita"
+          value={totalCount}
+          description="Balita aktif terdaftar"
+          icon={Users}
+          gradient="from-blue-500 to-cyan-500"
+          delay={0.1}
+        />
+        <StatCard
+          title="Desa/Kelurahan"
+          value={villageData.length}
+          description="Wilayah cakupan"
+          icon={MapPin}
+          gradient="from-emerald-500 to-teal-500"
+          delay={0.2}
+        />
+        <StatCard
+          title="Tidak Naik BB"
+          value={cumulativeNotGainingData.count}
+          description={`Akumulatif ${selectedYear}`}
+          icon={AlertTriangle}
+          gradient="from-rose-500 to-pink-500"
+          delay={0.3}
           onClick={() => setShowCumulativeModal(true)}
-        >
-          <CardContent className="p-3 sm:p-4 md:p-5 text-center">
-            <div className="flex items-center justify-center gap-1.5 mb-2">
-              <div className="p-1 sm:p-1.5 rounded-lg bg-white/15">
-                <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              </div>
-              <span className="text-[10px] sm:text-xs font-medium opacity-90 leading-tight">Tidak<br className="sm:hidden" /> Naik BB</span>
-            </div>
-            <div className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">{cumulativeNotGainingData.count}</div>
-            <p className="text-[9px] sm:text-[10px] md:text-xs opacity-70 mt-1">Akumulatif {selectedYear}</p>
-          </CardContent>
-        </Card>
+        />
       </div>
 
-      {/* Village Nutritional Status Distribution */}
-      <div>
+      {/* Village Status */}
+      <motion.div variants={itemVariants}>
         <VillageNutritionalStatus 
           yearData={filteredByYear} 
           monthData={mostRecentMonthRecords} 
@@ -447,9 +442,9 @@ const Dashboard = () => {
           notGainingWeightData={notGainingWeightData}
           onShowNotGainingModal={() => setShowNotGainingModal(true)}
         />
-      </div>
+      </motion.div>
 
-      {/* Modal for Not Gaining Weight Children */}
+      {/* Modals */}
       <ChildDetailsModal
         isOpen={showNotGainingModal}
         onClose={() => setShowNotGainingModal(false)}
@@ -459,7 +454,6 @@ const Dashboard = () => {
         allRecords={filteredByYear}
       />
 
-      {/* Modal for Cumulative Not Gaining Weight */}
       <ChildDetailsModal
         isOpen={showCumulativeModal}
         onClose={() => setShowCumulativeModal(false)}
@@ -470,57 +464,79 @@ const Dashboard = () => {
       />
 
       {/* Chart Section */}
-      <Card className="border-0 shadow-lg">
-        <CardHeader className="p-3 md:p-4 pb-1">
-          <CardTitle className="text-sm md:text-base font-heading">
-            Tren Status Gizi Balita
-          </CardTitle>
-          <p className="text-[10px] md:text-xs text-muted-foreground">
-            Grafik perkembangan status gizi per bulan
-          </p>
-        </CardHeader>
-        <CardContent className="p-3 md:p-4 pt-1">
-          <NutritionalStatusChart data={chartData} />
-        </CardContent>
-      </Card>
+      <motion.div variants={itemVariants}>
+        <Card className="border-0 shadow-lg">
+          <CardHeader className="space-y-1 p-4 sm:p-6 pb-3 sm:pb-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 bg-gradient-to-br from-violet-500 to-purple-500 rounded-lg flex-shrink-0">
+                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+              </div>
+              <div className="min-w-0">
+                <CardTitle className="text-base sm:text-lg md:text-xl truncate">Tren Status Gizi Balita</CardTitle>
+                <CardDescription className="text-xs sm:text-sm line-clamp-1">Grafik perkembangan status gizi per bulan</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-4 sm:p-6">
+            <EnhancedNutritionalChart data={chartData} />
+          </CardContent>
+        </Card>
+      </motion.div>
 
-      {/* Data Balita Section */}
-      <Card className="border-0 shadow-lg">
-        <CardHeader className="p-3 md:p-4 pb-1">
-          <CardTitle className="text-sm md:text-base font-heading">
-            Data Status Gizi Per Posyandu
-          </CardTitle>
-          <p className="text-[10px] md:text-xs text-muted-foreground">
-            Pilih desa/kelurahan dan bulan untuk melihat data detail
-          </p>
-        </CardHeader>
-        <CardContent className="p-3 md:p-4 pt-1">
-          <PosyanduTable
-            data={getPosyanduData(
-              selectedVillage && selectedMonth
+      {/* Table Section */}
+      <motion.div variants={itemVariants}>
+        <Card className="border-0 shadow-lg">
+          <CardHeader className="space-y-1 p-4 sm:p-6 pb-3 sm:pb-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 bg-gradient-to-br from-amber-500 to-orange-500 rounded-lg flex-shrink-0">
+                <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+              </div>
+              <div className="min-w-0">
+                <CardTitle className="text-base sm:text-lg md:text-xl truncate">Data Status Gizi Per Posyandu</CardTitle>
+                <CardDescription className="text-xs sm:text-sm line-clamp-1">Pilih desa/kelurahan dan bulan untuk melihat data detail</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+            <AnimatedFilter
+              villages={getUniqueValues(filteredByYear, 'Desa/Kel')}
+              months={[
+                'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+              ].filter(month =>
+                filteredByYear.some(record => record['Bulan Pengukuran'] === month)
+              )}
+              selectedVillage={selectedVillage}
+              selectedMonth={selectedMonth}
+              onVillageChange={setSelectedVillage}
+              onMonthChange={setSelectedMonth}
+              showVillage={true}
+              showMonth={true}
+            />
+            <PosyanduTable
+              data={getPosyanduData(
+                selectedVillage && selectedMonth
+                  ? filterByMonth(filterByVillage(filteredByYear, selectedVillage), selectedMonth)
+                  : []
+              )}
+              villages={[]}
+              months={[]}
+              selectedVillage={selectedVillage}
+              selectedMonth={selectedMonth}
+              onVillageChange={setSelectedVillage}
+              onMonthChange={setSelectedMonth}
+              allRecords={selectedVillage && selectedMonth
                 ? filterByMonth(filterByVillage(filteredByYear, selectedVillage), selectedMonth)
-                : []
-            )}
-            villages={getUniqueValues(filteredByYear, 'Desa/Kel')}
-            months={[
-              'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-              'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-            ].filter(month => 
-              filteredByYear.some(record => record['Bulan Pengukuran'] === month)
-            )}
-            selectedVillage={selectedVillage}
-            selectedMonth={selectedMonth}
-            onVillageChange={setSelectedVillage}
-            onMonthChange={setSelectedMonth}
-            allRecords={selectedVillage && selectedMonth
-              ? filterByMonth(filterByVillage(filteredByYear, selectedVillage), selectedMonth)
-              : []}
-            yearData={filteredByYear}
-          />
-        </CardContent>
-      </Card>
-    </div>
+                : []}
+              yearData={filteredByYear}
+            />
+          </CardContent>
+        </Card>
+      </motion.div>
+    </motion.div>
   );
 };
 
 export default Dashboard;
+
+// Made with Bob
