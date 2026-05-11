@@ -18,6 +18,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -174,37 +175,47 @@ const formattedDate = now.toLocaleDateString("id-ID", {
 });
 
   return (
-    
     <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen flex w-full bg-muted/30">
+      <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 md:h-16 border-b bg-card flex items-center px-3 md:px-6 sticky top-0 z-10 shadow-sm">
-            <SidebarTrigger className="mr-2 md:mr-4">
+          {/* Clean Header */}
+          <header className="h-16 border-b bg-background flex items-center px-4 md:px-6 sticky top-0 z-10">
+            <SidebarTrigger className="mr-4">
               <Menu className="h-5 w-5" />
             </SidebarTrigger>
-            <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
-              <h1 className="text-sm md:text-base lg:text-xl font-heading font-semibold text-foreground truncate">
+            <div className="flex-1 flex items-center justify-between">
+              <h1 className="text-sm md:text-base font-medium text-foreground truncate">
                 {formattedDate}
               </h1>
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 shrink-0">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-                </span>
-                <span className="text-[10px] md:text-xs font-semibold text-emerald-600 dark:text-emerald-400">Online</span>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                  </span>
+                  <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                    Online
+                  </span>
+                </div>
+                <ThemeToggle />
               </div>
             </div>
           </header>
-          <main className="flex-1 p-3 md:p-4 lg:p-6 overflow-x-hidden">
-            <div className="w-full max-w-[100vw] md:max-w-full mx-auto">
+          
+          {/* Main Content */}
+          <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-x-hidden">
+            <div className="w-full max-w-7xl mx-auto">
               {children}
             </div>
           </main>
-          <footer className="border-t bg-card py-3 md:py-4 px-4 md:px-6">
-            <p className="text-xs md:text-sm text-muted-foreground text-center">
-              © {new Date().getFullYear()} UPT Puskesmas Pulau Gadang. Build & Design by Rossa Gusti Yolanda, S.Gz
-            </p>
+          
+          {/* Clean Footer */}
+          <footer className="border-t bg-background py-4 px-4 md:px-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
+              <p>© {new Date().getFullYear()} UPT Puskesmas Pulau Gadang</p>
+              <p>Build & Design by Rossa Gusti Yolanda, S.Gz</p>
+            </div>
           </footer>
         </div>
       </div>
