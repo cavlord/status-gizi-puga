@@ -204,15 +204,18 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
                   <Cell key={`cell-${index}`} fill={entry.fill} />
                 ))}
               </Pie>
-              <Tooltip 
+              <Tooltip
                 contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
+                  backgroundColor: 'hsl(var(--popover))',
                   border: '1px solid hsl(var(--border))',
                   borderRadius: '0.5rem',
-                  fontSize: '12px'
+                  fontSize: '12px',
+                  color: 'hsl(var(--popover-foreground))'
                 }}
+                labelStyle={{ color: 'hsl(var(--popover-foreground))' }}
+                itemStyle={{ color: 'hsl(var(--popover-foreground))' }}
               />
-              <Legend 
+              <Legend
                 wrapperStyle={{ fontSize: '11px' }}
                 iconSize={10}
               />
@@ -296,15 +299,18 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
                       <Cell key={`cell-${index}`} fill={entry.fill} />
                     ))}
                   </Pie>
-                  <Tooltip 
+                  <Tooltip
                     contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
+                      backgroundColor: 'hsl(var(--popover))',
                       border: '1px solid hsl(var(--border))',
                       borderRadius: '0.5rem',
-                      fontSize: '12px'
+                      fontSize: '12px',
+                      color: 'hsl(var(--popover-foreground))'
                     }}
+                    labelStyle={{ color: 'hsl(var(--popover-foreground))' }}
+                    itemStyle={{ color: 'hsl(var(--popover-foreground))' }}
                   />
-                  <Legend 
+                  <Legend
                     wrapperStyle={{ fontSize: '11px' }}
                     iconSize={10}
                   />

@@ -184,49 +184,51 @@ export function PosyanduTable({
             <Users className="h-4 w-4 md:h-5 md:w-5 text-primary" />
             Status Gizi Per Posyandu
           </CardTitle>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3 lg:gap-4 mt-2 md:mt-3 lg:mt-4">
-            <div className="flex items-center gap-2 md:gap-3 bg-muted/50 p-2 md:p-3 rounded-lg">
-              <Building2 className="h-4 w-4 md:h-5 md:w-5 text-primary flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <label className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 block">
-                  Desa/Kelurahan
-                </label>
-                <Select value={selectedVillage} onValueChange={onVillageChange}>
-                  <SelectTrigger className="bg-background h-8 md:h-10 text-xs md:text-sm">
-                    <SelectValue placeholder="Pilih desa" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover z-50">
-                    {villages.map((village) => (
-                      <SelectItem key={village} value={village} className="text-xs md:text-sm">
-                        {village}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          {villages.length > 0 && months.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3 lg:gap-4 mt-2 md:mt-3 lg:mt-4">
+              <div className="flex items-center gap-2 md:gap-3 bg-muted/50 p-2 md:p-3 rounded-lg">
+                <Building2 className="h-4 w-4 md:h-5 md:w-5 text-primary flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <label className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 block">
+                    Desa/Kelurahan
+                  </label>
+                  <Select value={selectedVillage} onValueChange={onVillageChange}>
+                    <SelectTrigger className="bg-background h-8 md:h-10 text-xs md:text-sm">
+                      <SelectValue placeholder="Pilih desa" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover z-50">
+                      {villages.map((village) => (
+                        <SelectItem key={village} value={village} className="text-xs md:text-sm">
+                          {village}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            </div>
 
-            <div className="flex items-center gap-2 md:gap-3 bg-muted/50 p-2 md:p-3 rounded-lg">
-              <Calendar className="h-4 w-4 md:h-5 md:w-5 text-secondary flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <label className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 block">
-                  Bulan
-                </label>
-                <Select value={selectedMonth} onValueChange={onMonthChange}>
-                  <SelectTrigger className="bg-background h-8 md:h-10 text-xs md:text-sm">
-                    <SelectValue placeholder="Pilih bulan" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover z-50">
-                    {months.map((month) => (
-                      <SelectItem key={month} value={month} className="text-xs md:text-sm">
-                        {month}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="flex items-center gap-2 md:gap-3 bg-muted/50 p-2 md:p-3 rounded-lg">
+                <Calendar className="h-4 w-4 md:h-5 md:w-5 text-secondary flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <label className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 block">
+                    Bulan
+                  </label>
+                  <Select value={selectedMonth} onValueChange={onMonthChange}>
+                    <SelectTrigger className="bg-background h-8 md:h-10 text-xs md:text-sm">
+                      <SelectValue placeholder="Pilih bulan" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover z-50">
+                      {months.map((month) => (
+                        <SelectItem key={month} value={month} className="text-xs md:text-sm">
+                          {month}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </CardHeader>
         <CardContent className="p-0">
           {dataWithTidakNaik.length === 0 || (data.length === 0) ? (
