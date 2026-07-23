@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, MapPin, Clock, ChevronDown } from "lucide-react";
+import { Calendar, MapPin, Clock } from "lucide-react";
 import { useState } from "react";
 
 interface AnimatedFilterProps {
@@ -223,5 +223,3 @@ export function AnimatedFilter({
     </motion.div>
   );
 }
-
-// Made with Bob

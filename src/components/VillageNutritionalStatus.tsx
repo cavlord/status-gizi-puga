@@ -45,7 +45,10 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
   const [activeVillageIndex, setActiveVillageIndex] = useState<number | undefined>(undefined);
   const [activeStatusIndex, setActiveStatusIndex] = useState<number | undefined>(undefined);
 
-  const renderActiveShape = useCallback((props: any) => {
+  const renderActiveShape = useCallback((props: {
+    cx: number; cy: number; innerRadius: number; outerRadius: number;
+    startAngle: number; endAngle: number; fill: string;
+  }) => {
     const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
     return (
       <g>

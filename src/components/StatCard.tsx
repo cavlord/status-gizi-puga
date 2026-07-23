@@ -55,5 +55,3 @@ export function StatCard({
     </motion.div>
   );
 }
-
-// Made with Bob

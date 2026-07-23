@@ -62,5 +62,3 @@ export function useTheme() {
   }
   return context;
 }
-
-// Made with Bob

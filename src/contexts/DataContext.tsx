@@ -20,25 +20,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const { data: allRecords, isLoading, error, refetch } = useQuery<ChildRecord[]>({
     queryKey: ['sheetData', user?.email],
-    queryFn: async () => {
-      console.log('Fetching data from database for user:', user?.email);
-      const data = await fetchSheetData();
-      console.log('Fetched records count:', data?.length);
-      if (data && data.length > 0) {
-        // Log unique years found
-        const years = new Set<string>();
-        data.forEach(r => {
-          if (r['Tanggal Pengukuran']) {
-            const parts = r['Tanggal Pengukuran'].split('/');
-            if (parts.length === 3 && parts[2].length === 4) {
-              years.add(parts[2]);
-            }
-          }
-        });
-        console.log('Unique years in data:', Array.from(years).sort());
-      }
-      return data;
-    },
+    queryFn: fetchSheetData,
     staleTime: 0, // Always consider data stale to ensure fresh fetch
     gcTime: 30 * 60 * 1000, // 30 minutes
     enabled: isAuthenticated && !!user?.email,

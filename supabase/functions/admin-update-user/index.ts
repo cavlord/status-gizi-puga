@@ -3,6 +3,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { extractAuthPayload } from "../_shared/jwt.ts";
 
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -46,8 +49,9 @@ serve(async (req) => {
 
     const validationResult = updateUserSchema.safeParse(body);
     if (!validationResult.success) {
+      const parseError = validationResult as { success: false; error: { errors: { message: string }[] } };
       return new Response(
-        JSON.stringify({ error: validationResult.error.errors[0]?.message || "Input tidak valid" }),
+        JSON.stringify({ error: parseError.error.errors[0]?.message || "Input tidak valid" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -61,9 +65,7 @@ serve(async (req) => {
       );
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     // Verify the requester is an admin using verified user ID from JWT
     const { data: roleData, error: roleError } = await supabase
@@ -156,7 +158,7 @@ serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in admin-update-user:", error);
     return new Response(
       JSON.stringify({ error: "Terjadi kesalahan internal" }),
