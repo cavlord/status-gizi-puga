@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings as SettingsIcon, RefreshCw, Info, Upload, Database, Loader2 } from "lucide-react";
+import { Settings as SettingsIcon, RefreshCw, Info, Upload, Database, Loader2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -87,7 +87,7 @@ const Settings = () => {
             Manajemen Data
           </CardTitle>
           <CardDescription>
-            Kelola data dari database Lovable Cloud
+            Kelola data dari database
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -138,6 +138,36 @@ const Settings = () => {
         </CardContent>
       </Card>
 
+      {/* Auto Import Schedule */}
+      <Card className="border-0 shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-xl font-heading flex items-center gap-2">
+            <Clock className="h-5 w-5 text-primary" />
+            Jadwal Import Otomatis
+          </CardTitle>
+          <CardDescription>
+            Import data dari Google Sheets berjalan otomatis setiap hari
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+              <Clock className="h-5 w-5 text-green-600 dark:text-green-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-medium">Setiap hari pukul 07:00 WIB</h3>
+              <p className="text-sm text-muted-foreground">
+                Sistem secara otomatis menyinkronkan data dari Google Sheets ke database setiap hari pukul 07:00 pagi. Tidak diperlukan tindakan manual.
+              </p>
+            </div>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-green-100 dark:bg-green-900/30 px-3 py-1 text-xs font-medium text-green-700 dark:text-green-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+              Aktif
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Application Info */}
       <Card className="border-0 shadow-lg">
         <CardHeader>
@@ -166,7 +196,7 @@ const Settings = () => {
             <div className="p-4 bg-muted/50 rounded-lg">
               <h3 className="font-medium mb-2">Sumber Data</h3>
               <p className="text-sm text-muted-foreground">
-                Database Lovable Cloud
+                Database Supabase
               </p>
             </div>
             <div className="p-4 bg-muted/50 rounded-lg">
@@ -184,7 +214,7 @@ const Settings = () => {
             </h3>
             <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
               <li>Data balita yang ditampilkan hanya untuk usia di bawah 5 tahun</li>
-              <li>Data disimpan di database Lovable Cloud yang aman</li>
+              <li>Data disimpan di database yang aman</li>
               <li>Gunakan filter tahun, desa, dan bulan untuk analisis spesifik</li>
               <li>Klik pada kartu status gizi untuk melihat detail anak per kategori</li>
               {isAdmin && <li>Admin dapat mengimport data terbaru dari Google Sheets</li>}

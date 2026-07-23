@@ -1,7 +1,7 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { hashSync } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
-import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { serve } from "std/http/server";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { hashSync } from "bcrypt";
+import { z } from "zod";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -14,7 +14,7 @@ const corsHeaders = {
 const RATE_LIMIT_MAX = 3;
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 
-async function checkRateLimit(supabase: any, key: string): Promise<{ allowed: boolean; retryAfterSeconds?: number }> {
+async function checkRateLimit(supabase: SupabaseClient, key: string): Promise<{ allowed: boolean; retryAfterSeconds?: number }> {
   const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
   const { data, error } = await supabase
     .from("rate_limits")
@@ -35,7 +35,7 @@ async function checkRateLimit(supabase: any, key: string): Promise<{ allowed: bo
   return { allowed: true };
 }
 
-async function recordAttempt(supabase: any, key: string): Promise<void> {
+async function recordAttempt(supabase: SupabaseClient, key: string): Promise<void> {
   const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
   await supabase.from("rate_limits").delete().eq("key", key).lt("first_attempt_at", windowStart);
 
@@ -61,11 +61,14 @@ async function recordAttempt(supabase: any, key: string): Promise<void> {
 const registerSchema = z.object({
   email: z.string()
     .email({ message: "Format email tidak valid" })
-    .max(255, { message: "Email terlalu panjang (maksimal 255 karakter)" })
-    .transform(val => val.toLowerCase().trim()),
+    .max(255, { message: "Email terlalu panjang (maksimal 255 karakter)" }),
   password: z.string()
-    .min(8, { message: "Password minimal 8 karakter" })
+    .min(12, { message: "Password minimal 12 karakter" })
     .max(128, { message: "Password terlalu panjang (maksimal 128 karakter)" })
+    .regex(/[A-Z]/, { message: "Password harus mengandung minimal 1 huruf besar" })
+    .regex(/[a-z]/, { message: "Password harus mengandung minimal 1 huruf kecil" })
+    .regex(/[0-9]/, { message: "Password harus mengandung minimal 1 angka" })
+    .regex(/[^A-Za-z0-9]/, { message: "Password harus mengandung minimal 1 karakter khusus" }),
 });
 
 function generateOTP(): string {
@@ -138,7 +141,8 @@ serve(async (req) => {
 
     const validationResult = registerSchema.safeParse(body);
     if (!validationResult.success) {
-      const firstError = validationResult.error.errors[0]?.message || "Input tidak valid";
+      const parseError = validationResult as { success: false; error: { errors: { message: string }[] } };
+      const firstError = parseError.error.errors[0]?.message || "Input tidak valid";
       return new Response(
         JSON.stringify({ error: firstError }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -178,6 +182,7 @@ serve(async (req) => {
       );
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
     const hashedPassword = hashSync(password);
     const otp = generateOTP();
     const otpHash = hashSync(otp);
@@ -204,7 +209,7 @@ serve(async (req) => {
       const { error: insertError } = await supabase
         .from('users')
         .insert({
-          email,
+          email: normalizedEmail,
           password_hash: hashedPassword,
           otp: otpHash,
           otp_expiry: otpExpiry,
@@ -220,23 +225,23 @@ serve(async (req) => {
     }
 
     // Send OTP via Brevo
-    await sendOTPEmailBrevo(email, otp);
+    await sendOTPEmailBrevo(normalizedEmail, otp);
 
-    console.log("Registration initiated for:", email);
+    console.log("Registration initiated for:", normalizedEmail);
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         message: "Kode verifikasi telah dikirim ke email Anda",
-        email
+        email: normalizedEmail
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Registration error:", error);
     return new Response(
-      JSON.stringify({ error: error.message || "Terjadi kesalahan saat registrasi" }),
+      JSON.stringify({ error: error instanceof Error ? error.message : "Terjadi kesalahan saat registrasi" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

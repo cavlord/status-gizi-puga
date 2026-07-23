@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { hashSync } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+import { hashSync } from "bcrypt";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -128,10 +128,10 @@ serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Resend OTP error:", error);
     return new Response(
-      JSON.stringify({ error: error.message || "Gagal mengirim kode verifikasi" }),
+      JSON.stringify({ error: error instanceof Error ? error.message : "Gagal mengirim kode verifikasi" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

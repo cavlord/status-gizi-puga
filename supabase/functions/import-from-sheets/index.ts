@@ -82,8 +82,9 @@ serve(async (req) => {
 
     const validationResult = importSchema.safeParse(body);
     if (!validationResult.success) {
+      const parseError = validationResult as { success: false; error: { errors: { message: string }[] } };
       return new Response(
-        JSON.stringify({ error: validationResult.error.errors[0]?.message || "Input tidak valid" }),
+        JSON.stringify({ error: parseError.error.errors[0]?.message || "Input tidak valid" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -235,7 +236,7 @@ serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Import error:", error);
     return new Response(
       JSON.stringify({ error: "Terjadi kesalahan internal" }),

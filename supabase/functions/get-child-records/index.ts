@@ -62,8 +62,9 @@ serve(async (req) => {
 
     const validationResult = requestSchema.safeParse(body);
     if (!validationResult.success) {
+      const parseError = validationResult as { success: false; error: { errors: { message: string }[] } };
       return new Response(
-        JSON.stringify({ error: validationResult.error.errors[0]?.message || "Input tidak valid", data: [] }),
+        JSON.stringify({ error: parseError.error.errors[0]?.message || "Input tidak valid", data: [] }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -71,9 +72,7 @@ serve(async (req) => {
     const { offset, limit, fetchAll } = validationResult.data;
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    const selectQuery = `*`;
-
-    const transformRecord = (r: any) => ({
+    const transformRecord = (r: Record<string, unknown>) => ({
       nik: r.nik || "",
       nama: r.nama || "",
       jenis_kelamin: r.jk || "",
@@ -116,7 +115,7 @@ serve(async (req) => {
     if (fetchAll) {
       const { count, error: countError } = await supabase
         .from("child_records")
-        .select("*", { count: "exact", head: true });
+        .select("id", { count: "exact", head: true });
 
       if (countError) {
         return new Response(
@@ -135,7 +134,7 @@ serve(async (req) => {
         batchPromises.push(
           supabase
             .from("child_records")
-            .select(selectQuery)
+            .select("*")
             .range(batchOffset, batchOffset + batchSize - 1)
             .limit(batchSize)
         );
@@ -162,7 +161,7 @@ serve(async (req) => {
 
     const { data: records, error: recordsError } = await supabase
       .from("child_records")
-      .select(selectQuery)
+      .select("*")
       .range(offset, offset + limit - 1);
 
     if (recordsError) {

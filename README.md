@@ -5,7 +5,7 @@
 ## 📌 Deskripsi
 
 Dashboard ini merupakan aplikasi berbasis web yang dikembangkan untuk mendukung pengelolaan dan pemantauan data operasional **UPT Puskesmas Pulau Gadang**.
-Aplikasi dibangun menggunakan pendekatan AI-assisted development dengan **Code Vibe** dan **Lovable** untuk mempercepat pembuatan antarmuka dan logika aplikasi.
+Aplikasi dibangun menggunakan pendekatan AI-assisted development dengan **Code Vibe** untuk mempercepat pembuatan antarmuka dan logika aplikasi.
 
 Dashboard menyediakan tampilan visual data yang membantu monitoring layanan kesehatan dan pelaporan internal secara efisien.
 

@@ -103,7 +103,6 @@ const Analytics = () => {
     );
   }
 
-
   const getStatusColor = (status: string) => {
     const map: Record<string, { bg: string; text: string; border: string }> = {
       "Gizi Buruk": { bg: "bg-red-500/10", text: "text-red-700 dark:text-red-400", border: "border-red-500/30" },
@@ -407,7 +406,7 @@ const Analytics = () => {
 };
 
 // Sub-components
-function InfoItem({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
+function InfoItem({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
   return (
     <div className="min-w-0">
       <p className="text-[10px] md:text-xs text-muted-foreground flex items-center gap-1">
@@ -419,8 +418,8 @@ function InfoItem({ icon: Icon, label, value }: { icon: any; label: string; valu
   );
 }
 
-function MeasureItem({ icon: Icon, label, value, change, diff }: {
-  icon: any; label: string; value: string;
+function MeasureItem({ icon: Icon, label, value }: {
+  icon: React.ElementType; label: string; value: string;
   change?: 'up' | 'down' | 'same' | null;
   diff?: number;
 }) {
