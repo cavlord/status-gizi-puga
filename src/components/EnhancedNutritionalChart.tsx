@@ -48,10 +48,11 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>)
   return null;
 };
 
-const CustomLegend = ({ payload }: any) => {
+const CustomLegend = ({ payload }: { payload?: { color: string; value: string }[] }) => {
+  if (!payload) return null;
   return (
     <div className="flex flex-wrap justify-center gap-4 mt-6">
-      {payload.map((entry: any, index: number) => (
+      {payload.map((entry, index: number) => (
         <motion.div
           key={`legend-${index}`}
           initial={{ opacity: 0, y: 10 }}
@@ -85,7 +86,7 @@ export function EnhancedNutritionalChart({ data }: EnhancedNutritionalChartProps
       <ResponsiveContainer width="100%" height={350} className="sm:!h-[400px] md:!h-[450px]">
         <LineChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }} className="sm:!mr-[30px] sm:!ml-[20px]">
           <defs>
-            {statuses.map((status, index) => (
+            {statuses.map((status) => (
               <linearGradient key={`gradient-${status}`} id={`color-${status}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor={COLORS[status as keyof typeof COLORS] || '#3b82f6'} stopOpacity={0.8}/>
                 <stop offset="95%" stopColor={COLORS[status as keyof typeof COLORS] || '#3b82f6'} stopOpacity={0.1}/>
@@ -148,5 +149,3 @@ export function EnhancedNutritionalChart({ data }: EnhancedNutritionalChartProps
     </motion.div>
   );
 }
-
-// Made with Bob

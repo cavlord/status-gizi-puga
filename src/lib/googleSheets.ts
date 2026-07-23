@@ -1,6 +1,6 @@
-import { supabase } from "@/integrations/supabase/client";
+import { safeStorage } from "@/lib/storage";
 
-const SPREADSHEET_ID = import.meta.env.VITE_SPREADSHEET_ID || '1o-Lok3oWtmGXaN5Q9CeFj4ji9WFOINYW3M_RBNBUw60';
+const SPREADSHEET_ID = import.meta.env.VITE_SPREADSHEET_ID;
 const SHEET_NAME = 'RECORDS';
 
 // Configuration constants
@@ -84,52 +84,56 @@ export interface ChildRecord {
   'status desa': string;
 }
 
-function mapDbToRecord(dbRecord: any): ChildRecord {
+function str(v: unknown): string {
+  return typeof v === 'string' ? v : v != null ? String(v) : '';
+}
+
+function mapDbToRecord(dbRecord: Record<string, unknown>): ChildRecord {
   return {
-    NIK: dbRecord.nik || '',
-    Nama: dbRecord.nama || '',
-    JK: dbRecord.jenis_kelamin || '',
-    'Tgl Lahir': dbRecord.tgl_lahir || '',
-    'BB Lahir': dbRecord.bb_lahir || '',
-    'TB Lahir': dbRecord.tb_lahir || '',
-    'Nama Ortu': dbRecord.nama_ortu || '',
-    Prov: dbRecord.provinsi || '',
-    'Kab/Kota': dbRecord.kab_kota || '',
-    Kec: dbRecord.kecamatan || '',
-    Pukesmas: dbRecord.puskesmas || '',
-    'Desa/Kel': dbRecord.desa_kelurahan || '',
-    Posyandu: dbRecord.posyandu || '',
-    RT: dbRecord.rt || '',
-    RW: dbRecord.rw || '',
-    Alamat: dbRecord.alamat || '',
-    'Usia Saat Ukur': dbRecord.usia_saat_ukur || '',
-    'Tanggal Pengukuran': dbRecord.tgl_pengukuran || '',
-    'Bulan Pengukuran': dbRecord.bulan_pengukuran || '',
+    NIK: str(dbRecord.nik),
+    Nama: str(dbRecord.nama),
+    JK: str(dbRecord.jenis_kelamin),
+    'Tgl Lahir': str(dbRecord.tgl_lahir),
+    'BB Lahir': str(dbRecord.bb_lahir),
+    'TB Lahir': str(dbRecord.tb_lahir),
+    'Nama Ortu': str(dbRecord.nama_ortu),
+    Prov: str(dbRecord.provinsi),
+    'Kab/Kota': str(dbRecord.kab_kota),
+    Kec: str(dbRecord.kecamatan),
+    Pukesmas: str(dbRecord.puskesmas),
+    'Desa/Kel': str(dbRecord.desa_kelurahan),
+    Posyandu: str(dbRecord.posyandu),
+    RT: str(dbRecord.rt),
+    RW: str(dbRecord.rw),
+    Alamat: str(dbRecord.alamat),
+    'Usia Saat Ukur': str(dbRecord.usia_saat_ukur),
+    'Tanggal Pengukuran': str(dbRecord.tgl_pengukuran),
+    'Bulan Pengukuran': str(dbRecord.bulan_pengukuran),
     'Status Bulan': '',
     'status tahun': '',
-    Berat: dbRecord.berat_badan || '',
-    Tinggi: dbRecord.tinggi_badan || '',
-    'Cara Ukur': dbRecord.cara_ukur || '',
-    LiLA: dbRecord.lila || '',
-    'BB/U': dbRecord.status_bbu || '',
-    'ZS BB/U': dbRecord.zscore_bbu || '',
-    'TB/U': dbRecord.status_tbu || '',
-    'ZS TB/U': dbRecord.zscore_tbu || '',
-    'BB/TB': dbRecord.status_bbtb || '',
-    'ZS BB/TB': dbRecord.zscore_bbtb || '',
-    'Naik Berat Badan': dbRecord.naik_bb || '',
-    'PMT Diterima (kg)': dbRecord.pmt_diterima_kg || '',
-    'Jml Vit A': dbRecord.jml_vit_a || '',
-    KPSP: dbRecord.kpsp || '',
-    KIA: dbRecord.kia || '',
-    'Detail Status': dbRecord.detail || '',
-    'status desa': dbRecord.status_desa || '',
+    Berat: str(dbRecord.berat_badan),
+    Tinggi: str(dbRecord.tinggi_badan),
+    'Cara Ukur': str(dbRecord.cara_ukur),
+    LiLA: str(dbRecord.lila),
+    'BB/U': str(dbRecord.status_bbu),
+    'ZS BB/U': str(dbRecord.zscore_bbu),
+    'TB/U': str(dbRecord.status_tbu),
+    'ZS TB/U': str(dbRecord.zscore_tbu),
+    'BB/TB': str(dbRecord.status_bbtb),
+    'ZS BB/TB': str(dbRecord.zscore_bbtb),
+    'Naik Berat Badan': str(dbRecord.naik_bb),
+    'PMT Diterima (kg)': str(dbRecord.pmt_diterima_kg),
+    'Jml Vit A': str(dbRecord.jml_vit_a),
+    KPSP: str(dbRecord.kpsp),
+    KIA: str(dbRecord.kia),
+    'Detail Status': str(dbRecord.detail),
+    'status desa': str(dbRecord.status_desa),
   };
 }
 
 // Utility functions
 function getAuthToken(): string | null {
-  return localStorage.getItem(AUTH_TOKEN_KEY);
+  return safeStorage.getItem(AUTH_TOKEN_KEY);
 }
 
 function logError(message: string, error?: unknown): void {
@@ -139,8 +143,8 @@ function logError(message: string, error?: unknown): void {
 }
 
 function handleAuthenticationFailure(): never {
-  localStorage.removeItem(AUTH_DATA_KEY);
-  localStorage.removeItem(AUTH_TOKEN_KEY);
+  safeStorage.removeItem(AUTH_DATA_KEY);
+  safeStorage.removeItem(AUTH_TOKEN_KEY);
   window.location.href = AUTH_REDIRECT_PATH;
   throw new AuthenticationError('Authentication required');
 }
@@ -228,7 +232,7 @@ export async function fetchSheetData(): Promise<ChildRecord[]> {
   const endpoint = `${supabaseUrl}/functions/v1/get-child-records`;
 
   const result = await retryWithBackoff(
-    () => makeAuthenticatedRequest<any>(endpoint, token, { fetchAll: true }, REQUEST_TIMEOUT_MS),
+    () => makeAuthenticatedRequest<Record<string, unknown>>(endpoint, token, { fetchAll: true }, REQUEST_TIMEOUT_MS),
     {
       maxRetries: MAX_RETRIES,
       baseDelay: BASE_RETRY_DELAY_MS,
@@ -243,16 +247,16 @@ export async function fetchSheetData(): Promise<ChildRecord[]> {
   return result.data.map(mapDbToRecord);
 }
 
-export async function importFromGoogleSheets(userEmail: string): Promise<{ success: boolean; message: string; count?: number }> {
+export async function importFromGoogleSheets(_userEmail: string): Promise<{ success: boolean; message: string; count?: number }> {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const token = getAuthToken();
-  
+
   if (!token) {
     return { success: false, message: 'Not authenticated' };
   }
-  
+
   const url = `${supabaseUrl}/functions/v1/import-from-sheets`;
-  
+
   try {
     const response = await fetch(url, {
       method: 'POST',
@@ -265,16 +269,16 @@ export async function importFromGoogleSheets(userEmail: string): Promise<{ succe
         sheetName: SHEET_NAME,
       }),
     });
-    
-    const result = await response.json();
-    
+
+    const result = await response.json() as { error?: string; message?: string; count?: number };
+
     if (!response.ok) {
       return { success: false, message: result.error || 'Import failed' };
     }
-    
-    return { success: true, message: result.message, count: result.count };
+
+    return { success: true, message: result.message ?? '', count: result.count };
   } catch (error) {
-    console.error('Error importing from Google Sheets:', error);
+    logError('Error importing from Google Sheets:', error);
     return { success: false, message: 'Failed to connect to import service' };
   }
 }

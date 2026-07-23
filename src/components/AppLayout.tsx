@@ -1,10 +1,9 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Database, BarChart3, Settings, Menu, LogOut, Users } from "lucide-react";
+import { LayoutDashboard, BarChart3, Settings, Menu, LogOut, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -42,7 +41,6 @@ function AppSidebar() {
     }
   };
 
-  
   return (
     <Sidebar 
       className="border-r border-sidebar-border" 
@@ -159,20 +157,20 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const [now, setNow] = useState(new Date());
-useEffect(() => {
-  const timer = setInterval(() => {
-    setNow(new Date());
-  }, 1000);
 
-  return () => clearInterval(timer);
-}, []);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
-const formattedDate = now.toLocaleDateString("id-ID", {
-  weekday: "long",
-  day: "2-digit",
-  month: "long",
-  year: "numeric",
-});
+  const formattedDate = now.toLocaleDateString("id-ID", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
 
   return (
     <SidebarProvider defaultOpen={true}>
