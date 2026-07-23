@@ -52,6 +52,9 @@ const Dashboard = () => {
   const [selectedVillage, setSelectedVillage] = useState<string>("");
   const [selectedMonth, setSelectedMonth] = useState<string>("");
 
+  const [showNotGainingModal, setShowNotGainingModal] = useState(false);
+  const [showCumulativeModal, setShowCumulativeModal] = useState(false);
+
   const { allRecords, error } = useData();
 
   useEffect(() => {
@@ -375,9 +378,6 @@ const Dashboard = () => {
   };
 
   const cumulativeNotGainingData = getCumulativeNotGainingWeight();
-
-  const [showNotGainingModal, setShowNotGainingModal] = useState(false);
-  const [showCumulativeModal, setShowCumulativeModal] = useState(false);
 
   const chartData = getNutritionalStatusByMonth(filteredByYear);
 

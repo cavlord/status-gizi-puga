@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -109,14 +109,7 @@ export default function UserManagement() {
     checkAdminStatus();
   }, [isAuthenticated, user?.email]);
 
-  // Fetch users when admin is confirmed
-  useEffect(() => {
-    if (isAdmin) {
-      fetchUsers();
-    }
-  }, [isAdmin]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     if (!user?.email) return;
     
     setIsLoading(true);
@@ -142,13 +135,20 @@ export default function UserManagement() {
       }
 
       setUsers(data.users || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching users:", error);
-      toast.error(error.message || "Gagal memuat data user");
+      toast.error(error instanceof Error ? error.message : "Gagal memuat data user");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user?.email]);
+
+  // Fetch users when admin is confirmed
+  useEffect(() => {
+    if (isAdmin) {
+      fetchUsers();
+    }
+  }, [isAdmin, fetchUsers]);
 
   const generateOTP = (): string => {
     const array = new Uint32Array(1);
@@ -199,9 +199,9 @@ export default function UserManagement() {
       
       // Refresh user list
       fetchUsers();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error generating OTP:", error);
-      toast.error(error.message || "Gagal membuat OTP");
+      toast.error(error instanceof Error ? error.message : "Gagal membuat OTP");
     } finally {
       setIsProcessing(false);
     }
@@ -249,9 +249,9 @@ export default function UserManagement() {
       toast.success(`User ${selectedUser.email} berhasil dinonaktifkan`);
       setShowDeactivateDialog(false);
       fetchUsers();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error deactivating user:", error);
-      toast.error(error.message || "Gagal menonaktifkan user");
+      toast.error(error instanceof Error ? error.message : "Gagal menonaktifkan user");
     } finally {
       setIsProcessing(false);
     }
@@ -287,9 +287,9 @@ export default function UserManagement() {
 
       toast.success(`User ${targetUser.email} berhasil diaktifkan`);
       fetchUsers();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error activating user:", error);
-      toast.error(error.message || "Gagal mengaktifkan user");
+      toast.error(error instanceof Error ? error.message : "Gagal mengaktifkan user");
     } finally {
       setIsProcessing(false);
     }
@@ -330,9 +330,9 @@ export default function UserManagement() {
       toast.success(`User ${selectedUser.email} berhasil dihapus`);
       setShowDeleteDialog(false);
       fetchUsers();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error deleting user:", error);
-      toast.error(error.message || "Gagal menghapus user");
+      toast.error(error instanceof Error ? error.message : "Gagal menghapus user");
     } finally {
       setIsProcessing(false);
     }

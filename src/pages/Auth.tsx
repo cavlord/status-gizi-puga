@@ -73,8 +73,8 @@ const AuthPage = () => {
       setOtpValue('');
       setMode('register-otp');
       toast({ title: 'Kode OTP Dikirim', description: 'Cek email Anda untuk kode verifikasi' });
-    } catch (error: any) {
-      toast({ title: 'Registrasi Gagal', description: error.message || 'Terjadi kesalahan', variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({ title: 'Registrasi Gagal', description: error instanceof Error ? error.message : 'Terjadi kesalahan', variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
@@ -96,8 +96,8 @@ const AuthPage = () => {
       if (!response.ok) throw new Error(result.error || 'Verifikasi gagal');
       setMode('registered');
       toast({ title: 'Email Terverifikasi', description: 'Menunggu persetujuan admin untuk akses dashboard' });
-    } catch (error: any) {
-      toast({ title: 'Verifikasi Gagal', description: error.message, variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({ title: 'Verifikasi Gagal', description: error instanceof Error ? error.message : 'Verifikasi gagal', variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
@@ -115,8 +115,8 @@ const AuthPage = () => {
       if (!response.ok) throw new Error(result.error || 'Gagal kirim ulang OTP');
       setOtpValue('');
       toast({ title: 'OTP Dikirim Ulang', description: 'Cek email Anda untuk kode verifikasi baru' });
-    } catch (error: any) {
-      toast({ title: 'Gagal', description: error.message, variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({ title: 'Gagal', description: error instanceof Error ? error.message : 'Terjadi kesalahan', variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
@@ -138,8 +138,8 @@ const AuthPage = () => {
       if (!response.ok) throw new Error(result.error || 'Gagal mengirim OTP');
       toast({ title: 'OTP Dikirim', description: 'Cek email Anda untuk kode OTP' });
       setMode('forgot-otp');
-    } catch (error: any) {
-      toast({ title: 'Gagal', description: error.message, variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({ title: 'Gagal', description: error instanceof Error ? error.message : 'Terjadi kesalahan', variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
@@ -160,8 +160,8 @@ const AuthPage = () => {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Kode OTP salah');
       setMode('reset-password');
-    } catch (error: any) {
-      toast({ title: 'Verifikasi Gagal', description: error.message, variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({ title: 'Verifikasi Gagal', description: error instanceof Error ? error.message : 'Verifikasi gagal', variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
@@ -187,8 +187,8 @@ const AuthPage = () => {
       if (!response.ok) throw new Error(result.error || 'Gagal reset password');
       toast({ title: 'Berhasil', description: 'Password berhasil direset. Silakan login.' });
       switchMode('login');
-    } catch (error: any) {
-      toast({ title: 'Gagal', description: error.message, variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({ title: 'Gagal', description: error instanceof Error ? error.message : 'Terjadi kesalahan', variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
