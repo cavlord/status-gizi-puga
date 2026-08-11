@@ -333,8 +333,8 @@ const Dashboard = () => {
     });
     const sortedMonths = Array.from(monthSet).sort();
 
-    const cumulativeChildren: ChildRecord[] = [];
-    const seen = new Set<string>();
+    // Map: childName → most recent record where they did not gain weight
+    const latestNotGaining = new Map<string, ChildRecord>();
 
     for (let i = 1; i < sortedMonths.length; i++) {
       const prevKey = sortedMonths[i - 1];
@@ -360,20 +360,21 @@ const Dashboard = () => {
         const prevWeight = parseFloat(latestPrev.Berat);
         const currWeight = parseFloat(latestCurr.Berat);
 
-        const key = `${childName}-${currKey}`;
-        if (!isNaN(prevWeight) && !isNaN(currWeight) && currWeight <= prevWeight && !seen.has(key)) {
-          seen.add(key);
+        if (!isNaN(prevWeight) && !isNaN(currWeight) && currWeight <= prevWeight) {
           const formattedDate = formatDate(latestCurr['Tanggal Pengukuran']);
           if (!formattedDate.includes('NaN')) {
-            cumulativeChildren.push({
-              ...latestCurr,
-              'Tanggal Pengukuran': formattedDate
-            });
+            const candidate = { ...latestCurr, 'Tanggal Pengukuran': formattedDate };
+            // Keep only the most recent occurrence per child
+            const existing = latestNotGaining.get(childName);
+            if (!existing || parseDate(formattedDate) > parseDate(existing['Tanggal Pengukuran'])) {
+              latestNotGaining.set(childName, candidate);
+            }
           }
         }
       });
     }
 
+    const cumulativeChildren = Array.from(latestNotGaining.values());
     return { count: cumulativeChildren.length, children: cumulativeChildren };
   };
 
