@@ -352,10 +352,10 @@ export function countByVillage(records: ChildRecord[]): { village: string; count
   const villageMap = new Map<string, Set<string>>();
   records.forEach(record => {
     const village = record['Desa/Kel'];
-    const name = record.Nama;
-    if (!village || !name || village.trim() === '' || name.trim() === '') return;
+    const key = record.NIK?.trim() || record.Nama;
+    if (!village || !key || village.trim() === '') return;
     if (!villageMap.has(village)) villageMap.set(village, new Set());
-    villageMap.get(village)!.add(name);
+    villageMap.get(village)!.add(key);
   });
   return Array.from(villageMap.entries())
     .map(([village, names]) => ({ village, count: names.size }))
@@ -370,12 +370,12 @@ export function getNutritionalStatusByMonth(records: ChildRecord[]): {
   records.forEach(record => {
     const month = record['Bulan Pengukuran'];
     const status = record['BB/TB'];
-    const name = record.Nama;
-    if (!month || !status || !name || month.trim() === '' || status.trim() === '' || name.trim() === '') return;
+    const key = record.NIK?.trim() || record.Nama; // NIK is unique; fall back to name
+    if (!month || !status || !key || month.trim() === '' || status.trim() === '') return;
     if (!monthMap.has(month)) monthMap.set(month, new Map());
     const statusMap = monthMap.get(month)!;
     if (!statusMap.has(status)) statusMap.set(status, new Set());
-    statusMap.get(status)!.add(name);
+    statusMap.get(status)!.add(key);
   });
   const result: { month: string; [key: string]: number | string }[] = [];
   const monthOrder = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
@@ -399,13 +399,13 @@ export function getPosyanduData(records: ChildRecord[]): {
   records.forEach(record => {
     const status = record['BB/TB'];
     const posyandu = record.Posyandu;
-    const name = record.Nama;
-    if (!status || !posyandu || !name || status.trim() === '' || posyandu.trim() === '' || name.trim() === '') return;
+    const key = record.NIK?.trim() || record.Nama; // NIK is unique; fall back to name
+    if (!status || !posyandu || !key || status.trim() === '' || posyandu.trim() === '') return;
     allPosyandus.add(posyandu);
     if (!statusMap.has(status)) statusMap.set(status, new Map());
     const posyanduMap = statusMap.get(status)!;
     if (!posyanduMap.has(posyandu)) posyanduMap.set(posyandu, new Set());
-    posyanduMap.get(posyandu)!.add(name);
+    posyanduMap.get(posyandu)!.add(key);
   });
   const result: { status: string; [key: string]: number | string }[] = [];
   statusMap.forEach((posyanduMap, status) => {
