@@ -102,7 +102,24 @@ export function ChildDetailsModal({
     return { ...record, previousWeight: null, weightDiff: null };
   };
 
-  const recordsWithComparison = uniqueRecords.map(getRecordWithComparison);
+  const STATUS_ORDER: Record<string, number> = {
+    'Gizi Buruk': 0,
+    'Gizi Kurang': 1,
+    'Beresiko Gizi Lebih': 2,
+    'Berisiko Gizi Lebih': 2,
+    'Risiko Lebih': 2,
+    'Gizi Lebih': 3,
+    'Obesitas': 4,
+    'Gizi Baik': 5,
+  };
+
+  const recordsWithComparison = uniqueRecords
+    .map(getRecordWithComparison)
+    .sort((a, b) => {
+      const orderA = STATUS_ORDER[a['BB/TB']] ?? 6;
+      const orderB = STATUS_ORDER[b['BB/TB']] ?? 6;
+      return orderA - orderB;
+    });
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
