@@ -173,15 +173,20 @@ serve(async (req) => {
 
     const records = Array.from(recordMap.values());
 
-    console.log(`Sheet total rows: ${totalDataRows}, After filter: ${records.length}, Skipped no NIK: ${skippedNoNik}, Skipped no Nama: ${skippedNoNama}, Duplicates overwritten: ${duplicatesOverwritten}`);
+    // Split: records with a date use upsert (conflict on nik+date), records without use insert
+    const recordsWithDate = records.filter(r => r.tanggal_pengukuran?.trim());
+    const recordsWithoutDate = records.filter(r => !r.tanggal_pengukuran?.trim());
+
+    console.log(`Sheet total rows: ${totalDataRows}, After filter: ${records.length} (with date: ${recordsWithDate.length}, without date: ${recordsWithoutDate.length}), Skipped no NIK: ${skippedNoNik}, Skipped no Nama: ${skippedNoNama}, Duplicates overwritten: ${duplicatesOverwritten}`);
 
     const batchSize = 100;
     let upserted = 0;
     let errors = 0;
     const errorDetails: string[] = [];
 
-    for (let i = 0; i < records.length; i += batchSize) {
-      const batch = records.slice(i, i + batchSize);
+    // Upsert records that have a tanggal_pengukuran (safe to use conflict key)
+    for (let i = 0; i < recordsWithDate.length; i += batchSize) {
+      const batch = recordsWithDate.slice(i, i + batchSize);
       const { error: upsertError } = await supabase
         .from('child_records')
         .upsert(batch, {
@@ -192,6 +197,28 @@ serve(async (req) => {
       if (upsertError) {
         console.error(`Error upserting batch ${i}:`, upsertError);
         errorDetails.push(`Batch ${i}: ${upsertError.message}`);
+        errors++;
+        continue;
+      }
+
+      upserted += batch.length;
+    }
+
+    // Insert records without a date — delete existing ones for same NIK first to avoid PK conflicts
+    for (let i = 0; i < recordsWithoutDate.length; i += batchSize) {
+      const batch = recordsWithoutDate.slice(i, i + batchSize);
+      const niks = [...new Set(batch.map(r => r.nik))];
+      await supabase.from('child_records').delete()
+        .in('nik', niks)
+        .is('tanggal_pengukuran', null)
+        .or(niks.map(n => `nik.eq.${n}`).join(','));
+      const { error: insertError } = await supabase
+        .from('child_records')
+        .insert(batch);
+
+      if (insertError) {
+        console.error(`Error inserting no-date batch ${i}:`, insertError);
+        errorDetails.push(`No-date batch ${i}: ${insertError.message}`);
         errors++;
         continue;
       }
@@ -225,7 +252,8 @@ serve(async (req) => {
       console.error("Error fetching existing records for delete sync:", fetchErr);
     }
 
-    const message = `Berhasil sinkronisasi: ${upserted} record diperbarui/ditambahkan, ${deleted} record dihapus. Total baris sheet: ${totalDataRows}, dilewati (NIK kosong: ${skippedNoNik}, Nama kosong: ${skippedNoNama}, duplikat: ${duplicatesOverwritten})${errors > 0 ? `, ${errors} batch gagal` : ''}`;
+    const firstError = errorDetails[0] ?? '';
+    const message = `Berhasil sinkronisasi: ${upserted} record diperbarui/ditambahkan, ${deleted} record dihapus. Total baris sheet: ${totalDataRows}, dilewati (NIK kosong: ${skippedNoNik}, Nama kosong: ${skippedNoNama}, duplikat: ${duplicatesOverwritten})${errors > 0 ? `, ${errors} batch gagal. Error pertama: ${firstError}` : ''}`;
 
     return new Response(
       JSON.stringify({
