@@ -130,22 +130,23 @@ const Dashboard = () => {
 
   const getLatestRecords = (records: ChildRecord[]): ChildRecord[] => {
     const latestMap = new Map<string, ChildRecord>();
-    
+
     records.forEach(record => {
-      if (!record.Nama) return;
-      
-      const existingRecord = latestMap.get(record.Nama);
+      const key = record.NIK?.trim() || record.Nama; // NIK is unique; fall back to name
+      if (!key) return;
+
+      const existingRecord = latestMap.get(key);
       if (!existingRecord) {
-        latestMap.set(record.Nama, record);
+        latestMap.set(key, record);
       } else {
         const existingDate = new Date(existingRecord['Tanggal Pengukuran']);
         const newDate = new Date(record['Tanggal Pengukuran']);
         if (newDate > existingDate) {
-          latestMap.set(record.Nama, record);
+          latestMap.set(key, record);
         }
       }
     });
-    
+
     return Array.from(latestMap.values());
   };
 

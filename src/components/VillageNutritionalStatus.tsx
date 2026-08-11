@@ -84,22 +84,20 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
     return `${day}/${month}/${year}`;
   };
 
-  // Group by village for pie chart - count unique children (Nama) per village from YEAR data
+  // Group by village for pie chart - count unique children (NIK) per village from YEAR data
   const villageCountMap = new Map<string, Set<string>>();
-  
+
   yearData.forEach(record => {
     const village = record['Desa/Kel'];
-    const name = record.Nama;
-    
-    // Only count records with both village and name
-    if (!village || village.trim() === '' || !name || name.trim() === '') return;
-    
+    const key = record.NIK?.trim() || record.Nama; // NIK is unique; fall back to name
+
+    if (!village || village.trim() === '' || !key) return;
+
     if (!villageCountMap.has(village)) {
       villageCountMap.set(village, new Set());
     }
-    
-    // Count unique names (CountUnique on Nama)
-    villageCountMap.get(village)!.add(name);
+
+    villageCountMap.get(village)!.add(key);
   });
 
   const villageChartData = Array.from(villageCountMap.entries())
