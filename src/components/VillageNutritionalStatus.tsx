@@ -153,6 +153,40 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
     { name: "Gizi Buruk", value: totalGiziBuruk, fill: STATUS_COLORS["Gizi Buruk"] },
   ].filter(item => item.value > 0);
 
+  const renderPieLabel = ({ percent, cx, midAngle, outerRadius }: {
+    percent: number; cx: number; midAngle: number; outerRadius: number;
+  }) => {
+    if (percent < 0.05) return null; // skip tiny slices
+    const RADIAN = Math.PI / 180;
+    const radius = outerRadius + 24;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = 110 + (outerRadius + 24) * Math.sin(-midAngle * RADIAN); // fixed cy=110
+    return (
+      <text
+        x={x}
+        y={y}
+        fill="hsl(220 9% 46%)"
+        textAnchor={x > cx ? 'start' : 'end'}
+        dominantBaseline="central"
+        style={{ fontSize: '12px', fontWeight: 600 }}
+      >
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
+  };
+
+  const tooltipStyle = {
+    contentStyle: {
+      backgroundColor: 'hsl(var(--popover))',
+      border: '1px solid hsl(var(--border))',
+      borderRadius: '0.5rem',
+      fontSize: '12px',
+      color: 'hsl(var(--popover-foreground))',
+    },
+    labelStyle: { color: 'hsl(var(--popover-foreground))' },
+    itemStyle: { color: 'hsl(var(--popover-foreground))' },
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 transition-all duration-300">
       {/* Pie Chart - Sebaran Balita Per Desa */}
@@ -164,15 +198,14 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
           </CardTitle>
         </CardHeader>
         <CardContent className="p-3 md:p-4 pt-0">
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={280}>
             <PieChart>
               <Pie
                 data={villageChartData}
                 cx="50%"
-                cy="50%"
-                innerRadius={40}
-                outerRadius={80}
-                fill="#8884d8"
+                cy={110}
+                innerRadius={50}
+                outerRadius={90}
                 dataKey="value"
                 paddingAngle={3}
                 animationBegin={0}
@@ -182,54 +215,26 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
                 onMouseEnter={(_, index) => setActiveVillageIndex(index)}
                 onMouseLeave={() => setActiveVillageIndex(undefined)}
                 onClick={(_, index) => setActiveVillageIndex(prev => prev === index ? undefined : index)}
-                label={({ percent, cx, cy, midAngle, outerRadius }) => {
-                  const RADIAN = Math.PI / 180;
-                  const radius = outerRadius + 20;
-                  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                  const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                  const isMobile = window.innerWidth < 768;
-                  
-                  return (
-                    <text 
-                      x={x} 
-                      y={y} 
-                      fill="hsl(220 9% 46%)" 
-                      textAnchor={x > cx ? 'start' : 'end'} 
-                      dominantBaseline="central"
-                      style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: 600 }}
-                    >
-                      {`${(percent * 100).toFixed(0)}%`}
-                    </text>
-                  );
-                }}
+                label={renderPieLabel}
+                labelLine={false}
               >
                 {villageChartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.fill} />
                 ))}
               </Pie>
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--popover))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '0.5rem',
-                  fontSize: '12px',
-                  color: 'hsl(var(--popover-foreground))'
-                }}
-                labelStyle={{ color: 'hsl(var(--popover-foreground))' }}
-                itemStyle={{ color: 'hsl(var(--popover-foreground))' }}
-              />
+              <Tooltip {...tooltipStyle} />
               <Legend
-                wrapperStyle={{ fontSize: '11px' }}
+                wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }}
                 iconSize={10}
               />
             </PieChart>
           </ResponsiveContainer>
-          
-          {/* Village Summary Cards - matching right side style */}
+
+          {/* Village Summary Cards */}
           <div className="grid grid-cols-2 gap-2 mt-3">
             {villageChartData.map((village, index) => (
-              <div 
-                key={index} 
+              <div
+                key={index}
                 className="p-3 rounded-lg border text-center"
                 style={{ borderTop: `3px solid ${village.fill}` }}
               >
@@ -256,18 +261,16 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
           </CardTitle>
         </CardHeader>
         <CardContent className="p-3 md:p-4 pt-0">
-          {/* Chart visualization */}
           {statusChartData.length > 0 && (
             <div className="mb-3">
-              <ResponsiveContainer width="100%" height={220}>
+              <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
                   <Pie
                     data={statusChartData}
                     cx="50%"
-                    cy="50%"
-                    innerRadius={40}
-                    outerRadius={80}
-                    fill="#8884d8"
+                    cy={110}
+                    innerRadius={50}
+                    outerRadius={90}
                     dataKey="value"
                     paddingAngle={3}
                     animationBegin={0}
@@ -277,44 +280,16 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
                     onMouseEnter={(_, index) => setActiveStatusIndex(index)}
                     onMouseLeave={() => setActiveStatusIndex(undefined)}
                     onClick={(_, index) => setActiveStatusIndex(prev => prev === index ? undefined : index)}
-                    label={({ percent, cx, cy, midAngle, outerRadius }) => {
-                      const RADIAN = Math.PI / 180;
-                      const radius = outerRadius + 20;
-                      const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                      const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                      const isMobile = window.innerWidth < 768;
-                      
-                      return (
-                        <text 
-                          x={x} 
-                          y={y} 
-                          fill="hsl(220 9% 46%)" 
-                          textAnchor={x > cx ? 'start' : 'end'} 
-                          dominantBaseline="central"
-                          style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: 600 }}
-                        >
-                          {`${(percent * 100).toFixed(0)}%`}
-                        </text>
-                      );
-                    }}
+                    label={renderPieLabel}
+                    labelLine={false}
                   >
                     {statusChartData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.fill} />
                     ))}
                   </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--popover))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '0.5rem',
-                      fontSize: '12px',
-                      color: 'hsl(var(--popover-foreground))'
-                    }}
-                    labelStyle={{ color: 'hsl(var(--popover-foreground))' }}
-                    itemStyle={{ color: 'hsl(var(--popover-foreground))' }}
-                  />
+                  <Tooltip {...tooltipStyle} />
                   <Legend
-                    wrapperStyle={{ fontSize: '11px' }}
+                    wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }}
                     iconSize={10}
                   />
                 </PieChart>
