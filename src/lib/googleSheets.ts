@@ -1,6 +1,6 @@
 import { safeStorage } from "@/lib/storage";
 
-const SPREADSHEET_ID = import.meta.env.VITE_SPREADSHEET_ID;
+const SPREADSHEET_ID = import.meta.env.VITE_SPREADSHEET_ID || '1o-Lok3oWtmGXaN5Q9CeFj4ji9WFOINYW3M_RBNBUw60';
 const SHEET_NAME = 'RECORDS';
 
 // Configuration constants
