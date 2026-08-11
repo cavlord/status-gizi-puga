@@ -135,8 +135,8 @@ serve(async (req) => {
           supabase
             .from("child_records")
             .select("*")
+            .order("id", { ascending: true })
             .range(batchOffset, batchOffset + batchSize - 1)
-            .limit(batchSize)
         );
       }
 

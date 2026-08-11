@@ -19,6 +19,7 @@ const importSchema = z.object({
   sheetName: z.string().min(1).max(100),
 });
 
+// Maps Google Sheet column headers → DB column names
 const headerMap: Record<string, string> = {
   'NIK': 'nik', 'Nama': 'nama', 'JK': 'jk', 'Tgl Lahir': 'tgl_lahir',
   'BB Lahir': 'bb_lahir', 'TB Lahir': 'tb_lahir', 'Nama Ortu': 'nama_ortu',
@@ -34,26 +35,30 @@ const headerMap: Record<string, string> = {
   'KPSP': 'kpsp', 'KIA': 'kia', 'Detail Status': 'detail_status', 'status desa': 'status_desa',
 };
 
-async function fetchAllExistingRecords(supabase: any) {
-  const allRecords: any[] = [];
-  const pageSize = 1000;
-  let from = 0;
-  
-  while (true) {
-    const { data, error } = await supabase
-      .from('child_records')
-      .select('id, nik, tanggal_pengukuran')
-      .range(from, from + pageSize - 1);
-    
-    if (error) throw error;
-    if (!data || data.length === 0) break;
-    
-    allRecords.push(...data);
-    if (data.length < pageSize) break;
-    from += pageSize;
+// Only the columns that exist in the DB — used to strip any extra fields before insert
+const DB_COLUMNS = new Set([
+  'nik', 'nama', 'jk', 'tgl_lahir', 'bb_lahir', 'tb_lahir', 'nama_ortu',
+  'prov', 'kab_kota', 'kec', 'puskesmas', 'desa_kel', 'posyandu', 'rt', 'rw',
+  'alamat', 'usia_saat_ukur', 'tanggal_pengukuran', 'bulan_pengukuran',
+  'status_bulan', 'status_tahun', 'berat', 'tinggi', 'cara_ukur', 'lila',
+  'bb_u', 'zs_bb_u', 'tb_u', 'zs_tb_u', 'bb_tb', 'zs_bb_tb',
+  'naik_berat_badan', 'pmt_diterima', 'jml_vit_a', 'kpsp', 'kia',
+  'detail_status', 'status_desa',
+]);
+
+type DbRecord = Record<string, string | null>;
+
+function toDbRecord(raw: Record<string, string>): DbRecord {
+  const out: DbRecord = {};
+  for (const col of DB_COLUMNS) {
+    // Convert empty string to null so DB constraints are happy
+    const val = raw[col];
+    out[col] = val && val.trim() !== '' ? val.trim() : null;
   }
-  
-  return allRecords;
+  // nik and nama must not be null (NOT NULL columns)
+  out['nik'] = raw['nik']?.trim() || null;
+  out['nama'] = raw['nama']?.trim() || null;
+  return out;
 }
 
 serve(async (req) => {
@@ -113,6 +118,7 @@ serve(async (req) => {
       );
     }
 
+    // Fetch sheet data
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values/${encodeURIComponent(sheetName)}?key=${GOOGLE_SHEETS_API_KEY}`;
     const response = await fetch(url);
 
@@ -126,7 +132,7 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const rows = data.values;
+    const rows: string[][] = data.values;
 
     if (!rows || rows.length < 2) {
       return new Response(
@@ -135,113 +141,101 @@ serve(async (req) => {
       );
     }
 
-    const headers = rows[0];
+    const sheetHeaders: string[] = rows[0];
     const totalDataRows = rows.length - 1;
 
-    // Parse all rows, keeping ALL records including those without nik/nama
-    const recordMap = new Map<string, Record<string, string>>();
+    // Log actual sheet headers to help diagnose column name mismatches
+    console.log(`Sheet headers: ${JSON.stringify(sheetHeaders)}`);
+
+    // Deduplicate by nik+tanggal_pengukuran, last row wins
+    const recordMap = new Map<string, DbRecord>();
     let skippedNoNik = 0;
     let skippedNoNama = 0;
     let duplicatesOverwritten = 0;
 
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
-      const record: Record<string, string> = {};
+      const raw: Record<string, string> = {};
 
-      headers.forEach((header: string, index: number) => {
-        const dbColumn = headerMap[header];
-        if (dbColumn) record[dbColumn] = row[index] || '';
+      sheetHeaders.forEach((header: string, index: number) => {
+        const dbCol = headerMap[header.trim()];
+        if (dbCol) raw[dbCol] = row[index] ?? '';
       });
 
-      if (!record.nik || record.nik.trim() === '') {
-        skippedNoNik++;
-        continue;
-      }
-      if (!record.nama || record.nama.trim() === '') {
-        skippedNoNama++;
-        continue;
-      }
+      if (!raw.nik?.trim()) { skippedNoNik++; continue; }
+      if (!raw.nama?.trim()) { skippedNoNama++; continue; }
 
-      const key = record.tanggal_pengukuran?.trim()
-        ? `${record.nik}||${record.tanggal_pengukuran}`
-        : `${record.nik}||__row_${i}`;
-      if (recordMap.has(key)) {
-        duplicatesOverwritten++;
-      }
+      const record = toDbRecord(raw);
+      const key = `${record.nik}||${record.tanggal_pengukuran ?? ''}`;
+      if (recordMap.has(key)) duplicatesOverwritten++;
       recordMap.set(key, record);
     }
 
     const records = Array.from(recordMap.values());
+    console.log(`Parsed: total=${totalDataRows}, valid=${records.length}, skippedNIK=${skippedNoNik}, skippedNama=${skippedNoNama}, dupes=${duplicatesOverwritten}`);
 
-    console.log(`Sheet total rows: ${totalDataRows}, After filter: ${records.length}, Skipped no NIK: ${skippedNoNik}, Skipped no Nama: ${skippedNoNama}, Duplicates overwritten: ${duplicatesOverwritten}`);
+    // Log first record to verify shape
+    if (records.length > 0) {
+      console.log(`Sample record: ${JSON.stringify(records[0])}`);
+    }
 
     const batchSize = 100;
     let upserted = 0;
     let errors = 0;
-    const errorDetails: string[] = [];
+    let deleted = 0;
+    let firstErrorMsg = '';
+
+    // Full sync: delete all existing rows, then re-insert from sheet.
+    // This avoids upsert conflict key issues (NULLs in tanggal_pengukuran are
+    // not matched by UNIQUE constraints in Postgres) and is the safest approach
+    // for a complete replacement import.
+    try {
+      const { error: truncateError } = await supabase
+        .from('child_records')
+        .delete()
+        .gte('id', 0); // delete all rows
+      if (truncateError) {
+        console.error('Delete-all error:', JSON.stringify(truncateError));
+        firstErrorMsg = truncateError.message;
+      }
+    } catch (delErr) {
+      console.error('Delete-all exception:', delErr);
+    }
 
     for (let i = 0; i < records.length; i += batchSize) {
       const batch = records.slice(i, i + batchSize);
-      const { error: upsertError } = await supabase
+      const { error: insertError } = await supabase
         .from('child_records')
-        .upsert(batch, {
-          onConflict: 'nik,tanggal_pengukuran',
-          ignoreDuplicates: false
-        });
+        .insert(batch);
 
-      if (upsertError) {
-        console.error(`Error upserting batch ${i}:`, upsertError);
-        errorDetails.push(`Batch ${i}: ${upsertError.message}`);
+      if (insertError) {
+        console.error(`Insert error batch ${i}:`, JSON.stringify(insertError));
+        if (!firstErrorMsg) firstErrorMsg = insertError.message;
         errors++;
         continue;
       }
-
       upserted += batch.length;
     }
 
-    // Remove records from DB that no longer exist in the sheet (paginated fetch)
-    const sheetKeys = new Set(records.map(r => `${r.nik}||${r.tanggal_pengukuran}`));
-
-    let deleted = 0;
-    try {
-      const existingRecords = await fetchAllExistingRecords(supabase);
-      console.log(`Fetched ${existingRecords.length} existing records from DB for sync check`);
-
-      const idsToDelete = existingRecords
-        .filter((r: any) => !sheetKeys.has(`${r.nik}||${r.tanggal_pengukuran}`))
-        .map((r: any) => r.id);
-
-      if (idsToDelete.length > 0) {
-        for (let i = 0; i < idsToDelete.length; i += batchSize) {
-          const batch = idsToDelete.slice(i, i + batchSize);
-          const { error: delError } = await supabase
-            .from('child_records')
-            .delete()
-            .in('id', batch);
-          if (!delError) deleted += batch.length;
-        }
-      }
-    } catch (fetchErr: any) {
-      console.error("Error fetching existing records for delete sync:", fetchErr);
-    }
-
-    const message = `Berhasil sinkronisasi: ${upserted} record diperbarui/ditambahkan, ${deleted} record dihapus. Total baris sheet: ${totalDataRows}, dilewati (NIK kosong: ${skippedNoNik}, Nama kosong: ${skippedNoNama}, duplikat: ${duplicatesOverwritten})${errors > 0 ? `, ${errors} batch gagal` : ''}`;
+    const allFailed = errors > 0 && upserted === 0;
+    const partialError = errors > 0 && upserted > 0;
+    const skipSummary = `Total baris sheet: ${totalDataRows}, dilewati (NIK kosong: ${skippedNoNik}, Nama kosong: ${skippedNoNama}, duplikat: ${duplicatesOverwritten})`;
+    const message = allFailed
+      ? `Import gagal: semua ${errors} batch error. Error: ${firstErrorMsg}. ${skipSummary}`
+      : partialError
+        ? `Import selesai dengan error: ${upserted} berhasil, ${errors} batch gagal. Error: ${firstErrorMsg}. ${skipSummary}`
+        : `Berhasil sinkronisasi: ${upserted} record diperbarui/ditambahkan, ${deleted} record dihapus. ${skipSummary}`;
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        message,
-        count: upserted,
-        deleted,
-        stats: { totalDataRows, skippedNoNik, skippedNoNama, duplicatesOverwritten, errors, errorDetails }
-      }),
+      JSON.stringify({ success: !allFailed, message, count: upserted, deleted }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error: unknown) {
-    console.error("Import error:", error);
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("Import error:", msg);
     return new Response(
-      JSON.stringify({ error: "Terjadi kesalahan internal" }),
+      JSON.stringify({ error: `Terjadi kesalahan internal: ${msg}` }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
