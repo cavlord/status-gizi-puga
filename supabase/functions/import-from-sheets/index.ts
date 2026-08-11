@@ -181,16 +181,14 @@ serve(async (req) => {
     let errors = 0;
     let firstErrorMsg = '';
 
-    // Full sync: delete all existing rows then re-insert from sheet.
-    // Avoids upsert onConflict issues with nullable tanggal_pengukuran columns
-    // (NULL != NULL in Postgres unique constraints).
-    const { error: deleteAllError } = await supabase
-      .from('child_records')
-      .delete()
-      .gte('id', 0);
-    if (deleteAllError) {
-      console.error('Delete-all error:', JSON.stringify(deleteAllError));
-      firstErrorMsg = deleteAllError.message;
+    // Full sync: truncate all existing rows then re-insert from sheet.
+    // Uses TRUNCATE via RPC (more reliable than DELETE for clearing all rows;
+    // also resets the id sequence). Avoids upsert onConflict issues with
+    // nullable tanggal_pengukuran (NULL != NULL in Postgres unique constraints).
+    const { error: truncateError } = await supabase.rpc('truncate_child_records');
+    if (truncateError) {
+      console.error('Truncate error:', JSON.stringify(truncateError));
+      firstErrorMsg = truncateError.message;
     }
 
     for (let i = 0; i < records.length; i += batchSize) {
