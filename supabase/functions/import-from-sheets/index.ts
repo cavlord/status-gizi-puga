@@ -16,7 +16,7 @@ const spreadsheetIdRegex = /^[a-zA-Z0-9_-]{20,60}$/;
 
 const importSchema = z.object({
   spreadsheetId: z.string().regex(spreadsheetIdRegex).max(60),
-  sheetName: z.string().min(1).max(100).regex(/^[a-zA-Z0-9\s_-]+$/),
+  sheetName: z.string().min(1).max(100),
 });
 
 const headerMap: Record<string, string> = {
@@ -162,7 +162,9 @@ serve(async (req) => {
         continue;
       }
 
-      const key = `${record.nik}||${record.tanggal_pengukuran}`;
+      const key = record.tanggal_pengukuran?.trim()
+        ? `${record.nik}||${record.tanggal_pengukuran}`
+        : `${record.nik}||__row_${i}`;
       if (recordMap.has(key)) {
         duplicatesOverwritten++;
       }
