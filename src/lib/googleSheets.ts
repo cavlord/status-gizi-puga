@@ -314,9 +314,9 @@ export function filterUnderFiveYears(records: ChildRecord[]): ChildRecord[] {
     const ageStr = record['Usia Saat Ukur'];
     if (!ageStr || ageStr.trim() === '') return false;
     const yearMatch = ageStr.match(/(\d+)\s*[Tt]ahun/);
-    if (!yearMatch) return false;
-    const years = parseInt(yearMatch[1]);
-    return years < 5;
+    // No "Tahun" in string → age < 1 year → always under 5
+    if (!yearMatch) return true;
+    return parseInt(yearMatch[1]) < 5;
   });
 }
 
