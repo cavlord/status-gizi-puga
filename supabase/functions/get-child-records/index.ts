@@ -76,7 +76,7 @@ serve(async (req) => {
       nik: r.nik || "",
       nama: r.nama || "",
       jenis_kelamin: r.jk || "",
-      tgl_lahir: formatDateDDMMYYYY(r.tgl_lahir),
+      tgl_lahir: formatDateDDMMYYYY(r.tgl_lahir as string | null),
       bb_lahir: r.bb_lahir != null ? String(r.bb_lahir) : "",
       tb_lahir: r.tb_lahir != null ? String(r.tb_lahir) : "",
       nama_ortu: r.nama_ortu || "",
@@ -128,28 +128,22 @@ serve(async (req) => {
       const batchSize = 1000;
       const batches = Math.ceil(totalCount / batchSize);
 
-      const batchPromises = [];
+      // Use sequential fetches with stable ordering to avoid page overlaps
+      const allRecords: ReturnType<typeof transformRecord>[] = [];
       for (let i = 0; i < batches; i++) {
         const batchOffset = i * batchSize;
-        batchPromises.push(
-          supabase
-            .from("child_records")
-            .select("*")
-            .range(batchOffset, batchOffset + batchSize - 1)
-            .limit(batchSize)
-        );
-      }
+        const { data, error } = await supabase
+          .from("child_records")
+          .select("*")
+          .order("id", { ascending: true })
+          .range(batchOffset, batchOffset + batchSize - 1);
 
-      const results = await Promise.all(batchPromises);
-      const allRecords: any[] = [];
-
-      for (const result of results) {
-        if (result.error) {
-          console.error("Error fetching batch:", result.error);
+        if (error) {
+          console.error("Error fetching batch:", error);
           continue;
         }
-        if (result.data) {
-          allRecords.push(...result.data.map(transformRecord));
+        if (data) {
+          allRecords.push(...data.map(transformRecord));
         }
       }
 
@@ -162,6 +156,7 @@ serve(async (req) => {
     const { data: records, error: recordsError } = await supabase
       .from("child_records")
       .select("*")
+      .order("id", { ascending: true })
       .range(offset, offset + limit - 1);
 
     if (recordsError) {
@@ -179,7 +174,7 @@ serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in get-child-records:", error);
     return new Response(
       JSON.stringify({ error: "Terjadi kesalahan internal", data: [] }),
