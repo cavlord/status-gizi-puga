@@ -48,6 +48,20 @@ const DB_COLUMNS = new Set([
 
 type DbRecord = Record<string, string | null>;
 
+/** Strips decimal notation that Google Sheets adds to large integers (e.g. "76.9" → "76", "1.65321E+15" → "1653210000000000"). */
+function cleanNumericString(val: string): string {
+  const trimmed = val.trim();
+  // Scientific notation: 1.65321E+15
+  if (/^-?\d+\.?\d*[eE][+\-]?\d+$/.test(trimmed)) {
+    return String(Math.round(Number(trimmed)));
+  }
+  // Decimal with .0 or any fractional: "76.9" — truncate to integer part
+  if (/^-?\d+\.\d+$/.test(trimmed)) {
+    return trimmed.split('.')[0];
+  }
+  return trimmed;
+}
+
 /** Maps a raw sheet row (keyed by db column name) to a clean DB record. */
 function toDbRecord(raw: Record<string, string>): DbRecord {
   const out: DbRecord = {};
@@ -55,7 +69,9 @@ function toDbRecord(raw: Record<string, string>): DbRecord {
     const val = raw[col];
     out[col] = val && val.trim() !== '' ? val.trim() : null;
   }
-  out['nik'] = raw['nik']?.trim() || null;
+  // NIK is stored as bigint in the DB — clean Google Sheets numeric formatting
+  const rawNik = raw['nik']?.trim() || '';
+  out['nik'] = rawNik ? cleanNumericString(rawNik) : null;
   out['nama'] = raw['nama']?.trim() || null;
   return out;
 }
