@@ -59,7 +59,10 @@ serve(async (_req) => {
       if (dbColumn) record[dbColumn] = row[index] || '';
     });
     if (!record.nik?.trim() || !record.nama?.trim()) continue;
-    recordMap.set(`${record.nik}||${record.tanggal_pengukuran}`, record);
+    const key = record.tanggal_pengukuran?.trim()
+      ? `${record.nik}||${record.tanggal_pengukuran}`
+      : `${record.nik}||__row_${i}`;
+    recordMap.set(key, record);
   }
 
   const records = Array.from(recordMap.values());

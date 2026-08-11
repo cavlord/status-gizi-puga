@@ -162,7 +162,9 @@ serve(async (req) => {
         continue;
       }
 
-      const key = `${record.nik}||${record.tanggal_pengukuran}`;
+      const key = record.tanggal_pengukuran?.trim()
+        ? `${record.nik}||${record.tanggal_pengukuran}`
+        : `${record.nik}||__row_${i}`;
       if (recordMap.has(key)) {
         duplicatesOverwritten++;
       }
