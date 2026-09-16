@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, TooltipProps } from "recharts";
-import { TrendingUp, Activity } from "lucide-react";
 
 interface EnhancedNutritionalChartProps {
   data: { month: string; [key: string]: number | string }[];
@@ -137,13 +136,13 @@ export function EnhancedNutritionalChart({ data }: EnhancedNutritionalChartProps
 
           <CartesianGrid
             strokeDasharray="3 3"
-            stroke="#94a3b8"
-            opacity={0.2}
+            stroke="hsl(var(--border))"
+            opacity={0.5}
           />
 
           <XAxis
             dataKey="month"
-            stroke="#94a3b8"
+            stroke="hsl(var(--muted-foreground))"
             fontSize={10}
             angle={-45}
             textAnchor="end"
@@ -151,7 +150,7 @@ export function EnhancedNutritionalChart({ data }: EnhancedNutritionalChartProps
           />
 
           <YAxis
-            stroke="#94a3b8"
+            stroke="hsl(var(--muted-foreground))"
             fontSize={10}
             width={35}
           />

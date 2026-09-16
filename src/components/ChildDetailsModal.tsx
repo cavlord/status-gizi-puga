@@ -5,7 +5,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ChildRecord, deduplicateByName } from "@/lib/googleSheets";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ChildDetailsModalProps {
   isOpen: boolean;
