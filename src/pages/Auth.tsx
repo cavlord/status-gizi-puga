@@ -9,8 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2, CheckCircle, ArrowLeft, KeyRound, Sparkles, Shield } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2, CheckCircle, ArrowLeft, KeyRound } from 'lucide-react';
 
 type AuthMode = 'login' | 'register' | 'register-otp' | 'registered' | 'forgot' | 'forgot-otp' | 'reset-password';
 
@@ -209,526 +208,435 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 relative overflow-hidden">
-      {/* Animated background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 dark:from-blue-500/10 dark:to-cyan-500/10 rounded-full blur-3xl"
-        />
-        <motion.div
-          animate={{
-            scale: [1, 1.3, 1],
-            opacity: [0.3, 0.5, 0.3],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 2,
-          }}
-          className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 dark:from-emerald-500/10 dark:to-teal-500/10 rounded-full blur-3xl"
-        />
-      </div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md relative z-10"
-      >
-        <div className="backdrop-blur-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-700/50 rounded-3xl shadow-2xl p-8">
-          {/* Logo and Header */}
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="text-center mb-8"
-          >
-            <div className="flex justify-center mb-4">
-              <motion.img
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+      <div className="w-full max-w-sm">
+        <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+          {/* Logo & Header */}
+          <div className="text-center mb-6">
+            <div className="flex justify-center mb-3">
+              <img
                 src="/icon/logos.svg"
                 alt="Logo Gizi X"
-                className="w-24 h-24 object-contain drop-shadow-2xl"
-                animate={{
-                  y: [0, -5, 0],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
+                className="w-14 h-14 object-contain"
               />
             </div>
             
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={mode}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
-              >
-                {mode === 'login' ? (
-                  <>
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent mb-2">
-                      Dashboard GiziX
-                    </h1>
-                    <p className="text-sm text-muted-foreground font-medium">
-                      Dihati Kampar
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <h1 className="text-2xl font-bold text-foreground mb-2">
-                      {mode === 'register' && 'Registrasi Akun'}
-                      {mode === 'register-otp' && 'Verifikasi Email'}
-                      {mode === 'registered' && 'Pendaftaran Berhasil'}
-                      {mode === 'forgot' && 'Lupa Password'}
-                      {mode === 'forgot-otp' && 'Verifikasi OTP'}
-                      {mode === 'reset-password' && 'Reset Password'}
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                      {mode === 'register' && 'Buat akun baru untuk akses dashboard'}
-                      {mode === 'register-otp' && `Kode dikirim ke ${registerEmail}`}
-                      {mode === 'registered' && 'Akun Anda telah terdaftar'}
-                      {mode === 'forgot' && 'Masukkan email untuk reset password'}
-                      {mode === 'forgot-otp' && `Kode dikirim ke ${forgotEmail}`}
-                      {mode === 'reset-password' && 'Buat password baru Anda'}
-                    </p>
-                  </>
+            {mode === 'login' ? (
+              <>
+                <h1 className="text-xl font-semibold text-foreground tracking-tight">
+                  Dashboard GiziX
+                </h1>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  Posyandu Dihati Kampar
+                </p>
+              </>
+            ) : (
+              <>
+                <h1 className="text-xl font-semibold text-foreground tracking-tight">
+                  {mode === 'register' && 'Registrasi Akun'}
+                  {mode === 'register-otp' && 'Verifikasi Email'}
+                  {mode === 'registered' && 'Pendaftaran Berhasil'}
+                  {mode === 'forgot' && 'Lupa Password'}
+                  {mode === 'forgot-otp' && 'Verifikasi OTP'}
+                  {mode === 'reset-password' && 'Reset Password'}
+                </h1>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  {mode === 'register' && 'Buat akun untuk akses sistem'}
+                  {mode === 'register-otp' && `Kode telah dikirim ke ${registerEmail}`}
+                  {mode === 'registered' && 'Akun Anda menunggu verifikasi admin'}
+                  {mode === 'forgot' && 'Masukkan email terdaftar Anda'}
+                  {mode === 'forgot-otp' && `Kode dikirim ke ${forgotEmail}`}
+                  {mode === 'reset-password' && 'Buat password baru'}
+                </p>
+              </>
+            )}
+          </div>
+
+          {/* Login Form */}
+          {mode === 'login' && (
+            <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="email" className="text-xs font-medium text-foreground">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="nama@email.com"
+                    className="pl-9 h-10"
+                    {...loginForm.register('email')}
+                  />
+                </div>
+                {loginForm.formState.errors.email && (
+                  <p className="text-xs text-destructive">{loginForm.formState.errors.email.message}</p>
                 )}
-              </motion.div>
-            </AnimatePresence>
-          </motion.div>
+              </div>
 
-          {/* Forms */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={mode}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              {/* Login Form */}
-              {mode === 'login' && (
-                <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-sm font-medium">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="nama@email.com"
-                        className="pl-10 h-11 bg-muted/50 border-border focus:border-primary transition-all"
-                        {...loginForm.register('email')}
-                      />
-                    </div>
-                    {loginForm.formState.errors.email && (
-                      <p className="text-xs text-destructive">{loginForm.formState.errors.email.message}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="password" className="text-sm font-medium">Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <Input
-                        id="password"
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="••••••••"
-                        className="pl-10 pr-10 h-11 bg-muted/50 border-border focus:border-primary transition-all"
-                        {...loginForm.register('password')}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    </div>
-                    {loginForm.formState.errors.password && (
-                      <p className="text-xs text-destructive">{loginForm.formState.errors.password.message}</p>
-                    )}
-                  </div>
-
-                  <div className="text-right">
-                    <button
-                      type="button"
-                      onClick={() => switchMode('forgot')}
-                      className="text-sm text-primary hover:text-primary/80 font-medium transition-colors"
-                    >
-                      Lupa password?
-                    </button>
-                  </div>
-
-                  <Button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full h-11 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white font-semibold rounded-xl shadow-lg transition-all"
-                  >
-                    {isLoading ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <>
-                        Login <ArrowRight className="w-5 h-5 ml-2" />
-                      </>
-                    )}
-                  </Button>
-
-                  <p className="text-center text-sm text-muted-foreground">
-                    Belum punya akun?{' '}
-                    <button
-                      type="button"
-                      onClick={() => switchMode('register')}
-                      className="text-primary hover:text-primary/80 font-semibold transition-colors"
-                    >
-                      Daftar sekarang
-                    </button>
-                  </p>
-                </form>
-              )}
-
-              {/* Register Form */}
-              {mode === 'register' && (
-                <form onSubmit={registerForm.handleSubmit(handleRegister)} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="reg-email" className="text-sm font-medium">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <Input
-                        id="reg-email"
-                        type="email"
-                        placeholder="nama@email.com"
-                        className="pl-10 h-11 bg-muted/50 border-border focus:border-primary transition-all"
-                        {...registerForm.register('email')}
-                      />
-                    </div>
-                    {registerForm.formState.errors.email && (
-                      <p className="text-xs text-destructive">{registerForm.formState.errors.email.message}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="reg-password" className="text-sm font-medium">Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <Input
-                        id="reg-password"
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="Minimal 8 karakter"
-                        className="pl-10 pr-10 h-11 bg-muted/50 border-border focus:border-primary transition-all"
-                        {...registerForm.register('password')}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    </div>
-                    {registerForm.formState.errors.password && (
-                      <p className="text-xs text-destructive">{registerForm.formState.errors.password.message}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm-password" className="text-sm font-medium">Konfirmasi Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <Input
-                        id="confirm-password"
-                        type={showConfirmPassword ? 'text' : 'password'}
-                        placeholder="Ulangi password"
-                        className="pl-10 pr-10 h-11 bg-muted/50 border-border focus:border-primary transition-all"
-                        {...registerForm.register('confirmPassword')}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    </div>
-                    {registerForm.formState.errors.confirmPassword && (
-                      <p className="text-xs text-destructive">{registerForm.formState.errors.confirmPassword.message}</p>
-                    )}
-                  </div>
-
-                  <Button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full h-11 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white font-semibold rounded-xl shadow-lg transition-all"
-                  >
-                    {isLoading ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <>
-                        Daftar <ArrowRight className="w-5 h-5 ml-2" />
-                      </>
-                    )}
-                  </Button>
-
-                  <p className="text-center text-sm text-muted-foreground">
-                    Sudah punya akun?{' '}
-                    <button
-                      type="button"
-                      onClick={() => switchMode('login')}
-                      className="text-primary hover:text-primary/80 font-semibold transition-colors"
-                    >
-                      Login
-                    </button>
-                  </p>
-                </form>
-              )}
-
-              {/* Register OTP */}
-              {mode === 'register-otp' && (
-                <div className="space-y-6">
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="p-4 bg-primary/10 rounded-full">
-                      <KeyRound className="w-8 h-8 text-primary" />
-                    </div>
-                    <InputOTP maxLength={6} value={otpValue} onChange={setOtpValue}>
-                      <InputOTPGroup>
-                        <InputOTPSlot index={0} />
-                        <InputOTPSlot index={1} />
-                        <InputOTPSlot index={2} />
-                        <InputOTPSlot index={3} />
-                        <InputOTPSlot index={4} />
-                        <InputOTPSlot index={5} />
-                      </InputOTPGroup>
-                    </InputOTP>
-                    <p className="text-xs text-muted-foreground">Kode berlaku 5 menit</p>
-                  </div>
-
-                  <Button
-                    onClick={handleVerifyRegisterOtp}
-                    disabled={isLoading || otpValue.length !== 6}
-                    className="w-full h-11 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white font-semibold rounded-xl shadow-lg transition-all"
-                  >
-                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Verifikasi <ArrowRight className="w-5 h-5 ml-2" /></>}
-                  </Button>
-
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password" className="text-xs font-medium text-foreground">Password</Label>
                   <button
-                    onClick={handleResendRegisterOtp}
-                    disabled={isLoading}
-                    className="w-full text-sm text-primary hover:text-primary/80 font-medium transition-colors"
-                  >
-                    Kirim ulang kode
-                  </button>
-
-                  <button
-                    onClick={() => switchMode('register')}
-                    className="flex items-center justify-center gap-2 w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <ArrowLeft className="w-4 h-4" /> Kembali
-                  </button>
-                </div>
-              )}
-
-              {/* Registered Success */}
-              {mode === 'registered' && (
-                <div className="space-y-6 text-center">
-                  <div className="flex justify-center">
-                    <div className="p-4 bg-emerald-500/10 rounded-full">
-                      <CheckCircle className="w-16 h-16 text-emerald-500" />
-                    </div>
-                  </div>
-                  <div className="p-4 bg-muted/50 rounded-xl">
-                    <p className="text-sm text-foreground/80 leading-relaxed">
-                      Email terverifikasi! Hubungi <strong>admin</strong> untuk mendapat akses dashboard.
-                    </p>
-                  </div>
-                  <Button
-                    onClick={() => switchMode('login')}
-                    className="w-full h-11 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white font-semibold rounded-xl shadow-lg transition-all"
-                  >
-                    Kembali ke Login
-                  </Button>
-                </div>
-              )}
-
-              {/* Forgot Password */}
-              {mode === 'forgot' && (
-                <div className="space-y-4">
-                  <div className="flex flex-col items-center gap-3 mb-6">
-                    <div className="p-4 bg-primary/10 rounded-full">
-                      <Mail className="w-8 h-8 text-primary" />
-                    </div>
-                    <p className="text-sm text-muted-foreground text-center">
-                      Masukkan email terdaftar untuk menerima kode OTP
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="forgot-email" className="text-sm font-medium">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <Input
-                        id="forgot-email"
-                        type="email"
-                        placeholder="nama@email.com"
-                        value={forgotEmail}
-                        onChange={(e) => setForgotEmail(e.target.value)}
-                        className="pl-10 h-11 bg-muted/50 border-border focus:border-primary transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  <Button
-                    onClick={handleForgotPassword}
-                    disabled={isLoading || !forgotEmail}
-                    className="w-full h-11 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white font-semibold rounded-xl shadow-lg transition-all"
-                  >
-                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Kirim OTP <ArrowRight className="w-5 h-5 ml-2" /></>}
-                  </Button>
-
-                  <button
-                    onClick={() => switchMode('login')}
-                    className="flex items-center justify-center gap-2 w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <ArrowLeft className="w-4 h-4" /> Kembali
-                  </button>
-                </div>
-              )}
-
-              {/* Forgot OTP */}
-              {mode === 'forgot-otp' && (
-                <div className="space-y-6">
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="p-4 bg-primary/10 rounded-full">
-                      <KeyRound className="w-8 h-8 text-primary" />
-                    </div>
-                    <InputOTP maxLength={6} value={otpValue} onChange={setOtpValue}>
-                      <InputOTPGroup>
-                        <InputOTPSlot index={0} />
-                        <InputOTPSlot index={1} />
-                        <InputOTPSlot index={2} />
-                        <InputOTPSlot index={3} />
-                        <InputOTPSlot index={4} />
-                        <InputOTPSlot index={5} />
-                      </InputOTPGroup>
-                    </InputOTP>
-                    <p className="text-xs text-muted-foreground">Kode berlaku 5 menit</p>
-                  </div>
-
-                  <Button
-                    onClick={handleVerifyOtpAndReset}
-                    disabled={isLoading || otpValue.length !== 6}
-                    className="w-full h-11 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white font-semibold rounded-xl shadow-lg transition-all"
-                  >
-                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Verifikasi <ArrowRight className="w-5 h-5 ml-2" /></>}
-                  </Button>
-
-                  <button
+                    type="button"
                     onClick={() => switchMode('forgot')}
-                    className="flex items-center justify-center gap-2 w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-xs text-primary hover:underline font-normal"
                   >
-                    <ArrowLeft className="w-4 h-4" /> Kembali
+                    Lupa password?
                   </button>
                 </div>
-              )}
-
-              {/* Reset Password */}
-              {mode === 'reset-password' && (
-                <div className="space-y-4">
-                  <div className="flex flex-col items-center gap-3 mb-6">
-                    <div className="p-4 bg-emerald-500/10 rounded-full">
-                      <Lock className="w-8 h-8 text-emerald-500" />
-                    </div>
-                    <p className="text-sm text-muted-foreground text-center">
-                      Buat password baru untuk akun Anda
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="new-password" className="text-sm font-medium">Password Baru</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <Input
-                        id="new-password"
-                        type={showNewPassword ? 'text' : 'password'}
-                        placeholder="Minimal 8 karakter"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        className="pl-10 pr-10 h-11 bg-muted/50 border-border focus:border-primary transition-all"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm-new-password" className="text-sm font-medium">Konfirmasi Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <Input
-                        id="confirm-new-password"
-                        type={showConfirmPassword ? 'text' : 'password'}
-                        placeholder="Ulangi password"
-                        value={confirmNewPassword}
-                        onChange={(e) => setConfirmNewPassword(e.target.value)}
-                        className="pl-10 pr-10 h-11 bg-muted/50 border-border focus:border-primary transition-all"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <Button
-                    onClick={handleResetPassword}
-                    disabled={isLoading}
-                    className="w-full h-11 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white font-semibold rounded-xl shadow-lg transition-all"
-                  >
-                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Reset Password <ArrowRight className="w-5 h-5 ml-2" /></>}
-                  </Button>
-
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    className="pl-9 pr-9 h-10"
+                    {...loginForm.register('password')}
+                  />
                   <button
-                    onClick={() => switchMode('login')}
-                    className="flex items-center justify-center gap-2 w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    <ArrowLeft className="w-4 h-4" /> Kembali
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
+                {loginForm.formState.errors.password && (
+                  <p className="text-xs text-destructive">{loginForm.formState.errors.password.message}</p>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="w-full h-10 font-medium"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  'Masuk'
+                )}
+              </Button>
+
+              <div className="pt-2 text-center text-xs text-muted-foreground border-t border-border mt-4">
+                Belum memiliki akun?{' '}
+                <button
+                  type="button"
+                  onClick={() => switchMode('register')}
+                  className="text-primary hover:underline font-medium"
+                >
+                  Daftar
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Register Form */}
+          {mode === 'register' && (
+            <form onSubmit={registerForm.handleSubmit(handleRegister)} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="reg-email" className="text-xs font-medium text-foreground">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="reg-email"
+                    type="email"
+                    placeholder="nama@email.com"
+                    className="pl-9 h-10"
+                    {...registerForm.register('email')}
+                  />
+                </div>
+                {registerForm.formState.errors.email && (
+                  <p className="text-xs text-destructive">{registerForm.formState.errors.email.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="reg-password" className="text-xs font-medium text-foreground">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="reg-password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Minimal 8 karakter"
+                    className="pl-9 pr-9 h-10"
+                    {...registerForm.register('password')}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {registerForm.formState.errors.password && (
+                  <p className="text-xs text-destructive">{registerForm.formState.errors.password.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="confirm-password" className="text-xs font-medium text-foreground">Konfirmasi Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="confirm-password"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder="Ulangi password"
+                    className="pl-9 pr-9 h-10"
+                    {...registerForm.register('confirmPassword')}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {registerForm.formState.errors.confirmPassword && (
+                  <p className="text-xs text-destructive">{registerForm.formState.errors.confirmPassword.message}</p>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="w-full h-10 font-medium"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  'Daftar'
+                )}
+              </Button>
+
+              <div className="pt-2 text-center text-xs text-muted-foreground border-t border-border mt-4">
+                Sudah punya akun?{' '}
+                <button
+                  type="button"
+                  onClick={() => switchMode('login')}
+                  className="text-primary hover:underline font-medium"
+                >
+                  Masuk
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Register OTP */}
+          {mode === 'register-otp' && (
+            <div className="space-y-5">
+              <div className="flex flex-col items-center gap-3">
+                <div className="p-3 bg-muted rounded-full">
+                  <KeyRound className="w-5 h-5 text-foreground" />
+                </div>
+                <InputOTP maxLength={6} value={otpValue} onChange={setOtpValue}>
+                  <InputOTPGroup>
+                    <InputOTPSlot index={0} />
+                    <InputOTPSlot index={1} />
+                    <InputOTPSlot index={2} />
+                    <InputOTPSlot index={3} />
+                    <InputOTPSlot index={4} />
+                    <InputOTPSlot index={5} />
+                  </InputOTPGroup>
+                </InputOTP>
+                <p className="text-xs text-muted-foreground">Kode berlaku selama 5 menit</p>
+              </div>
+
+              <Button
+                onClick={handleVerifyRegisterOtp}
+                disabled={isLoading || otpValue.length !== 6}
+                className="w-full h-10 font-medium"
+              >
+                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Verifikasi'}
+              </Button>
+
+              <div className="flex flex-col items-center gap-2 pt-1 text-xs">
+                <button
+                  onClick={handleResendRegisterOtp}
+                  disabled={isLoading}
+                  className="text-primary hover:underline font-medium disabled:opacity-50"
+                >
+                  Kirim ulang kode OTP
+                </button>
+                <button
+                  onClick={() => switchMode('register')}
+                  className="inline-flex items-center text-muted-foreground hover:text-foreground"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 mr-1" /> Kembali ke registrasi
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Registered Success */}
+          {mode === 'registered' && (
+            <div className="space-y-5 text-center">
+              <div className="flex justify-center">
+                <div className="p-3 bg-emerald-500/10 rounded-full">
+                  <CheckCircle className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+                </div>
+              </div>
+              <div className="p-3.5 bg-muted/50 rounded-lg text-xs text-muted-foreground leading-relaxed">
+                Email Anda berhasil diverifikasi. Silakan hubungi <strong>admin</strong> untuk persetujuan akun sebelum masuk.
+              </div>
+              <Button
+                onClick={() => switchMode('login')}
+                className="w-full h-10 font-medium"
+              >
+                Kembali ke Halaman Masuk
+              </Button>
+            </div>
+          )}
+
+          {/* Forgot Password */}
+          {mode === 'forgot' && (
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="forgot-email" className="text-xs font-medium text-foreground">Email Terdaftar</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="forgot-email"
+                    type="email"
+                    placeholder="nama@email.com"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    className="pl-9 h-10"
+                  />
+                </div>
+              </div>
+
+              <Button
+                onClick={handleForgotPassword}
+                disabled={isLoading || !forgotEmail}
+                className="w-full h-10 font-medium"
+              >
+                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Kirim Kode OTP'}
+              </Button>
+
+              <div className="pt-2 text-center">
+                <button
+                  onClick={() => switchMode('login')}
+                  className="inline-flex items-center text-xs text-muted-foreground hover:text-foreground"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 mr-1" /> Kembali ke Halaman Masuk
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Forgot OTP */}
+          {mode === 'forgot-otp' && (
+            <div className="space-y-5">
+              <div className="flex flex-col items-center gap-3">
+                <div className="p-3 bg-muted rounded-full">
+                  <KeyRound className="w-5 h-5 text-foreground" />
+                </div>
+                <InputOTP maxLength={6} value={otpValue} onChange={setOtpValue}>
+                  <InputOTPGroup>
+                    <InputOTPSlot index={0} />
+                    <InputOTPSlot index={1} />
+                    <InputOTPSlot index={2} />
+                    <InputOTPSlot index={3} />
+                    <InputOTPSlot index={4} />
+                    <InputOTPSlot index={5} />
+                  </InputOTPGroup>
+                </InputOTP>
+                <p className="text-xs text-muted-foreground">Kode berlaku selama 5 menit</p>
+              </div>
+
+              <Button
+                onClick={handleVerifyOtpAndReset}
+                disabled={isLoading || otpValue.length !== 6}
+                className="w-full h-10 font-medium"
+              >
+                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Verifikasi Kode'}
+              </Button>
+
+              <div className="pt-1 text-center">
+                <button
+                  onClick={() => switchMode('forgot')}
+                  className="inline-flex items-center text-xs text-muted-foreground hover:text-foreground"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 mr-1" /> Ganti Email
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Reset Password */}
+          {mode === 'reset-password' && (
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="new-password" className="text-xs font-medium text-foreground">Password Baru</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="new-password"
+                    type={showNewPassword ? 'text' : 'password'}
+                    placeholder="Minimal 8 karakter"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="pl-9 pr-9 h-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="confirm-new-password" className="text-xs font-medium text-foreground">Konfirmasi Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="confirm-new-password"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder="Ulangi password"
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    className="pl-9 pr-9 h-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <Button
+                onClick={handleResetPassword}
+                disabled={isLoading}
+                className="w-full h-10 font-medium"
+              >
+                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Simpan Password Baru'}
+              </Button>
+
+              <div className="pt-2 text-center">
+                <button
+                  onClick={() => switchMode('login')}
+                  className="inline-flex items-center text-xs text-muted-foreground hover:text-foreground"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 mr-1" /> Batalkan
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="text-center text-xs text-muted-foreground/60 mt-6"
-        >
+        <p className="text-center text-xs text-muted-foreground mt-6">
           © 2024 Rossa Gusti Yolanda S.Gz. All rights reserved.
-        </motion.p>
-      </motion.div>
+        </p>
+      </div>
     </div>
   );
 };
