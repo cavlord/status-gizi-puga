@@ -4,7 +4,6 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, Sector } fro
 import { ChildRecord } from "@/lib/googleSheets";
 import { ChildDetailsModal } from "./ChildDetailsModal";
 import { MapPin, Users, AlertTriangle } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 
 interface VillageNutritionalStatusProps {
   yearData: ChildRecord[];
@@ -115,8 +114,7 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
   
   monthData.forEach(record => {
     const status = record['BB/TB'];
-    const village = record['Desa/Kel'];
-    
+
     // Include all records with valid status, regardless of village
     if (!status || status.trim() === '') return;
     
@@ -186,12 +184,12 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 transition-all duration-300">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       {/* Pie Chart - Sebaran Balita Per Desa */}
-      <Card className="border-0 shadow-lg">
-        <CardHeader className="p-3 md:p-4 pb-1">
-          <CardTitle className="text-sm md:text-base flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-primary" />
+      <Card className="border border-border shadow-sm">
+        <CardHeader className="p-4 pb-2 border-b border-border">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-sky-500" />
             Sebaran Balita Per Desa ({year})
           </CardTitle>
         </CardHeader>
@@ -250,13 +248,15 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
       </Card>
 
       {/* Status Gizi with Chart */}
-      <Card className="border-0 shadow-lg">
-        <CardHeader className="p-3 md:p-4 pb-1">
-          <CardTitle className="text-sm md:text-base flex items-center gap-2">
-            <Users className="h-4 w-4 text-primary" />
-            Status Gizi (Bulan Terbaru)
-            <span className="text-[10px] md:text-xs text-muted-foreground font-normal ml-auto">Klik kategori untuk detail</span>
-          </CardTitle>
+      <Card className="border border-border shadow-sm">
+        <CardHeader className="p-4 pb-2 border-b border-border">
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Users className="h-4 w-4 text-sky-500" />
+              Status Gizi (Bulan Terbaru)
+            </CardTitle>
+            <span className="text-[10px] text-muted-foreground">Klik kategori untuk detail</span>
+          </div>
         </CardHeader>
         <CardContent className="p-3 md:p-4 pt-0">
           {statusChartData.length > 0 && (
