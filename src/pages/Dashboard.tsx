@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import {
   getUniqueYears,
   filterByYear,
@@ -21,36 +20,19 @@ import { StatCard } from "@/components/StatCard";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Users, MapPin, AlertTriangle, TrendingUp, BarChart3 } from "lucide-react";
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2
-    }
-  }
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      type: "spring" as const,
-      stiffness: 100,
-      damping: 15
-    }
-  }
-};
+import { useStaggerReveal, useScrollReveal } from "@/hooks/useGsapAnimations";
 
 const Dashboard = () => {
   const { toast } = useToast();
   const [selectedYear, setSelectedYear] = useState<string>("");
   const [selectedVillage, setSelectedVillage] = useState<string>("");
   const [selectedMonth, setSelectedMonth] = useState<string>("");
+
+  // GSAP — stagger stat cards on mount, scroll reveal sections below the fold
+  const statsGridRef = useStaggerReveal<HTMLDivElement>([selectedYear]);
+  const villageRef = useScrollReveal<HTMLDivElement>([selectedYear]);
+  const chartRef = useScrollReveal<HTMLDivElement>([selectedYear]);
+  const tableRef = useScrollReveal<HTMLDivElement>([selectedYear]);
 
   const [showNotGainingModal, setShowNotGainingModal] = useState(false);
   const [showCumulativeModal, setShowCumulativeModal] = useState(false);
@@ -109,17 +91,11 @@ const Dashboard = () => {
   if (!allRecords || allRecords.length === 0) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="text-center space-y-4"
-        >
-          <Users className="h-16 w-16 text-muted-foreground mx-auto opacity-50" />
-          <div>
-            <p className="text-xl font-semibold mb-2">Data Tidak Tersedia</p>
-            <p className="text-muted-foreground">Belum ada data yang tersedia saat ini.</p>
-          </div>
-        </motion.div>
+        <div className="text-center space-y-3">
+          <Users className="h-12 w-12 text-muted-foreground mx-auto opacity-40" />
+          <p className="text-lg font-semibold">Data Tidak Tersedia</p>
+          <p className="text-sm text-muted-foreground">Belum ada data yang tersedia saat ini.</p>
+        </div>
       </div>
     );
   }
@@ -384,17 +360,15 @@ const Dashboard = () => {
   const chartData = getNutritionalStatusByMonth(filteredByYear);
 
   return (
-    <motion.div 
-      className="space-y-8"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
+    <div className="space-y-6">
       {/* Header Section */}
-      <motion.div variants={itemVariants}>
-        <div className="mb-4 sm:mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard Status Gizi</h1>
-          <p className="text-sm sm:text-base text-muted-foreground mt-1">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div>
+          <p className="text-xs text-muted-foreground mb-1">
+            {new Date().toLocaleDateString("id-ID", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
+          </p>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">Dashboard Status Gizi</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
             Monitoring status gizi balita — UPT Puskesmas Pulau Gadang
           </p>
         </div>
@@ -404,47 +378,47 @@ const Dashboard = () => {
           onYearChange={setSelectedYear}
           showYear={true}
         />
-      </motion.div>
+      </div>
 
-      {/* Stats Grid */}
-      <div className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Stats Grid — stagger on mount */}
+      <div ref={statsGridRef} className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
           title="Total Balita"
           value={totalCount}
           description="Balita aktif terdaftar"
           icon={Users}
-          gradient="from-blue-500 to-cyan-500"
-          delay={0.1}
+          accentColor="text-sky-500"
+          borderColor="border-l-sky-400"
         />
         <StatCard
           title="Desa/Kelurahan"
           value={villageData.length}
           description="Wilayah cakupan"
           icon={MapPin}
-          gradient="from-emerald-500 to-teal-500"
-          delay={0.2}
+          accentColor="text-emerald-600"
+          borderColor="border-l-emerald-400"
         />
         <StatCard
           title="Tidak Naik BB"
           value={cumulativeNotGainingData.count}
           description={`Akumulatif ${selectedYear}`}
           icon={AlertTriangle}
-          gradient="from-rose-500 to-pink-500"
-          delay={0.3}
+          accentColor="text-rose-500"
+          borderColor="border-l-rose-400"
           onClick={() => setShowCumulativeModal(true)}
         />
       </div>
 
-      {/* Village Status */}
-      <motion.div variants={itemVariants}>
-        <VillageNutritionalStatus 
-          yearData={filteredByYear} 
-          monthData={mostRecentMonthRecords} 
+      {/* Village Status — scroll reveal */}
+      <div ref={villageRef}>
+        <VillageNutritionalStatus
+          yearData={filteredByYear}
+          monthData={mostRecentMonthRecords}
           year={selectedYear}
           notGainingWeightData={notGainingWeightData}
           onShowNotGainingModal={() => setShowNotGainingModal(true)}
         />
-      </motion.div>
+      </div>
 
       {/* Modals */}
       <ChildDetailsModal
@@ -465,77 +439,69 @@ const Dashboard = () => {
         allRecords={filteredByYear}
       />
 
-      {/* Chart Section */}
-      <motion.div variants={itemVariants}>
-        <Card className="border-0 shadow-lg">
-          <CardHeader className="space-y-1 p-4 sm:p-6 pb-3 sm:pb-4">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-1.5 sm:p-2 bg-gradient-to-br from-violet-500 to-purple-500 rounded-lg flex-shrink-0">
-                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-              </div>
-              <div className="min-w-0">
-                <CardTitle className="text-base sm:text-lg md:text-xl truncate">Tren Status Gizi Balita</CardTitle>
-                <CardDescription className="text-xs sm:text-sm line-clamp-1">Grafik perkembangan status gizi per bulan</CardDescription>
-              </div>
+      {/* Chart Section — scroll reveal */}
+      <Card ref={chartRef} className="border border-border shadow-sm">
+        <CardHeader className="p-5 pb-4 border-b border-border">
+          <div className="flex items-center gap-3">
+            <TrendingUp className="h-5 w-5 text-sky-500 flex-shrink-0" />
+            <div className="min-w-0">
+              <CardTitle className="text-base font-semibold">Tren Status Gizi Balita</CardTitle>
+              <CardDescription className="text-xs mt-0.5">Grafik perkembangan status gizi per bulan</CardDescription>
             </div>
-          </CardHeader>
-          <CardContent className="p-4 sm:p-6">
-            <EnhancedNutritionalChart data={chartData} />
-          </CardContent>
-        </Card>
-      </motion.div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-5">
+          <EnhancedNutritionalChart data={chartData} />
+        </CardContent>
+      </Card>
 
-      {/* Table Section */}
-      <motion.div variants={itemVariants}>
-        <Card className="border-0 shadow-lg">
-          <CardHeader className="space-y-1 p-4 sm:p-6 pb-3 sm:pb-4">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-1.5 sm:p-2 bg-gradient-to-br from-amber-500 to-orange-500 rounded-lg flex-shrink-0">
-                <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-              </div>
-              <div className="min-w-0">
-                <CardTitle className="text-base sm:text-lg md:text-xl truncate">Data Status Gizi Per Posyandu</CardTitle>
-                <CardDescription className="text-xs sm:text-sm line-clamp-1">Pilih desa/kelurahan dan bulan untuk melihat data detail</CardDescription>
-              </div>
+      {/* Table Section — scroll reveal */}
+      <Card ref={tableRef} className="border border-border shadow-sm">
+        <CardHeader className="p-5 pb-4 border-b border-border">
+          <div className="flex items-center gap-3">
+            <BarChart3 className="h-5 w-5 text-sky-500 flex-shrink-0" />
+            <div className="min-w-0">
+              <CardTitle className="text-base font-semibold">Data Status Gizi Per Posyandu</CardTitle>
+              <CardDescription className="text-xs mt-0.5">Pilih desa/kelurahan dan bulan untuk melihat data detail</CardDescription>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
-            <AnimatedFilter
-              villages={getUniqueValues(filteredByYear, 'Desa/Kel')}
-              months={[
-                'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-                'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-              ].filter(month =>
-                filteredByYear.some(record => record['Bulan Pengukuran'] === month)
-              )}
-              selectedVillage={selectedVillage}
-              selectedMonth={selectedMonth}
-              onVillageChange={setSelectedVillage}
-              onMonthChange={setSelectedMonth}
-              showVillage={true}
-              showMonth={true}
-            />
-            <PosyanduTable
-              data={getPosyanduData(
-                selectedVillage && selectedMonth
-                  ? filterByMonth(filterByVillage(filteredByYear, selectedVillage), selectedMonth)
-                  : []
-              )}
-              villages={[]}
-              months={[]}
-              selectedVillage={selectedVillage}
-              selectedMonth={selectedMonth}
-              onVillageChange={setSelectedVillage}
-              onMonthChange={setSelectedMonth}
-              allRecords={selectedVillage && selectedMonth
+          </div>
+        </CardHeader>
+        <CardContent className="p-5 space-y-5">
+          <AnimatedFilter
+            villages={getUniqueValues(filteredByYear, 'Desa/Kel')}
+            months={[
+              'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+              'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+            ].filter(month =>
+              filteredByYear.some(record => record['Bulan Pengukuran'] === month)
+            )}
+            selectedVillage={selectedVillage}
+            selectedMonth={selectedMonth}
+            onVillageChange={setSelectedVillage}
+            onMonthChange={setSelectedMonth}
+            showVillage={true}
+            showMonth={true}
+          />
+          <PosyanduTable
+            data={getPosyanduData(
+              selectedVillage && selectedMonth
                 ? filterByMonth(filterByVillage(filteredByYear, selectedVillage), selectedMonth)
-                : []}
-              yearData={filteredByYear}
-            />
-          </CardContent>
-        </Card>
-      </motion.div>
-    </motion.div>
+                : []
+            )}
+            villages={[]}
+            months={[]}
+            selectedVillage={selectedVillage}
+            selectedMonth={selectedMonth}
+            onVillageChange={setSelectedVillage}
+            onMonthChange={setSelectedMonth}
+            allRecords={selectedVillage && selectedMonth
+              ? filterByMonth(filterByVillage(filteredByYear, selectedVillage), selectedMonth)
+              : []}
+            yearData={filteredByYear}
+          />
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

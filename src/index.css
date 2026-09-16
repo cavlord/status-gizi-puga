@@ -2,69 +2,73 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Modern Design System - Enhanced for 2026 UI/UX Standards
-All colors MUST be HSL for consistency and theme support.
+/* GiziX Design System — Healthcare Dashboard
+   Palette: Healthcare App (calm cyan, health green, white, light cyan background)
+   Typography: Lexend (headings) + Source Sans 3 (body)
+   Skills: ui-ux-pro-max healthcare color result #2
 */
 
 @layer base {
   :root {
-    /* Base Colors - Refined neutral palette */
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    /* Background & Foreground — warm off-white #FAFAF9 */
+    --background: 60 9% 98%;
+    --foreground: 220 26% 14%;
 
-    /* Surface Colors - Enhanced depth */
+    /* Surface — pure white cards on warm background */
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --card-hover: 210 40% 98%;
+    --card-foreground: 220 26% 14%;
+    --card-hover: 60 9% 97%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 220 26% 14%;
 
-    /* Brand Colors - Vibrant and modern */
-    --primary: 217 91% 60%;
+    /* Primary — cyan #0891B2 */
+    --primary: 193 88% 37%;
     --primary-foreground: 0 0% 100%;
-    --primary-light: 217 91% 70%;
-    --primary-dark: 217 91% 50%;
+    --primary-light: 193 88% 47%;
+    --primary-dark: 193 88% 27%;
 
-    --secondary: 160 60% 45%;
-    --secondary-foreground: 0 0% 100%;
-    --secondary-light: 160 60% 55%;
-    --secondary-dark: 160 60% 35%;
+    /* Secondary — light cyan #22D3EE */
+    --secondary: 188 91% 54%;
+    --secondary-foreground: 193 65% 12%;
+    --secondary-light: 188 91% 64%;
+    --secondary-dark: 188 91% 44%;
 
-    /* Neutral Colors - Improved contrast */
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --muted-hover: 210 40% 94%;
+    /* Neutral */
+    --muted: 220 14% 94%;
+    --muted-foreground: 220 9% 42%;
+    --muted-hover: 220 14% 91%;
 
-    --accent: 188 94% 43%;
-    --accent-foreground: 0 0% 100%;
-    --accent-light: 188 94% 53%;
+    /* Accent — neutral (used by shadcn hover states, must NOT be a brand color) */
+    --accent: 220 14% 94%;
+    --accent-foreground: 220 26% 14%;
+    --accent-light: 220 14% 91%;
 
-    /* Semantic Colors - Clear feedback */
+    /* Semantic */
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --destructive-light: 0 84% 70%;
 
-    --success: 142 71% 45%;
+    --success: 161 94% 30%;
     --success-foreground: 0 0% 100%;
-    --success-light: 142 71% 55%;
+    --success-light: 161 94% 40%;
 
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
     --warning-light: 38 92% 60%;
 
-    --info: 199 89% 48%;
+    --info: 193 88% 37%;
     --info-foreground: 0 0% 100%;
-    --info-light: 199 89% 58%;
+    --info-light: 193 88% 47%;
 
     /* Border & Input */
-    --border: 214 32% 91%;
-    --border-hover: 214 32% 85%;
-    --input: 214 32% 91%;
-    --input-focus: 217 91% 60%;
-    --ring: 217 91% 60%;
+    --border: 220 13% 88%;
+    --border-hover: 220 13% 80%;
+    --input: 220 13% 88%;
+    --input-focus: 193 88% 37%;
+    --ring: 193 88% 37%;
 
-    /* Border Radius - Modern rounded corners */
+    /* Border Radius */
     --radius: 0.75rem;
     --radius-sm: 0.5rem;
     --radius-md: 0.75rem;
@@ -72,23 +76,23 @@ All colors MUST be HSL for consistency and theme support.
     --radius-xl: 1.5rem;
     --radius-full: 9999px;
 
-    /* Sidebar - Enhanced contrast */
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 217 91% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 33% 25%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 20%;
-    --sidebar-ring: 217 91% 60%;
+    /* Sidebar — deep teal */
+    --sidebar-background: 194 75% 20%;
+    --sidebar-foreground: 186 60% 96%;
+    --sidebar-primary: 188 91% 54%;
+    --sidebar-primary-foreground: 194 75% 12%;
+    --sidebar-accent: 194 60% 28%;
+    --sidebar-accent-foreground: 186 60% 96%;
+    --sidebar-border: 194 60% 26%;
+    --sidebar-ring: 188 91% 54%;
 
-    /* Chart Colors - Vibrant data visualization */
-    --chart-1: 217 91% 60%;
-    --chart-2: 160 60% 45%;
+    /* Chart colors — semantic status palette */
+    --chart-1: 193 88% 37%;
+    --chart-2: 161 94% 30%;
     --chart-3: 38 92% 50%;
     --chart-4: 271 81% 56%;
-    --chart-5: 340 82% 52%;
-    --chart-6: 199 89% 48%;
+    --chart-5: 0 84% 60%;
+    --chart-6: 188 91% 54%;
 
     /* Gradients - Modern and smooth */
     --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(188 94% 43%) 100%);
@@ -150,63 +154,63 @@ All colors MUST be HSL for consistency and theme support.
   }
 
   .dark {
-    /* Dark Mode - Enhanced contrast and readability */
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
+    /* Dark Mode — deep teal-navy base */
+    --background: 194 60% 8%;
+    --foreground: 186 60% 94%;
 
-    --card: 222 47% 15%;
-    --card-foreground: 210 40% 98%;
-    --card-hover: 222 47% 18%;
+    --card: 194 55% 12%;
+    --card-foreground: 186 60% 94%;
+    --card-hover: 194 55% 15%;
 
-    --popover: 222 47% 15%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 194 55% 12%;
+    --popover-foreground: 186 60% 94%;
 
-    --primary: 217 91% 65%;
+    --primary: 193 88% 48%;
     --primary-foreground: 0 0% 100%;
-    --primary-light: 217 91% 75%;
-    --primary-dark: 217 91% 55%;
+    --primary-light: 193 88% 58%;
+    --primary-dark: 193 88% 38%;
 
-    --secondary: 160 60% 50%;
-    --secondary-foreground: 0 0% 100%;
-    --secondary-light: 160 60% 60%;
-    --secondary-dark: 160 60% 40%;
+    --secondary: 188 91% 60%;
+    --secondary-foreground: 194 75% 10%;
+    --secondary-light: 188 91% 70%;
+    --secondary-dark: 188 91% 50%;
 
-    --muted: 217 33% 25%;
-    --muted-foreground: 215 20% 65%;
-    --muted-hover: 217 33% 28%;
+    --muted: 194 40% 20%;
+    --muted-foreground: 186 30% 65%;
+    --muted-hover: 194 40% 23%;
 
-    --accent: 188 94% 48%;
+    --accent: 161 94% 40%;
     --accent-foreground: 0 0% 100%;
-    --accent-light: 188 94% 58%;
+    --accent-light: 161 94% 50%;
 
     --destructive: 0 84% 65%;
     --destructive-foreground: 0 0% 100%;
     --destructive-light: 0 84% 75%;
 
-    --success: 142 71% 50%;
+    --success: 161 94% 40%;
     --success-foreground: 0 0% 100%;
-    --success-light: 142 71% 60%;
+    --success-light: 161 94% 50%;
 
     --warning: 38 92% 55%;
     --warning-foreground: 0 0% 100%;
     --warning-light: 38 92% 65%;
 
-    --info: 199 89% 53%;
+    --info: 193 88% 48%;
     --info-foreground: 0 0% 100%;
-    --info-light: 199 89% 63%;
+    --info-light: 193 88% 58%;
 
-    --border: 217 33% 25%;
-    --border-hover: 217 33% 30%;
-    --input: 217 33% 25%;
-    --input-focus: 217 91% 65%;
-    --ring: 217 91% 65%;
+    --border: 194 40% 22%;
+    --border-hover: 194 40% 28%;
+    --input: 194 40% 22%;
+    --input-focus: 193 88% 48%;
+    --ring: 193 88% 48%;
 
-    --chart-1: 217 91% 65%;
-    --chart-2: 160 60% 50%;
+    --chart-1: 193 88% 48%;
+    --chart-2: 161 94% 40%;
     --chart-3: 38 92% 55%;
     --chart-4: 271 81% 61%;
-    --chart-5: 340 82% 57%;
-    --chart-6: 199 89% 53%;
+    --chart-5: 0 84% 65%;
+    --chart-6: 188 91% 60%;
 
     --gradient-mesh: radial-gradient(at 40% 20%, hsl(217 91% 60% / 0.2) 0px, transparent 50%),
                      radial-gradient(at 80% 0%, hsl(188 94% 43% / 0.15) 0px, transparent 50%),
@@ -224,18 +228,17 @@ All colors MUST be HSL for consistency and theme support.
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    font-family: 'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  
+
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading;
-    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'Lexend', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-weight: 600;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
   }
 
   h1 {

@@ -1,23 +1,25 @@
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, BarChart3, Settings, Menu, LogOut, Users } from "lucide-react";
+import { LayoutDashboard, BarChart3, Settings, LogOut, Users, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-  useSidebar,
-} from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { gsap } from "gsap";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -29,125 +31,186 @@ const adminNavigation = [
   { name: "Pengaturan", href: "/settings", icon: Settings },
 ];
 
-function AppSidebar() {
+function NavItem({
+  item,
+  onClick,
+  mobile = false,
+}: {
+  item: { name: string; href: string; icon: React.ElementType };
+  onClick?: () => void;
+  mobile?: boolean;
+}) {
   const location = useLocation();
-  const { state, isMobile, setOpenMobile } = useSidebar();
-  const { user, logout } = useAuth();
-  const isCollapsed = state === "collapsed" && !isMobile;
-
-  const handleNavClick = () => {
-    if (isMobile) {
-      setOpenMobile(false);
-    }
-  };
+  const isActive = location.pathname === item.href;
 
   return (
-    <Sidebar 
-      className="border-r border-sidebar-border" 
-      collapsible="offcanvas"
+    <NavLink
+      to={item.href}
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-2 text-sm font-medium transition-colors duration-150",
+        mobile
+          ? cn(
+              "w-full px-3 py-2.5 rounded-lg",
+              isActive
+                ? "bg-primary text-primary-foreground"
+                : "text-foreground/70 hover:bg-muted hover:text-foreground"
+            )
+          : cn(
+              "px-3 py-1.5 rounded-md",
+              isActive
+                ? "bg-primary/10 text-primary font-semibold"
+                : "text-foreground/60 hover:text-foreground hover:bg-muted"
+            )
+      )}
     >
-      <SidebarContent className="bg-sidebar text-sidebar-foreground">
-        <div className="p-4 md:p-6">
-          {!isCollapsed && (
-            <div className="flex flex-col items-center text-center">
-              <img
-                src="/icon/logos-white.svg"
-                alt="Logo GiziX"
-                className="w-24 h-24 md:w-28 md:h-28 object-contain drop-shadow-[0_4px_12px_rgba(255,255,255,0.1)]"
-              />
-              <p className="text-xs text-sidebar-foreground/70 mt-1">
-                UPT Puskesmas Pulau Gadang
-              </p>
-            </div>
-          )}
+      <item.icon className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
+      <span>{item.name}</span>
+    </NavLink>
+  );
+}
+
+function TopNav() {
+  const { user, logout } = useAuth();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const allNav = user?.role === "admin" ? [...navigation, ...adminNavigation] : navigation;
+  const navRef = useRef<HTMLElement>(null);
+
+  // GSAP: stagger nav links from top on mount, respects prefers-reduced-motion
+  useEffect(() => {
+    const el = navRef.current;
+    if (!el) return;
+    const mm = gsap.matchMedia();
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+      const links = Array.from(el.querySelectorAll("a")) as HTMLElement[];
+      gsap.from(links, {
+        opacity: 0,
+        y: -6,
+        duration: 0.25,
+        stagger: 0.04,
+        ease: "power1.out",
+        clearProps: "all",
+      });
+    });
+    return () => mm.revert();
+  }, []);
+
+  return (
+    <header className="sticky top-0 z-40 w-full border-b border-border bg-card">
+      {/* Brand accent line */}
+      <div className="h-0.5 w-full bg-primary" />
+
+      <div className="flex h-14 items-center px-4 md:px-6 gap-4">
+        {/* Logo */}
+        <NavLink to="/" className="flex items-center gap-2.5 flex-shrink-0">
+          <img src="/icon/logos.svg" alt="GiziX" className="h-7 w-7 object-contain" />
+          <div className="hidden sm:block">
+            <span className="text-sm font-semibold text-foreground leading-none">GiziX</span>
+            <p className="text-[10px] text-muted-foreground leading-none mt-0.5">Puskesmas Pulau Gadang</p>
+          </div>
+        </NavLink>
+
+        {/* Desktop nav */}
+        <nav ref={navRef} className="hidden md:flex items-center gap-1 ml-6" aria-label="Navigasi utama">
+          {navigation.map((item) => (
+            <NavItem key={item.href} item={item} />
+          ))}
+          {user?.role === "admin" &&
+            adminNavigation.map((item) => (
+              <NavItem key={item.href} item={item} />
+            ))}
+        </nav>
+
+        {/* Right side */}
+        <div className="ml-auto flex items-center gap-2">
+          {/* Online badge */}
+          <div className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
+            <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400">Online</span>
+          </div>
+
+          <ThemeToggle />
+
+          {/* User menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="h-8 gap-2 px-2 text-sm text-foreground/70 hover:text-foreground hidden md:flex"
+              >
+                <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
+                  <span className="text-[10px] font-semibold text-primary">
+                    {user?.email?.[0]?.toUpperCase() ?? "U"}
+                  </span>
+                </div>
+                <span className="max-w-[120px] truncate text-xs">{user?.email}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <div className="px-3 py-2 border-b border-border">
+                <p className="text-[10px] text-muted-foreground">Masuk sebagai</p>
+                <p className="text-xs font-medium truncate">{user?.email}</p>
+              </div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive">
+                <LogOut className="mr-2 h-4 w-4" />
+                Keluar
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Mobile hamburger */}
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 md:hidden" aria-label="Buka menu">
+                <Menu className="h-4 w-4" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-72 p-0">
+              <SheetHeader className="p-5 border-b border-border">
+                <SheetTitle className="flex items-center gap-2.5">
+                  <img src="/icon/logos.svg" alt="GiziX" className="h-7 w-7 object-contain" />
+                  <div>
+                    <p className="text-sm font-semibold">GiziX</p>
+                    <p className="text-[10px] text-muted-foreground font-normal">Puskesmas Pulau Gadang</p>
+                  </div>
+                </SheetTitle>
+              </SheetHeader>
+
+              <nav className="p-4 space-y-1" aria-label="Navigasi mobile">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground px-3 mb-2">Menu</p>
+                {navigation.map((item) => (
+                  <NavItem key={item.href} item={item} mobile onClick={() => setMobileOpen(false)} />
+                ))}
+                {user?.role === "admin" && (
+                  <>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground px-3 mt-4 mb-2">Admin</p>
+                    {adminNavigation.map((item) => (
+                      <NavItem key={item.href} item={item} mobile onClick={() => setMobileOpen(false)} />
+                    ))}
+                  </>
+                )}
+              </nav>
+
+              <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border">
+                <div className="mb-3 px-3">
+                  <p className="text-[10px] text-muted-foreground">Masuk sebagai</p>
+                  <p className="text-xs font-medium truncate">{user?.email}</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  onClick={() => { logout(); setMobileOpen(false); }}
+                  className="w-full justify-start gap-2 text-sm text-destructive hover:text-destructive hover:bg-destructive/5"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Keluar
+                </Button>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
-
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/60 px-4 md:px-6">
-            Menu Utama
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navigation.map((item) => {
-                const isActive = location.pathname === item.href;
-                return (
-                  <SidebarMenuItem key={item.name}>
-                    <SidebarMenuButton asChild>
-                      <NavLink
-                        to={item.href}
-                        onClick={handleNavClick}
-                        className={cn(
-                          "flex items-center gap-3 px-4 md:px-6 py-3 transition-all duration-300",
-                          isActive
-                            ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium"
-                            : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                        )}
-                      >
-                        <item.icon className="h-5 w-5 flex-shrink-0" />
-                        {!isCollapsed && <span className="text-sm md:text-base">{item.name}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Admin Menu - Only show for admins */}
-        {user?.role === 'admin' && (
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-sidebar-foreground/60 px-4 md:px-6">
-              Admin
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {adminNavigation.map((item) => {
-                  const isActive = location.pathname === item.href;
-                  return (
-                    <SidebarMenuItem key={item.name}>
-                      <SidebarMenuButton asChild>
-                        <NavLink
-                          to={item.href}
-                          onClick={handleNavClick}
-                          className={cn(
-                            "flex items-center gap-3 px-4 md:px-6 py-3 transition-all duration-300",
-                            isActive
-                              ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium"
-                              : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                          )}
-                        >
-                          <item.icon className="h-5 w-5 flex-shrink-0" />
-                          {!isCollapsed && <span className="text-sm md:text-base">{item.name}</span>}
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-        {/* User info and logout */}
-        <div className="mt-auto p-4 border-t border-sidebar-border">
-          {!isCollapsed && user && (
-            <div className="mb-3">
-              <p className="text-xs text-sidebar-foreground/60">Masuk sebagai</p>
-              <p className="text-sm text-sidebar-foreground truncate">{user.email}</p>
-            </div>
-          )}
-          <Button
-            variant="ghost"
-            onClick={logout}
-            className="w-full justify-start gap-3 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-          >
-            <LogOut className="h-5 w-5" />
-            {!isCollapsed && <span>Keluar</span>}
-          </Button>
-        </div>
-      </SidebarContent>
-    </Sidebar>
+      </div>
+    </header>
   );
 }
 
@@ -156,67 +219,20 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const [now, setNow] = useState(new Date());
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setNow(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const formattedDate = now.toLocaleDateString("id-ID", {
-    weekday: "long",
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
-
   return (
-    <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen flex w-full bg-background">
-        <AppSidebar />
-        <div className="flex-1 flex flex-col min-w-0">
-          {/* Clean Header */}
-          <header className="h-16 border-b bg-background flex items-center px-4 md:px-6 sticky top-0 z-10">
-            <SidebarTrigger className="mr-4">
-              <Menu className="h-5 w-5" />
-            </SidebarTrigger>
-            <div className="flex-1 flex items-center justify-between">
-              <h1 className="text-sm md:text-base font-medium text-foreground truncate">
-                {formattedDate}
-              </h1>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-                  </span>
-                  <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
-                    Online
-                  </span>
-                </div>
-                <ThemeToggle />
-              </div>
-            </div>
-          </header>
-          
-          {/* Main Content */}
-          <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-x-hidden">
-            <div className="w-full max-w-7xl mx-auto">
-              {children}
-            </div>
-          </main>
-          
-          {/* Clean Footer */}
-          <footer className="border-t bg-background py-4 px-4 md:px-6">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
-              <p>© {new Date().getFullYear()} UPT Puskesmas Pulau Gadang</p>
-              <p>Build & Design by Rossa Gusti Yolanda, S.Gz</p>
-            </div>
-          </footer>
+    <div className="min-h-screen flex flex-col bg-background">
+      <TopNav />
+      <main className="flex-1 px-4 py-6 md:px-6 md:py-8 overflow-x-hidden">
+        <div className="w-full max-w-7xl mx-auto">
+          {children}
         </div>
-      </div>
-    </SidebarProvider>
+      </main>
+      <footer className="border-t border-border bg-card py-3 px-4 md:px-6">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1 text-[11px] text-muted-foreground">
+          <p>© {new Date().getFullYear()} UPT Puskesmas Pulau Gadang</p>
+          <p>Build &amp; Design by Rossa Gusti Yolanda, S.Gz</p>
+        </div>
+      </footer>
+    </div>
   );
 }
