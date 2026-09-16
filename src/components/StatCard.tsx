@@ -1,57 +1,60 @@
-import { motion } from 'framer-motion';
 import { LucideIcon } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { AnimatedCounter } from './AnimatedCounter';
+import { cn } from '@/lib/utils';
 
 interface StatCardProps {
   title: string;
   value: number;
   description: string;
   icon: LucideIcon;
-  gradient: string;
+  /** Tailwind text-color class for the icon and accent, e.g. "text-blue-500" */
+  accentColor?: string;
+  /** Tailwind border-left-color class, e.g. "border-l-blue-500" */
+  borderColor?: string;
   delay?: number;
   onClick?: () => void;
 }
 
-export function StatCard({ 
-  title, 
-  value, 
-  description, 
-  icon: Icon, 
-  gradient,
-  delay = 0,
-  onClick 
+export function StatCard({
+  title,
+  value,
+  description,
+  icon: Icon,
+  accentColor = 'text-sky-500',
+  borderColor = 'border-l-sky-400',
+  onClick,
 }: StatCardProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay }}
-      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+    <Card
       onClick={onClick}
-      className={onClick ? 'cursor-pointer' : ''}
+      className={cn(
+        'border border-border border-l-4 bg-card rounded-xl transition-shadow duration-200',
+        borderColor,
+        onClick
+          ? 'cursor-pointer hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none'
+          : 'shadow-sm',
+      )}
+      tabIndex={onClick ? 0 : undefined}
+      role={onClick ? 'button' : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') onClick(); } : undefined}
     >
-      <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
-        <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-90`} />
-        <CardContent className="relative p-4 sm:p-5 md:p-6">
-          <div className="flex items-start justify-between gap-3">
-            <div className="space-y-1.5 sm:space-y-2 flex-1 min-w-0">
-              <p className="text-xs sm:text-sm font-medium text-white/80 truncate">{title}</p>
-              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">
-                <AnimatedCounter value={value} />
-              </div>
-              <p className="text-[10px] sm:text-xs text-white/70 line-clamp-2">{description}</p>
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-1 min-w-0">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide truncate">
+              {title}
+            </p>
+            <div className="text-3xl font-bold text-foreground tabular-nums">
+              <AnimatedCounter value={value} />
             </div>
-            <motion.div
-              className="p-2 sm:p-2.5 md:p-3 bg-white/20 rounded-lg sm:rounded-xl backdrop-blur-sm flex-shrink-0"
-              whileHover={{ scale: 1.1, rotate: 5 }}
-              transition={{ type: "spring" as const, stiffness: 400 }}
-            >
-              <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-            </motion.div>
+            <p className="text-xs text-muted-foreground line-clamp-2">{description}</p>
           </div>
-        </CardContent>
-      </Card>
-    </motion.div>
+          <div className={cn('p-2.5 rounded-lg bg-muted flex-shrink-0', accentColor)}>
+            <Icon className="h-5 w-5" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
