@@ -28,7 +28,7 @@ export function useStaggerReveal<T extends HTMLElement>(deps: unknown[] = []) {
         duration: 0.3,
         stagger: 0.06,
         ease: "power1.out",
-        clearProps: "all",
+        clearProps: "transform",
       });
     });
 
@@ -65,12 +65,14 @@ export function useScrollReveal<T extends HTMLElement>(deps: unknown[] = []) {
         y: 12,
         duration: 0.35,
         ease: "power1.out",
+        immediateRender: false,
         scrollTrigger: {
           trigger: el,
           start: "top 90%",
           toggleActions: "play none none reverse",
+          once: true,
         },
-        clearProps: "all",
+        clearProps: "transform",
       });
     });
 
