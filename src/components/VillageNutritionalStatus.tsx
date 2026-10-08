@@ -297,10 +297,14 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
           
           <div className="grid grid-cols-2 gap-2">
             {/* Gizi Baik */}
-            <div 
+            <div
+              role="button"
+              tabIndex={0}
+              aria-label="Lihat detail anak dengan Gizi Baik"
               className="p-3 rounded-lg border cursor-pointer hover:shadow-md transition-all hover:scale-[1.02] text-center"
               style={{ borderTop: `3px solid ${STATUS_COLORS["Gizi Baik"]}` }}
               onClick={() => handleStatusClick("Gizi Baik")}
+              onKeyDown={(e) => e.key === 'Enter' && handleStatusClick("Gizi Baik")}
             >
               <p className="text-xs text-muted-foreground mb-1">Gizi Baik</p>
               <p className="text-2xl font-bold" style={{ color: STATUS_COLORS["Gizi Baik"] }}>
@@ -312,10 +316,14 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
             </div>
 
             {/* Gizi Kurang */}
-            <div 
+            <div
+              role="button"
+              tabIndex={0}
+              aria-label="Lihat detail anak dengan Gizi Kurang"
               className="p-3 rounded-lg border cursor-pointer hover:shadow-md transition-all hover:scale-[1.02] text-center"
               style={{ borderTop: `3px solid ${STATUS_COLORS["Gizi Kurang"]}` }}
               onClick={() => handleStatusClick("Gizi Kurang")}
+              onKeyDown={(e) => e.key === 'Enter' && handleStatusClick("Gizi Kurang")}
             >
               <p className="text-xs text-muted-foreground mb-1">Gizi Kurang</p>
               <p className="text-2xl font-bold" style={{ color: STATUS_COLORS["Gizi Kurang"] }}>
@@ -327,10 +335,14 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
             </div>
 
             {/* Gizi Buruk */}
-            <div 
+            <div
+              role="button"
+              tabIndex={0}
+              aria-label="Lihat detail anak dengan Gizi Buruk"
               className="p-3 rounded-lg border cursor-pointer hover:shadow-md transition-all hover:scale-[1.02] text-center"
               style={{ borderTop: `3px solid ${STATUS_COLORS["Gizi Buruk"]}` }}
               onClick={() => handleStatusClick("Gizi Buruk")}
+              onKeyDown={(e) => e.key === 'Enter' && handleStatusClick("Gizi Buruk")}
             >
               <p className="text-xs text-muted-foreground mb-1">Gizi Buruk</p>
               <p className="text-2xl font-bold" style={{ color: STATUS_COLORS["Gizi Buruk"] }}>
@@ -343,10 +355,14 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
 
             {/* Tidak Naik BB */}
             {notGainingWeightData && (
-              <div 
+              <div
+                role="button"
+                tabIndex={0}
+                aria-label="Lihat detail anak yang tidak naik berat badan"
                 className="p-3 rounded-lg border cursor-pointer hover:shadow-md transition-all hover:scale-[1.02] text-center"
                 style={{ borderTop: '3px solid hsl(0 84% 60%)' }}
                 onClick={() => onShowNotGainingModal?.()}
+                onKeyDown={(e) => e.key === 'Enter' && onShowNotGainingModal?.()}
               >
                 <p className="text-xs text-muted-foreground mb-1 flex items-center justify-center gap-1">
                   <AlertTriangle className="h-3 w-3" />

@@ -133,7 +133,7 @@ export function ChildDetailsModal({
         </DialogHeader>
         <div className="overflow-auto max-h-[calc(90vh-80px)] md:max-h-[calc(95vh-120px)]">
           <div className="min-w-max">
-            <table className="w-full border-collapse text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs">
+            <table className="w-full border-collapse text-xs">
               <thead className="bg-muted sticky top-0 z-10 shadow-sm">
                 <tr>
                   <th className="px-1 py-1 sm:px-1.5 sm:py-1.5 md:px-2 md:py-2 text-left border font-semibold">No</th>
@@ -160,11 +160,11 @@ export function ChildDetailsModal({
                     <td className="px-1 py-0.5 sm:px-1.5 sm:py-1 md:px-2 md:py-1.5 border text-center">{index + 1}</td>
                     <td className="px-1 py-0.5 sm:px-1.5 sm:py-1 md:px-2 md:py-1.5 border font-medium uppercase">{record.Nama}</td>
                     <td className="px-1 py-0.5 sm:px-1.5 sm:py-1 md:px-2 md:py-1.5 border text-center uppercase">{record.JK}</td>
-                    <td className="px-1 py-0.5 sm:px-1.5 sm:py-1 md:px-2 md:py-1.5 border text-[7px] sm:text-[8px] md:text-[9px] uppercase">{record['Usia Saat Ukur']}</td>
-                    <td className="px-1 py-0.5 sm:px-1.5 sm:py-1 md:px-2 md:py-1.5 border whitespace-nowrap text-[7px] sm:text-[8px] md:text-[9px] uppercase">{record['Tanggal Pengukuran']}</td>
+                    <td className="px-1 py-0.5 sm:px-1.5 sm:py-1 md:px-2 md:py-1.5 border text-xs uppercase">{record['Usia Saat Ukur']}</td>
+                    <td className="px-1 py-0.5 sm:px-1.5 sm:py-1 md:px-2 md:py-1.5 border whitespace-nowrap text-xs uppercase">{record['Tanggal Pengukuran']}</td>
                     <td className="px-1 py-0.5 sm:px-1.5 sm:py-1 md:px-2 md:py-1.5 border">
                       <span
-                        className={`inline-block px-0.5 py-0.5 sm:px-1 sm:py-0.5 md:px-1.5 md:py-1 rounded text-[7px] sm:text-[8px] md:text-[9px] font-semibold whitespace-nowrap ${
+                        className={`inline-block px-0.5 py-0.5 sm:px-1 sm:py-0.5 md:px-1.5 md:py-1 rounded text-xs font-semibold whitespace-nowrap ${
                           record['BB/TB'] === 'Gizi Baik'
                             ? 'bg-secondary/20 text-secondary-foreground'
                             : record['BB/TB'] === 'Gizi Kurang'
@@ -184,7 +184,7 @@ export function ChildDetailsModal({
                           {record.previousWeight !== null ? (
                             <div>
                               <div className="font-medium">{record.previousWeight}</div>
-                              <div className="text-[6px] sm:text-[7px] md:text-[8px] text-muted-foreground">{record.previousDate}</div>
+                              <div className="text-xs text-muted-foreground">{record.previousDate}</div>
                             </div>
                           ) : (
                             <span className="text-muted-foreground">-</span>
@@ -208,8 +208,8 @@ export function ChildDetailsModal({
                       </>
                     )}
                     <td className="px-1 py-0.5 sm:px-1.5 sm:py-1 md:px-2 md:py-1.5 border text-center uppercase">{record.Tinggi}</td>
-                    <td className="px-1 py-0.5 sm:px-1.5 sm:py-1 md:px-2 md:py-1.5 border text-[7px] sm:text-[8px] md:text-[9px] uppercase">{record['Desa/Kel']}</td>
-                    <td className="px-1 py-0.5 sm:px-1.5 sm:py-1 md:px-2 md:py-1.5 border text-[7px] sm:text-[8px] md:text-[9px] uppercase">{record['Nama Ortu']}</td>
+                    <td className="px-1 py-0.5 sm:px-1.5 sm:py-1 md:px-2 md:py-1.5 border text-xs uppercase">{record['Desa/Kel']}</td>
+                    <td className="px-1 py-0.5 sm:px-1.5 sm:py-1 md:px-2 md:py-1.5 border text-xs uppercase">{record['Nama Ortu']}</td>
                   </tr>
                 ))}
               </tbody>

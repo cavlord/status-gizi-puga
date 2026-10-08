@@ -11,6 +11,7 @@ import {
   ChildRecord,
 } from "@/lib/googleSheets";
 import { useData } from "@/contexts/DataContext";
+import LoadingScreen from "@/components/LoadingScreen";
 import { AnimatedFilter } from "@/components/AnimatedFilter";
 import { EnhancedNutritionalChart } from "@/components/EnhancedNutritionalChart";
 import { VillageNutritionalStatus } from "@/components/VillageNutritionalStatus";
@@ -37,7 +38,13 @@ const Dashboard = () => {
   const [showNotGainingModal, setShowNotGainingModal] = useState(false);
   const [showCumulativeModal, setShowCumulativeModal] = useState(false);
 
-  const { allRecords, error } = useData();
+  const { allRecords, isLoading, error } = useData();
+  const [showLoading, setShowLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowLoading(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (error) {
@@ -87,6 +94,10 @@ const Dashboard = () => {
       }
     }
   }, [allRecords, selectedYear, selectedMonth]);
+
+  if (isLoading || showLoading) {
+    return <LoadingScreen />;
+  }
 
   if (!allRecords || allRecords.length === 0) {
     return (

@@ -286,15 +286,16 @@ export function PosyanduTable({
                               className="text-center p-2 md:p-3"
                             >
                               <button
-                                onClick={() => handleCellClick(posyandu, row.status as string)}
-                                className={`inline-flex items-center justify-center min-w-[32px] h-7 md:h-8 px-2 rounded-md text-xs md:text-sm font-semibold tabular-nums transition-all duration-150 
-                                  ${value > 0 
-                                    ? `${config.badgeClass} hover:opacity-80 cursor-pointer active:scale-95` 
-                                    : 'text-muted-foreground/40 cursor-pointer hover:bg-muted/50'
-                                  }`}
-                              >
-                                {value}
-                              </button>
+                                  onClick={() => handleCellClick(posyandu, row.status as string)}
+                                  aria-label={`Lihat detail ${row.status} di Posyandu ${posyandu}`}
+                                  className={`inline-flex items-center justify-center min-w-[32px] h-7 md:h-8 px-2 rounded-md text-xs md:text-sm font-semibold tabular-nums transition-all duration-150
+                                    ${value > 0
+                                      ? `${config.badgeClass} hover:opacity-80 cursor-pointer active:scale-95`
+                                      : 'text-muted-foreground/40 cursor-pointer hover:bg-muted/50'
+                                    }`}
+                                >
+                                  {value}
+                                </button>
                             </TableCell>
                           );
                         })}
