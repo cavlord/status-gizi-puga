@@ -1,15 +1,17 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, BarChart3, Settings, LogOut, Users, Menu, ChevronRight } from "lucide-react";
+import { LayoutDashboard, BarChart3, Settings, LogOut, Users, Menu, ChevronRight, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { safeStorage } from "@/lib/storage";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { gsap } from "gsap";
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
@@ -21,91 +23,87 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const navigation = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Analytics", href: "/analytics", icon: BarChart3 },
+const sections = [
+  {
+    label: "Menu Utama",
+    adminOnly: false,
+    items: [
+      { name: "Dashboard", href: "/", icon: LayoutDashboard },
+      { name: "Analytics", href: "/analytics", icon: BarChart3 },
+    ],
+  },
+  {
+    label: "Administrasi",
+    adminOnly: true,
+    items: [
+      { name: "Manajemen User", href: "/users", icon: Users },
+      { name: "Pengaturan", href: "/settings", icon: Settings },
+    ],
+  },
 ];
 
-const adminNavigation = [
-  { name: "Manajemen User", href: "/users", icon: Users },
-  { name: "Pengaturan", href: "/settings", icon: Settings },
-];
+const COLLAPSE_KEY = "posyandu_sidebar_collapsed";
 
 function NavItem({
   item,
+  collapsed,
   onClick,
-  mobile = false,
 }: {
   item: { name: string; href: string; icon: React.ElementType };
+  collapsed: boolean;
   onClick?: () => void;
-  mobile?: boolean;
 }) {
-  const location = useLocation();
-  const isActive = location.pathname === item.href;
+  const isActive = useLocation().pathname === item.href;
 
-  return (
+  const link = (
     <NavLink
       to={item.href}
       onClick={onClick}
+      aria-current={isActive ? "page" : undefined}
       className={cn(
-        "flex items-center gap-2 text-sm font-medium transition-colors duration-150",
-        mobile
-          ? cn(
-              "w-full px-3 py-2.5 rounded-lg",
-              isActive
-                ? "bg-primary text-primary-foreground"
-                : "text-foreground/70 hover:bg-muted hover:text-foreground"
-            )
-          : cn(
-              "px-3 py-1.5 rounded-md",
-              isActive
-                ? "bg-primary/10 text-primary font-semibold"
-                : "text-foreground/60 hover:text-foreground hover:bg-muted"
-            )
+        "relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150",
+        isActive
+          ? "bg-primary/10 text-primary font-semibold"
+          : "text-foreground/60 hover:text-foreground hover:bg-muted"
       )}
     >
+      {isActive && <span className="absolute left-0 inset-y-1.5 w-0.5 rounded-full bg-primary" aria-hidden="true" />}
       <item.icon className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
-      <span>{item.name}</span>
+      <span className={cn("whitespace-nowrap transition-opacity duration-200", collapsed && "opacity-0")}>{item.name}</span>
     </NavLink>
   );
-}
 
-function Breadcrumb() {
-  const { pathname } = useLocation();
-  const current = [...navigation, ...adminNavigation].find((i) => i.href === pathname);
-  if (!current || pathname === "/") return null;
-
+  if (!collapsed) return link;
   return (
-    <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-1.5 text-xs text-muted-foreground">
-      <NavLink to="/" className="hover:text-foreground transition-colors">Dashboard</NavLink>
-      <ChevronRight className="h-3 w-3" aria-hidden="true" />
-      <span className="font-medium text-foreground" aria-current="page">{current.name}</span>
-    </nav>
+    <Tooltip>
+      <TooltipTrigger asChild>{link}</TooltipTrigger>
+      <TooltipContent side="right">{item.name}</TooltipContent>
+    </Tooltip>
   );
 }
 
-function TopNav() {
-  const { user, logout } = useAuth();
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const { pathname } = useLocation();
-
-  // Close mobile menu on any route change
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
-  const allNav = user?.role === "admin" ? [...navigation, ...adminNavigation] : navigation;
+// Shared by the desktop rail and the mobile Sheet
+function SidebarBody({
+  collapsed,
+  onToggle,
+  onNavigate,
+}: {
+  collapsed: boolean;
+  onToggle?: () => void;
+  onNavigate?: () => void;
+}) {
+  const { user } = useAuth();
   const navRef = useRef<HTMLElement>(null);
 
-  // GSAP: stagger nav links from top on mount, respects prefers-reduced-motion
+  // GSAP: stagger nav links on mount, respects prefers-reduced-motion
   useEffect(() => {
     const el = navRef.current;
     if (!el) return;
     const mm = gsap.matchMedia();
     mm.add("(prefers-reduced-motion: no-preference)", () => {
-      const links = Array.from(el.querySelectorAll("a")) as HTMLElement[];
-      gsap.from(links, {
+      gsap.from(Array.from(el.querySelectorAll("a")), {
         opacity: 0,
-        y: -6,
+        x: -8,
         duration: 0.25,
         stagger: 0.04,
         ease: "power1.out",
@@ -116,33 +114,88 @@ function TopNav() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border bg-card">
-      {/* Brand accent line */}
-      <div className="h-0.5 w-full bg-primary" />
+    <div className="flex h-full flex-col">
+      <NavLink to="/" onClick={onNavigate} className="flex h-14 flex-shrink-0 items-center gap-2.5 border-b border-border px-[18px]">
+        <img src="/icon/logos.svg" alt="GiziX" className="h-7 w-7 flex-shrink-0 object-contain" />
+        <div className={cn("whitespace-nowrap transition-opacity duration-200", collapsed && "opacity-0")}>
+          <span className="text-sm font-semibold text-foreground leading-none">GiziX</span>
+          <p className="text-[10px] text-muted-foreground leading-none mt-0.5">Puskesmas Pulau Gadang</p>
+        </div>
+      </NavLink>
 
-      <div className="flex h-14 items-center px-4 md:px-6 gap-4">
-        {/* Logo */}
-        <NavLink to="/" className="flex items-center gap-2.5 flex-shrink-0">
-          <img src="/icon/logos.svg" alt="GiziX" className="h-7 w-7 object-contain" />
-          <div className="hidden sm:block">
-            <span className="text-sm font-semibold text-foreground leading-none">GiziX</span>
-            <p className="text-[10px] text-muted-foreground leading-none mt-0.5">Puskesmas Pulau Gadang</p>
-          </div>
-        </NavLink>
-
-        {/* Desktop nav */}
-        <nav ref={navRef} className="hidden md:flex items-center gap-1 ml-6" aria-label="Navigasi utama">
-          {navigation.map((item) => (
-            <NavItem key={item.href} item={item} />
+      <nav ref={navRef} className="flex-1 space-y-4 overflow-y-auto overflow-x-hidden p-3" aria-label="Navigasi utama">
+        {sections
+          .filter((s) => !s.adminOnly || user?.role === "admin")
+          .map((s) => (
+            <div key={s.label} className="space-y-1">
+              {collapsed ? (
+                <Separator className="my-2" />
+              ) : (
+                <p className="px-3 pb-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{s.label}</p>
+              )}
+              {s.items.map((item) => (
+                <NavItem key={item.href} item={item} collapsed={collapsed} onClick={onNavigate} />
+              ))}
+            </div>
           ))}
-          {user?.role === "admin" &&
-            adminNavigation.map((item) => (
-              <NavItem key={item.href} item={item} />
-            ))}
-        </nav>
+      </nav>
 
-        {/* Right side */}
-        <div className="ml-auto flex items-center gap-2">
+      {onToggle && (
+        <div className="flex-shrink-0 border-t border-border p-3">
+          <Button
+            variant="ghost"
+            onClick={onToggle}
+            aria-label={collapsed ? "Perluas sidebar" : "Perkecil sidebar"}
+            className="h-9 w-full justify-start gap-3 px-3 text-sm font-medium text-foreground/60 hover:text-foreground"
+          >
+            {collapsed ? <PanelLeftOpen className="h-4 w-4 flex-shrink-0" /> : <PanelLeftClose className="h-4 w-4 flex-shrink-0" />}
+            <span className={cn("whitespace-nowrap transition-opacity duration-200", collapsed && "opacity-0")}>Perkecil</span>
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TopBar() {
+  const { user, logout } = useAuth();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const { pathname } = useLocation();
+
+  // Close mobile menu on any route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  const section = sections.find((s) => s.items.some((i) => i.href === pathname));
+  const current = section?.items.find((i) => i.href === pathname);
+
+  return (
+    <header className="sticky top-0 z-30 flex h-14 flex-shrink-0 items-center gap-3 border-b border-border bg-card px-4 md:px-6">
+      {/* Mobile hamburger */}
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-8 w-8 md:hidden" aria-label="Buka menu">
+            <Menu className="h-4 w-4" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="w-72 p-0">
+          <SheetTitle className="sr-only">Menu navigasi</SheetTitle>
+          <SidebarBody collapsed={false} onNavigate={() => setMobileOpen(false)} />
+        </SheetContent>
+      </Sheet>
+
+      {/* Breadcrumb */}
+      {current && (
+        <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 text-sm">
+          <span className="hidden text-muted-foreground sm:inline">{section.label}</span>
+          <ChevronRight className="hidden h-3 w-3 text-muted-foreground sm:inline" aria-hidden="true" />
+          <span className="truncate font-semibold text-foreground" aria-current="page">{current.name}</span>
+        </nav>
+      )}
+
+      {/* Right side */}
+      <div className="ml-auto flex items-center gap-2">
           {/* Online badge */}
           <div className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
@@ -156,14 +209,15 @@ function TopNav() {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="h-8 gap-2 px-2 text-sm text-foreground/70 hover:text-foreground hidden md:flex"
+                aria-label="Menu pengguna"
+                className="h-8 gap-2 px-2 text-sm text-foreground/70 hover:text-foreground"
               >
                 <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
                   <span className="text-[10px] font-semibold text-primary">
                     {user?.email?.[0]?.toUpperCase() ?? "U"}
                   </span>
                 </div>
-                <span className="max-w-[120px] truncate text-xs">{user?.email}</span>
+                <span className="hidden max-w-[120px] truncate text-xs md:inline">{user?.email}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
@@ -178,57 +232,6 @@ function TopNav() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-
-          {/* Mobile hamburger */}
-          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 md:hidden" aria-label="Buka menu">
-                <Menu className="h-4 w-4" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-72 p-0">
-              <SheetHeader className="p-5 border-b border-border">
-                <SheetTitle className="flex items-center gap-2.5">
-                  <img src="/icon/logos.svg" alt="GiziX" className="h-7 w-7 object-contain" />
-                  <div>
-                    <p className="text-sm font-semibold">GiziX</p>
-                    <p className="text-[10px] text-muted-foreground font-normal">Puskesmas Pulau Gadang</p>
-                  </div>
-                </SheetTitle>
-              </SheetHeader>
-
-              <nav className="p-4 space-y-1" aria-label="Navigasi mobile">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground px-3 mb-2">Menu</p>
-                {navigation.map((item) => (
-                  <NavItem key={item.href} item={item} mobile onClick={() => setMobileOpen(false)} />
-                ))}
-                {user?.role === "admin" && (
-                  <>
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground px-3 mt-4 mb-2">Admin</p>
-                    {adminNavigation.map((item) => (
-                      <NavItem key={item.href} item={item} mobile onClick={() => setMobileOpen(false)} />
-                    ))}
-                  </>
-                )}
-              </nav>
-
-              <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border">
-                <div className="mb-3 px-3">
-                  <p className="text-[10px] text-muted-foreground">Masuk sebagai</p>
-                  <p className="text-xs font-medium truncate">{user?.email}</p>
-                </div>
-                <Button
-                  variant="ghost"
-                  onClick={() => { logout(); setMobileOpen(false); }}
-                  className="w-full justify-start gap-2 text-sm text-destructive hover:text-destructive hover:bg-destructive/5"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Keluar
-                </Button>
-              </div>
-            </SheetContent>
-          </Sheet>
-        </div>
       </div>
     </header>
   );
@@ -239,21 +242,36 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
+  const [collapsed, setCollapsed] = useState(() => safeStorage.getItem(COLLAPSE_KEY) === "1");
+  const toggle = () =>
+    setCollapsed((c) => {
+      safeStorage.setItem(COLLAPSE_KEY, c ? "0" : "1");
+      return !c;
+    });
+
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <TopNav />
-      <main className="flex-1 px-4 py-6 md:px-6 md:py-8 overflow-x-hidden">
-        <div className="w-full max-w-7xl mx-auto">
-          <Breadcrumb />
-          {children}
+    <div className="flex h-screen bg-background">
+      <aside
+        className={cn(
+          "hidden md:block flex-shrink-0 overflow-hidden border-r border-border bg-card transition-[width] duration-300 ease-in-out motion-reduce:transition-none",
+          collapsed ? "w-16" : "w-64"
+        )}
+      >
+        <SidebarBody collapsed={collapsed} onToggle={toggle} />
+      </aside>
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <TopBar />
+        <div className="flex-1 overflow-y-auto overflow-x-hidden">
+          <main className="mx-auto w-full max-w-[1600px] px-4 py-4 md:px-6 md:py-5">{children}</main>
+          <footer className="border-t border-border bg-card py-3 px-4 md:px-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-1 text-[11px] text-muted-foreground">
+              <p>© {new Date().getFullYear()} UPT Puskesmas Pulau Gadang</p>
+              <p>Build &amp; Design by Rossa Gusti Yolanda, S.Gz</p>
+            </div>
+          </footer>
         </div>
-      </main>
-      <footer className="border-t border-border bg-card py-3 px-4 md:px-6">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1 text-[11px] text-muted-foreground">
-          <p>© {new Date().getFullYear()} UPT Puskesmas Pulau Gadang</p>
-          <p>Build &amp; Design by Rossa Gusti Yolanda, S.Gz</p>
-        </div>
-      </footer>
+      </div>
     </div>
   );
 }
