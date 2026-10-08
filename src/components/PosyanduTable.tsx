@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Calendar, Users, TrendingDown, CheckCircle, AlertTriangle, XCircle } from "lucide-react";
+import { Building2, Calendar, Users, TrendingDown, CheckCircle, AlertTriangle, XCircle, ArrowUp, ArrowDown } from "lucide-react";
 import { ChildRecord } from "@/lib/googleSheets";
 import { ChildDetailsModal } from "./ChildDetailsModal";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -56,6 +56,10 @@ export function PosyanduTable({
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tidakNaikChildren, setTidakNaikChildren] = useState<ChildRecord[]>([]);
+  const [sort, setSort] = useState<{ key: string; dir: "asc" | "desc" } | null>(null);
+
+  const toggleSort = (key: string) =>
+    setSort((s) => (s?.key !== key ? { key, dir: "desc" } : s.dir === "desc" ? { key, dir: "asc" } : null));
 
   const posyandus = data.length > 0 
     ? Object.keys(data[0]).filter(key => key !== 'status')
@@ -147,7 +151,22 @@ export function PosyanduTable({
   };
 
   const tidakNaikBBResult = computeTidakNaikBB();
-  const dataWithTidakNaik = [...data, tidakNaikBBResult.row];
+  const rowTotal = (r: { [key: string]: number | string }) =>
+    posyandus.reduce((sum, p) => sum + (Number(r[p]) || 0), 0);
+  const sortedData = sort
+    ? [...data].sort((a, b) => {
+        const va = sort.key === "TOTAL" ? rowTotal(a) : Number(a[sort.key]) || 0;
+        const vb = sort.key === "TOTAL" ? rowTotal(b) : Number(b[sort.key]) || 0;
+        return sort.dir === "asc" ? va - vb : vb - va;
+      })
+    : data;
+  // "Tidak Naik BB" stays pinned last
+  const dataWithTidakNaik = [...sortedData, tidakNaikBBResult.row];
+
+  const SortIcon = ({ k }: { k: string }) =>
+    sort?.key === k ? (
+      sort.dir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+    ) : null;
 
   const handleCellClick = (posyandu: string, status: string) => {
     if (status === 'Tidak Naik BB') {
@@ -244,15 +263,28 @@ export function PosyanduTable({
                       STATUS
                     </TableHead>
                     {posyandus.map((posyandu) => (
-                      <TableHead 
-                        key={posyandu} 
+                      <TableHead
+                        key={posyandu}
+                        aria-sort={sort?.key === posyandu ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}
                         className="text-xs md:text-sm font-semibold text-foreground text-center uppercase min-w-[80px]"
                       >
-                        {posyandu}
+                        <button
+                          onClick={() => toggleSort(posyandu)}
+                          className="inline-flex items-center gap-1 uppercase hover:text-primary"
+                        >
+                          {posyandu}
+                          <SortIcon k={posyandu} />
+                        </button>
                       </TableHead>
                     ))}
-                    <TableHead className="text-xs md:text-sm font-semibold text-foreground text-center min-w-[70px] bg-muted/50">
-                      TOTAL
+                    <TableHead
+                      aria-sort={sort?.key === "TOTAL" ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}
+                      className="text-xs md:text-sm font-semibold text-foreground text-center min-w-[70px] bg-muted/50"
+                    >
+                      <button onClick={() => toggleSort("TOTAL")} className="inline-flex items-center gap-1 hover:text-primary">
+                        TOTAL
+                        <SortIcon k="TOTAL" />
+                      </button>
                     </TableHead>
                   </TableRow>
                 </TableHeader>

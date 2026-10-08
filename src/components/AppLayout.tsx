@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, BarChart3, Settings, LogOut, Users, Menu } from "lucide-react";
+import { LayoutDashboard, BarChart3, Settings, LogOut, Users, Menu, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -70,9 +70,29 @@ function NavItem({
   );
 }
 
+function Breadcrumb() {
+  const { pathname } = useLocation();
+  const current = [...navigation, ...adminNavigation].find((i) => i.href === pathname);
+  if (!current || pathname === "/") return null;
+
+  return (
+    <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-1.5 text-xs text-muted-foreground">
+      <NavLink to="/" className="hover:text-foreground transition-colors">Dashboard</NavLink>
+      <ChevronRight className="h-3 w-3" aria-hidden="true" />
+      <span className="font-medium text-foreground" aria-current="page">{current.name}</span>
+    </nav>
+  );
+}
+
 function TopNav() {
   const { user, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { pathname } = useLocation();
+
+  // Close mobile menu on any route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
   const allNav = user?.role === "admin" ? [...navigation, ...adminNavigation] : navigation;
   const navRef = useRef<HTMLElement>(null);
 
@@ -224,6 +244,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       <TopNav />
       <main className="flex-1 px-4 py-6 md:px-6 md:py-8 overflow-x-hidden">
         <div className="w-full max-w-7xl mx-auto">
+          <Breadcrumb />
           {children}
         </div>
       </main>
