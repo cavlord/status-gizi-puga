@@ -4,7 +4,6 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, Sector } fro
 import { ChildRecord } from "@/lib/googleSheets";
 import { ChildDetailsModal } from "./ChildDetailsModal";
 import { MapPin, Users, AlertTriangle } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 
 interface VillageNutritionalStatusProps {
   yearData: ChildRecord[];
@@ -115,8 +114,7 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
   
   monthData.forEach(record => {
     const status = record['BB/TB'];
-    const village = record['Desa/Kel'];
-    
+
     // Include all records with valid status, regardless of village
     if (!status || status.trim() === '') return;
     
@@ -186,12 +184,12 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 transition-all duration-300">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       {/* Pie Chart - Sebaran Balita Per Desa */}
-      <Card className="border-0 shadow-lg">
-        <CardHeader className="p-3 md:p-4 pb-1">
-          <CardTitle className="text-sm md:text-base flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-primary" />
+      <Card className="border border-border shadow-sm">
+        <CardHeader className="p-4 pb-2 border-b border-border">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-sky-500" />
             Sebaran Balita Per Desa ({year})
           </CardTitle>
         </CardHeader>
@@ -250,13 +248,15 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
       </Card>
 
       {/* Status Gizi with Chart */}
-      <Card className="border-0 shadow-lg">
-        <CardHeader className="p-3 md:p-4 pb-1">
-          <CardTitle className="text-sm md:text-base flex items-center gap-2">
-            <Users className="h-4 w-4 text-primary" />
-            Status Gizi (Bulan Terbaru)
-            <span className="text-[10px] md:text-xs text-muted-foreground font-normal ml-auto">Klik kategori untuk detail</span>
-          </CardTitle>
+      <Card className="border border-border shadow-sm">
+        <CardHeader className="p-4 pb-2 border-b border-border">
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Users className="h-4 w-4 text-sky-500" />
+              Status Gizi (Bulan Terbaru)
+            </CardTitle>
+            <span className="text-[10px] text-muted-foreground">Klik kategori untuk detail</span>
+          </div>
         </CardHeader>
         <CardContent className="p-3 md:p-4 pt-0">
           {statusChartData.length > 0 && (
@@ -297,10 +297,14 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
           
           <div className="grid grid-cols-2 gap-2">
             {/* Gizi Baik */}
-            <div 
+            <div
+              role="button"
+              tabIndex={0}
+              aria-label="Lihat detail anak dengan Gizi Baik"
               className="p-3 rounded-lg border cursor-pointer hover:shadow-md transition-all hover:scale-[1.02] text-center"
               style={{ borderTop: `3px solid ${STATUS_COLORS["Gizi Baik"]}` }}
               onClick={() => handleStatusClick("Gizi Baik")}
+              onKeyDown={(e) => e.key === 'Enter' && handleStatusClick("Gizi Baik")}
             >
               <p className="text-xs text-muted-foreground mb-1">Gizi Baik</p>
               <p className="text-2xl font-bold" style={{ color: STATUS_COLORS["Gizi Baik"] }}>
@@ -312,10 +316,14 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
             </div>
 
             {/* Gizi Kurang */}
-            <div 
+            <div
+              role="button"
+              tabIndex={0}
+              aria-label="Lihat detail anak dengan Gizi Kurang"
               className="p-3 rounded-lg border cursor-pointer hover:shadow-md transition-all hover:scale-[1.02] text-center"
               style={{ borderTop: `3px solid ${STATUS_COLORS["Gizi Kurang"]}` }}
               onClick={() => handleStatusClick("Gizi Kurang")}
+              onKeyDown={(e) => e.key === 'Enter' && handleStatusClick("Gizi Kurang")}
             >
               <p className="text-xs text-muted-foreground mb-1">Gizi Kurang</p>
               <p className="text-2xl font-bold" style={{ color: STATUS_COLORS["Gizi Kurang"] }}>
@@ -327,10 +335,14 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
             </div>
 
             {/* Gizi Buruk */}
-            <div 
+            <div
+              role="button"
+              tabIndex={0}
+              aria-label="Lihat detail anak dengan Gizi Buruk"
               className="p-3 rounded-lg border cursor-pointer hover:shadow-md transition-all hover:scale-[1.02] text-center"
               style={{ borderTop: `3px solid ${STATUS_COLORS["Gizi Buruk"]}` }}
               onClick={() => handleStatusClick("Gizi Buruk")}
+              onKeyDown={(e) => e.key === 'Enter' && handleStatusClick("Gizi Buruk")}
             >
               <p className="text-xs text-muted-foreground mb-1">Gizi Buruk</p>
               <p className="text-2xl font-bold" style={{ color: STATUS_COLORS["Gizi Buruk"] }}>
@@ -343,10 +355,14 @@ export function VillageNutritionalStatus({ yearData, monthData, year, notGaining
 
             {/* Tidak Naik BB */}
             {notGainingWeightData && (
-              <div 
+              <div
+                role="button"
+                tabIndex={0}
+                aria-label="Lihat detail anak yang tidak naik berat badan"
                 className="p-3 rounded-lg border cursor-pointer hover:shadow-md transition-all hover:scale-[1.02] text-center"
                 style={{ borderTop: '3px solid hsl(0 84% 60%)' }}
                 onClick={() => onShowNotGainingModal?.()}
+                onKeyDown={(e) => e.key === 'Enter' && onShowNotGainingModal?.()}
               >
                 <p className="text-xs text-muted-foreground mb-1 flex items-center justify-center gap-1">
                   <AlertTriangle className="h-3 w-3" />

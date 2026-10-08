@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { safeStorage } from "@/lib/storage";
 import {
   Table,
   TableBody,
@@ -55,7 +56,7 @@ interface UserData {
 }
 
 function getAuthToken(): string | null {
-  return localStorage.getItem('posyandu_token');
+  return safeStorage.getItem('posyandu_token');
 }
 
 export default function UserManagement() {

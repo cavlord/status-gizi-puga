@@ -8,7 +8,7 @@ interface NutritionalStatusSummaryProps {
   data: ChildRecord[];
 }
 
-const STATUS_COLORS = {
+export const STATUS_COLORS = {
   "Gizi Buruk": "hsl(0 84% 60%)",
   "Gizi Kurang": "hsl(38 92% 50%)",
   "Gizi Baik": "hsl(142 71% 45%)",
@@ -60,6 +60,11 @@ export function NutritionalStatusSummary({ data }: NutritionalStatusSummaryProps
           <CardTitle className="text-base sm:text-lg md:text-xl">Distribusi Status Gizi</CardTitle>
         </CardHeader>
         <CardContent className="p-4 md:p-6">
+          {chartData.length === 0 ? (
+            <div className="flex h-[250px] items-center justify-center text-sm text-muted-foreground">
+              Tidak ada data status gizi untuk ditampilkan
+            </div>
+          ) : (
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie
@@ -73,6 +78,8 @@ export function NutritionalStatusSummary({ data }: NutritionalStatusSummaryProps
                 fill="#8884d8"
                 dataKey="value"
                 paddingAngle={2}
+                labelLine={false}
+                label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
               >
                 {chartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -89,6 +96,7 @@ export function NutritionalStatusSummary({ data }: NutritionalStatusSummaryProps
               <Legend wrapperStyle={{ fontSize: '10px' }} />
             </PieChart>
           </ResponsiveContainer>
+          )}
         </CardContent>
       </Card>
 

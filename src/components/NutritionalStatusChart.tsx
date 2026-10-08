@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { TrendingUp } from "lucide-react";
+import { STATUS_COLORS } from "./NutritionalStatusSummary";
 
 interface NutritionalStatusChartProps {
   data: { month: string; [key: string]: number | string }[];
@@ -13,6 +14,9 @@ const COLORS = [
   'hsl(var(--chart-4))',
   'hsl(var(--chart-5))',
 ];
+
+const getColor = (status: string, index: number) =>
+  STATUS_COLORS[status as keyof typeof STATUS_COLORS] || COLORS[index % COLORS.length];
 
 export function NutritionalStatusChart({ data }: NutritionalStatusChartProps) {
   const statuses = data.length > 0 
@@ -39,7 +43,12 @@ export function NutritionalStatusChart({ data }: NutritionalStatusChartProps) {
               textAnchor="end"
               height={80}
             />
-            <YAxis stroke="hsl(var(--foreground))" fontSize={12} />
+            <YAxis
+              stroke="hsl(var(--foreground))"
+              fontSize={12}
+              allowDecimals={false}
+              label={{ value: "Jumlah Anak", angle: -90, position: "insideLeft", style: { textAnchor: "middle", fill: "hsl(var(--foreground))", fontSize: 12 } }}
+            />
             <Tooltip 
               contentStyle={{
                 backgroundColor: 'hsl(var(--card))',
@@ -53,9 +62,9 @@ export function NutritionalStatusChart({ data }: NutritionalStatusChartProps) {
                 key={status}
                 type="monotone"
                 dataKey={status}
-                stroke={COLORS[index % COLORS.length]}
+                stroke={getColor(status, index)}
                 strokeWidth={2}
-                dot={{ fill: COLORS[index % COLORS.length], r: 4 }}
+                dot={{ fill: getColor(status, index), r: 4 }}
                 activeDot={{ r: 6 }}
               />
             ))}

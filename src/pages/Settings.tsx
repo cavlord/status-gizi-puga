@@ -2,6 +2,17 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Settings as SettingsIcon, RefreshCw, Info, Upload, Database, Loader2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -115,24 +126,41 @@ const Settings = () => {
                   Import data terbaru dari Google Sheets ke database (Admin only)
                 </p>
               </div>
-              <Button 
-                onClick={handleImportFromSheets} 
-                className="gap-2"
-                disabled={isImporting}
-                variant="default"
-              >
-                {isImporting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Importing...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="h-4 w-4" />
-                    Import Data
-                  </>
-                )}
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    className="gap-2"
+                    disabled={isImporting}
+                    variant="default"
+                  >
+                    {isImporting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Importing...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4" />
+                        Import Data
+                      </>
+                    )}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Konfirmasi Import Data</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Proses ini akan menghapus semua data lama dan menggantinya dengan data terbaru dari Google Sheets. Tindakan ini tidak dapat dibatalkan.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Batal</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleImportFromSheets}>
+                      Ya, Import Sekarang
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           )}
         </CardContent>
