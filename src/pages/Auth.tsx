@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { loginSchema, registerSchema, LoginFormData, RegisterFormData } from '@/lib/validation';
+import { loginSchema, registerSchema, passwordSchema, LoginFormData, RegisterFormData } from '@/lib/validation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -167,8 +167,9 @@ const AuthPage = () => {
   };
 
   const handleResetPassword = async () => {
-    if (newPassword.length < 8) {
-      toast({ title: 'Error', description: 'Password minimal 8 karakter', variant: 'destructive' });
+    const passwordCheck = passwordSchema.safeParse(newPassword);
+    if (!passwordCheck.success) {
+      toast({ title: 'Error', description: passwordCheck.error.errors[0]?.message || 'Password tidak valid', variant: 'destructive' });
       return;
     }
     if (newPassword !== confirmNewPassword) {
