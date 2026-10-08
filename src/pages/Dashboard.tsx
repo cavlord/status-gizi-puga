@@ -39,12 +39,14 @@ const Dashboard = () => {
   const [showCumulativeModal, setShowCumulativeModal] = useState(false);
 
   const { allRecords, isLoading, error } = useData();
-  const [showLoading, setShowLoading] = useState(true);
+  const [showLoading, setShowLoading] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowLoading(false), 1500);
-    return () => clearTimeout(timer);
-  }, []);
+    if (!isLoading) {
+      const timer = setTimeout(() => setShowLoading(false), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading]);
 
   useEffect(() => {
     if (error) {
