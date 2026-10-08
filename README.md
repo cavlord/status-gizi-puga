@@ -1,34 +1,55 @@
-# Dashboard UPT Puskesmas Pulau Gadang — Versi 2.0
+# Dashboard Status Gizi Balita — UPT Puskesmas Pulau Gadang
 
-> **📌 Versi 2.0** (3 Maret 2026) — Stable release dengan seluruh data 9.861 records (2024–2026) tertampil lengkap.
+> Monitoring status gizi balita (0-5 tahun) per Posyandu. Data tersinkron otomatis dari Google Sheets ke database Supabase setiap hari.
 
-## 📌 Deskripsi
+## Tech Stack
 
-Dashboard ini merupakan aplikasi berbasis web yang dikembangkan untuk mendukung pengelolaan dan pemantauan data operasional **UPT Puskesmas Pulau Gadang**.
-Aplikasi dibangun menggunakan pendekatan AI-assisted development dengan **Code Vibe** untuk mempercepat pembuatan antarmuka dan logika aplikasi.
+- **Frontend:** React 18 + TypeScript + Vite
+- **UI:** Tailwind CSS + shadcn/ui + Framer Motion + GSAP
+- **Charts:** Recharts
+- **State:** TanStack Query v5
+- **Auth:** Custom JWT (via Supabase Edge Functions)
+- **Backend:** Supabase (PostgreSQL + Edge Functions)
 
-Dashboard menyediakan tampilan visual data yang membantu monitoring layanan kesehatan dan pelaporan internal secara efisien.
+## Fitur Utama
 
----
+- Dashboard monitoring status gizi real-time
+- Visualisasi tren status gizi per bulan
+- Data per Posyandu dengan filter desa/kelurahan dan bulan
+- Pencarian riwayat pengukuran anak (per anak)
+- Manajemen user (admin)
+- Import data dari Google Sheets (admin)
+- Dark mode
+- Responsive (mobile, tablet, desktop)
 
-## 🎯 Tujuan
+## Development
 
-* Menyederhanakan akses informasi operasional
-* Menyediakan visualisasi data layanan kesehatan
-* Mendukung pengambilan keputusan berbasis data
-* Mempercepat proses pelaporan
+```bash
+npm install
+npm run dev      # dev server di http://localhost:8080
+npm run build    # production build
+npm run lint     # eslint
+```
 
----
+## Struktur Proyek
 
-## ⚙️ Fitur Utama
+```
+src/
+├── components/    # UI components (pages, components, ui)
+├── contexts/      # React contexts (Auth, Data, Theme)
+├── hooks/         # Custom hooks
+├── lib/           # Utilities, validation, helpers
+└── pages/         # Page components (lazy-loaded)
+```
 
-* 📊 Visualisasi data dalam bentuk grafik dan tabel
-* 🔎 Pencarian dan filtering data
-* 🧾 Rekap laporan layanan
-* 🖥️ UI responsif
-* ⚡ Pengembangan cepat berbasis AI tools
+## Deployment
 
----
+Edge Functions di-deploy ke Supabase:
+```bash
+npx supabase functions deploy <function-name>
+```
 
-# Build & Design by Rossa Gusti Yolada, S.Gz
+## Build & Design
+
+Rossa Gusti Yolanda, S.Gz — UPT Puskesmas Pulau Gadang XIII Koto Kampar
 
